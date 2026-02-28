@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -10,12 +10,13 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, addLesson, deleteLesson, updateLesson } = useVocabulary();
+    const { lessons, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+    const [lessonToReset, setLessonToReset] = useState<string | null>(null);
 
     // Edit Lesson State
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export function Home({ onStartExercise }: HomeProps) {
     const [scannedWords, setScannedWords] = useState<ExtractedWordPair[] | null>(null);
     const [scannedLessonName, setScannedLessonName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const importInputRef = useRef<HTMLInputElement>(null);
     const progressIntervalRef = useRef<number | null>(null);
 
     // Global Key Listener for Modals
@@ -37,11 +39,12 @@ export function Home({ onStartExercise }: HomeProps) {
             if (e.key === 'Escape') {
                 if (scannedWords) setScannedWords(null);
                 if (editingLessonId) setEditingLessonId(null);
+                if (lessonToReset) setLessonToReset(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [scannedWords, editingLessonId]);
+    }, [scannedWords, editingLessonId, lessonToReset]);
 
     const handleCreateLesson = () => {
         setError('');
@@ -159,6 +162,38 @@ export function Home({ onStartExercise }: HomeProps) {
         setScannedWords(scannedWords.filter((_, i) => i !== index));
     };
 
+    const handleDownloadLesson = (lesson: Lesson) => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lesson, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `${lesson.name}.json`);
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
+    const handleImportLesson = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string);
+                importLesson(json);
+                setError('');
+            } catch (err: any) {
+                setError(err.message || 'Error parsing lesson file.');
+            }
+            if (importInputRef.current) importInputRef.current.value = '';
+        };
+        reader.onerror = () => {
+            setError('Error reading file.');
+            if (importInputRef.current) importInputRef.current.value = '';
+        };
+        reader.readAsText(file);
+    };
+
     const openEditLessonModal = (lesson: Lesson) => {
         setEditingLessonId(lesson.id);
         setEditLessonName(lesson.name);
@@ -203,6 +238,20 @@ export function Home({ onStartExercise }: HomeProps) {
                         ref={fileInputRef}
                         onChange={handleImageUpload}
                     />
+                    <input
+                        type="file"
+                        accept=".json"
+                        style={{ display: 'none' }}
+                        ref={importInputRef}
+                        onChange={handleImportLesson}
+                    />
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => importInputRef.current?.click()}
+                        title="Import Lesson JSON"
+                    >
+                        <Upload size={18} /> Import Lesson
+                    </button>
                     <button
                         className="btn btn-secondary"
                         onClick={() => fileInputRef.current?.click()}
@@ -293,6 +342,22 @@ export function Home({ onStartExercise }: HomeProps) {
                                         <button
                                             className="btn btn-secondary"
                                             style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                            onClick={() => setLessonToReset(lesson.id)}
+                                            title="Reset Lesson Progress"
+                                        >
+                                            <RotateCcw size={16} color="var(--text-secondary)" />
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                            onClick={() => handleDownloadLesson(lesson)}
+                                            title="Download Lesson"
+                                        >
+                                            <Download size={16} color="var(--text-secondary)" />
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
                                             onClick={() => openEditLessonModal(lesson)}
                                             title="Edit Lesson"
                                         >
@@ -338,6 +403,19 @@ export function Home({ onStartExercise }: HomeProps) {
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
                             <button className="btn btn-secondary" onClick={() => setLessonToDelete(null)}>Cancel</button>
                             <button className="btn btn-danger" onClick={() => { deleteLesson(lessonToDelete); setLessonToDelete(null); }}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {lessonToReset && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+                        <h3>Reset Progress?</h3>
+                        <p>Are you sure you want to reset all progress for this lesson? All words will be marked as 'Unlearned'.</p>
+                        <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
+                            <button className="btn btn-secondary" onClick={() => setLessonToReset(null)}>Cancel</button>
+                            <button className="btn btn-primary" onClick={() => { resetLessonProgress(lessonToReset); setLessonToReset(null); }}>Reset</button>
                         </div>
                     </div>
                 </div>

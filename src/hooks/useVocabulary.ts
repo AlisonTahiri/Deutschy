@@ -103,6 +103,42 @@ export function useVocabulary() {
         }));
     };
 
+    const importLesson = (data: unknown) => {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid file format. Expected a JSON object.');
+        }
+
+        const obj = data as any;
+        if (typeof obj.name !== 'string' || !Array.isArray(obj.words)) {
+            throw new Error('Invalid lesson schema. Missing "name" or "words" array.');
+        }
+
+        for (const word of obj.words) {
+            if (typeof word !== 'object' || word === null) {
+                throw new Error('Invalid word format in lesson.');
+            }
+            if (typeof word.german !== 'string' || typeof word.albanian !== 'string') {
+                throw new Error('Each word must contain "german" and "albanian" text.');
+            }
+        }
+
+        const newLesson: Lesson = {
+            id: crypto.randomUUID(),
+            name: obj.name,
+            createdAt: Date.now(),
+            words: obj.words.map((w: any) => ({
+                id: crypto.randomUUID(),
+                german: w.german,
+                albanian: w.albanian,
+                learned: typeof w.learned === 'boolean' ? w.learned : false,
+                failCount: typeof w.failCount === 'number' ? w.failCount : 0,
+                mcq: w.mcq || undefined
+            }))
+        };
+
+        setLessons(prev => [...prev, newLesson]);
+    };
+
     return {
         lessons,
         addLesson,
@@ -111,6 +147,7 @@ export function useVocabulary() {
         deleteWord,
         updateWordStatus,
         updateWordMCQs,
-        resetLessonProgress
+        resetLessonProgress,
+        importLesson
     };
 }
