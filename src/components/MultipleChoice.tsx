@@ -11,11 +11,25 @@ interface MultipleChoiceProps {
 
 export function MultipleChoice({ words, onResult, onComplete }: MultipleChoiceProps) {
     const { settings } = useSettings();
-    const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
-    const [currentIndex, setCurrentIndex] = useState(0);
+    // Filter queue immediately on mount if no API key is present
+    const [queue, setQueue] = useState<WordPair[]>(() => {
+        const shuffled = [...words].sort(() => Math.random() - 0.5);
+        if (!settings.aiApiKey) {
+            return shuffled.filter(w => w.mcq);
+        }
+        return shuffled;
+    });
+    const [skippedWords] = useState<number>(() => {
+        if (!settings.aiApiKey) {
+            return words.length - queue.length;
+        }
+        return 0;
+    });
 
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [showSummary, setShowSummary] = useState(false);
 
     const currentWord = queue[currentIndex];
 
@@ -42,14 +56,31 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
         setIsSubmitted(false);
 
         if (currentIndex + 1 >= nextQueue.length) {
-            onComplete();
+            if (skippedWords > 0) {
+                setShowSummary(true);
+            } else {
+                onComplete();
+            }
         }
     };
 
-    if (!settings.aiApiKey) {
+    if (showSummary) {
+        return (
+            <div className="glass-panel text-center animate-fade-in flex-column align-center gap-md">
+                <h3 style={{ color: 'var(--warning-color)' }}>Exercise Complete</h3>
+                <p>
+                    <strong>{skippedWords}</strong> words were skipped because you don't have an AI API key configured, and they didn't have pre-generated questions.
+                </p>
+                <button className="btn btn-primary" onClick={onComplete}>Back to Lessons</button>
+            </div>
+        );
+    }
+
+    if (!settings.aiApiKey && queue.length === 0) {
         return (
             <div className="glass-panel text-center">
                 <h3 style={{ color: 'var(--warning-color)' }}>AI API Key Required</h3>
+                <p>None of your chosen words have pre-generated questions.</p>
                 <p>Please go to Settings and provide an API key to use Multiple Choice mode.</p>
                 <button className="btn btn-secondary" style={{ marginTop: '1rem' }} onClick={onComplete}>Back</button>
             </div>

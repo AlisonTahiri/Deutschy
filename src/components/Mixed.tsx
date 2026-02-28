@@ -3,6 +3,7 @@ import type { WordPair } from '../types';
 import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
 import { Writing } from './Writing';
+import { useSettings } from '../hooks/useSettings';
 
 interface MixedProps {
     words: WordPair[];
@@ -13,17 +14,28 @@ interface MixedProps {
 type RandomMode = 'flashcards' | 'multiple-choice' | 'writing';
 
 export function Mixed({ words, onResult, onComplete }: MixedProps) {
+    const { settings } = useSettings();
     // We keep a single unified queue of words to process
     const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
     const [currentIndex, setCurrentIndex] = useState(0);
 
+    const currentWord = queue[currentIndex];
+
     // For the current word, pick a random mode
-    const pickRandomMode = (): RandomMode => {
-        const modes: RandomMode[] = ['flashcards', 'multiple-choice', 'writing'];
+    const pickRandomMode = (word: WordPair | undefined): RandomMode => {
+        if (!word) return 'flashcards'; // fallback
+
+        const modes: RandomMode[] = ['flashcards', 'writing'];
+
+        // Only allow multiple-choice if they have an API key OR the word already has an MCQ
+        if (settings.aiApiKey || word.mcq) {
+            modes.push('multiple-choice');
+        }
+
         return modes[Math.floor(Math.random() * modes.length)];
     };
 
-    const [currentMode, setCurrentMode] = useState<RandomMode>(pickRandomMode());
+    const [currentMode, setCurrentMode] = useState<RandomMode>(() => pickRandomMode(currentWord));
 
     const handleResult = (wordId: string, learned: boolean) => {
         const currentWord = queue[currentIndex];
@@ -42,11 +54,9 @@ export function Mixed({ words, onResult, onComplete }: MixedProps) {
             onComplete();
         } else {
             // Pick a new random mode for the next word
-            setCurrentMode(pickRandomMode());
+            setCurrentMode(pickRandomMode(nextQueue[currentIndex + 1]));
         }
     };
-
-    const currentWord = queue[currentIndex];
 
     if (!currentWord) return null;
 
