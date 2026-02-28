@@ -13,6 +13,7 @@ export function Home({ onStartExercise }: HomeProps) {
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
+    const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
 
     const handleCreateLesson = () => {
         setError('');
@@ -115,7 +116,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                     <button
                                         className="btn btn-secondary"
                                         style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                        onClick={() => deleteLesson(lesson.id)}
+                                        onClick={() => setLessonToDelete(lesson.id)}
                                         title="Delete Lesson"
                                     >
                                         <Trash2 size={16} color="var(--danger-color)" />
@@ -142,6 +143,19 @@ export function Home({ onStartExercise }: HomeProps) {
                     );
                 })}
             </div>
+
+            {lessonToDelete && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+                        <h3>Delete Lesson?</h3>
+                        <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
+                        <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
+                            <button className="btn btn-secondary" onClick={() => setLessonToDelete(null)}>Cancel</button>
+                            <button className="btn btn-danger" onClick={() => { deleteLesson(lessonToDelete); setLessonToDelete(null); }}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

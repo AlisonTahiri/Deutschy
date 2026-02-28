@@ -13,7 +13,7 @@ interface ExerciseContainerProps {
 }
 
 export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
-    const { lessons, updateWordStatus } = useVocabulary();
+    const { lessons, updateWordStatus, resetLessonProgress } = useVocabulary();
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
 
@@ -27,18 +27,8 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     }
 
     const unlearnedWords = lesson.words.filter(w => !w.learned);
-
-    if (unlearnedWords.length === 0 && lesson.words.length > 0) {
-        return (
-            <div className="glass-panel text-center animate-fade-in flex-column align-center justify-center gap-md" style={{ minHeight: '40vh', maxWidth: '600px', margin: '0 auto' }}>
-                <h2 style={{ color: 'var(--success-color)' }}>Congratulations! 🎉</h2>
-                <p>You have learned all words in this lesson.</p>
-                <button className="btn btn-primary" onClick={onExit}>
-                    <ArrowLeft size={18} /> Back to dashboard
-                </button>
-            </div>
-        );
-    }
+    const isFullyLearned = unlearnedWords.length === 0 && lesson.words.length > 0;
+    const wordsToPractice = isFullyLearned ? lesson.words : unlearnedWords;
 
     // Handle saving word learning status
     const handleWordResult = (wordId: string, learned: boolean) => {
@@ -55,8 +45,18 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                     <h2 style={{ margin: 0 }}>{lesson.name}</h2>
                 </div>
 
+                {isFullyLearned && (
+                    <div className="glass-panel text-center animate-fade-in flex-column align-center justify-center gap-sm" style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'rgba(46, 160, 67, 0.05)' }}>
+                        <h3 style={{ color: 'var(--success-color)', margin: 0 }}>🎉 All words learned!</h3>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>You can practice all words again, or reset your progress.</p>
+                        <button className="btn btn-secondary" style={{ marginTop: '0.5rem' }} onClick={() => resetLessonProgress(lesson.id)}>
+                            Reset Progress
+                        </button>
+                    </div>
+                )}
+
                 <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    {unlearnedWords.length} words remaining to learn. Choose an exercise mode:
+                    {isFullyLearned ? 'Practicing all words.' : `${unlearnedWords.length} words remaining to learn.`} Choose an exercise mode:
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
@@ -101,22 +101,22 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                     {exerciseMode === 'mixed' && 'Mixed Practice'}
                 </h3>
                 <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)' }}>
-                    {unlearnedWords.length} words left
+                    {wordsToPractice.length} words left
                 </span>
             </div>
 
             <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 {exerciseMode === 'flashcards' && (
-                    <Flashcards words={unlearnedWords} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Flashcards words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}
                 {exerciseMode === 'multiple-choice' && (
-                    <MultipleChoice words={unlearnedWords} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <MultipleChoice words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}
                 {exerciseMode === 'writing' && (
-                    <Writing words={unlearnedWords} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Writing words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}
                 {exerciseMode === 'mixed' && (
-                    <Mixed words={unlearnedWords} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Mixed words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}
             </div>
         </div>
