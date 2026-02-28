@@ -71,3 +71,63 @@ Instructions:
         return null;
     }
 }
+
+export interface ExtractedWordPair {
+    german: string;
+    albanian: string;
+}
+
+export async function extractWordsFromImage(
+    apiKey: string,
+    base64Image: string,
+    mimeType: string
+): Promise<ExtractedWordPair[] | null> {
+    if (!apiKey || apiKey.startsWith('sk-')) {
+        // OpenAI vision not implemented yet or missing key
+        alert('Image scanning currently only supports Google Gemini API keys.');
+        return null;
+    }
+
+    const prompt = `
+Extract all the German words from this image and translate them into Albanian.
+If a word has a plural form or ending indicated with a hyphen (e.g. "die Neuigkeit -en"), replace the hyphen with a slash (e.g. "die Neuigkeit/en"). Do not leave it as a hyphen.
+Return the result strictly as a JSON array of objects, with each object having exactly two string keys: "german" and "albanian".
+Example:
+[
+  { "german": "die Neuigkeit/en", "albanian": "e reja, të rejat" },
+  { "german": "das Haus/häuser", "albanian": "shtëpia" }
+]
+Return ONLY the JSON array.
+`;
+
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: base64Image
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.2,
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        const data = await res.json();
+        const text = data.candidates[0].content.parts[0].text;
+        return JSON.parse(text) as ExtractedWordPair[];
+    } catch (err) {
+        console.error('Image AI Extraction Failed', err);
+        return null;
+    }
+}

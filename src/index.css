@@ -6,7 +6,7 @@
   --bg-color-secondary: #161b22;
   --text-primary: #e6edf3;
   --text-secondary: #7d8590;
-  
+
   --accent-color: #58a6ff;
   --accent-hover: #3182ce;
   --success-color: #2ea043;
@@ -21,10 +21,10 @@
   --border-radius-lg: 24px;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
   --shadow-glow: 0 0 20px rgba(88, 166, 255, 0.2);
 }
 
@@ -46,10 +46,29 @@ body {
 }
 
 /* Typography utilities */
-h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.02em; }
-h2 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.75rem; }
-h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-p { margin-bottom: 1rem; color: var(--text-secondary); }
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
 
 /* Glassmorphism Panel styles */
 .glass-panel {
@@ -76,6 +95,7 @@ p { margin-bottom: 1rem; color: var(--text-secondary); }
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  color: var(--text-primary);
 }
 
 .btn:disabled {
@@ -88,6 +108,7 @@ p { margin-bottom: 1rem; color: var(--text-secondary); }
   color: #fff;
   box-shadow: var(--shadow-glow);
 }
+
 .btn-primary:not(:disabled):hover {
   background-color: var(--accent-hover);
   transform: translateY(-1px);
@@ -98,15 +119,28 @@ p { margin-bottom: 1rem; color: var(--text-secondary); }
   color: var(--text-primary);
   border: 1px solid var(--border-color);
 }
+
 .btn-secondary:not(:disabled):hover {
   border-color: var(--text-secondary);
 }
 
-.btn-success { background-color: var(--success-color); color: #fff; }
-.btn-success:not(:disabled):hover { background-color: var(--success-hover); }
+.btn-success {
+  background-color: var(--success-color);
+  color: #fff;
+}
 
-.btn-danger { background-color: var(--danger-color); color: #fff; }
-.btn-danger:not(:disabled):hover { background-color: var(--danger-hover); }
+.btn-success:not(:disabled):hover {
+  background-color: var(--success-hover);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+
+.btn-danger:not(:disabled):hover {
+  background-color: var(--danger-hover);
+}
 
 .btn-icon-circular {
   border-radius: 50%;
@@ -158,21 +192,72 @@ textarea.input-field {
   padding: 2rem 1rem;
   width: 100%;
 }
-.flex-column { display: flex; flex-direction: column; }
-.flex-row { display: flex; flex-direction: row; }
-.align-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.gap-sm { gap: 0.5rem; }
-.gap-md { gap: 1rem; }
-.gap-lg { gap: 2rem; }
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: 0.5rem;
+}
+
+.gap-md {
+  gap: 1rem;
+}
+
+.gap-lg {
+  gap: 2rem;
+}
 
 /* Custom Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-color); }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
 
 /* Animation Utils */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}

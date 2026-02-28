@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
-import { Plus, Trash2, Play } from 'lucide-react';
+import { useSettings } from '../hooks/useSettings';
+import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -14,6 +16,13 @@ export function Home({ onStartExercise }: HomeProps) {
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+
+    // Image Upload State
+    const { settings } = useSettings();
+    const [isUploading, setIsUploading] = useState(false);
+    const [scannedWords, setScannedWords] = useState<ExtractedWordPair[] | null>(null);
+    const [scannedLessonName, setScannedLessonName] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleCreateLesson = () => {
         setError('');
@@ -48,17 +57,99 @@ export function Home({ onStartExercise }: HomeProps) {
         setShowNewLesson(false);
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!settings.aiApiKey) {
+            alert('Please add your Google Gemini API key in Settings first to use Image Scanning.');
+            // Reset input
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
+        setIsUploading(true);
+        setError('');
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64String = (reader.result as string).split(',')[1];
+            const mimeType = file.type;
+
+            const words = await extractWordsFromImage(settings.aiApiKey, base64String, mimeType);
+            setIsUploading(false);
+
+            if (words && words.length > 0) {
+                setScannedWords(words);
+                setScannedLessonName(file.name.replace(/\.[^/.]+$/, "")); // Default name without extension
+            } else {
+                setError('Could not extract any words from the image. Please try again or check your API key.');
+            }
+
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveScannedLesson = () => {
+        if (!scannedLessonName.trim()) {
+            alert('Please enter a lesson name.');
+            return;
+        }
+        if (!scannedWords || scannedWords.length === 0) {
+            alert('No words to save.');
+            return;
+        }
+
+        addLesson(scannedLessonName.trim(), scannedWords);
+        setScannedWords(null);
+        setScannedLessonName('');
+    };
+
+    const handleUpdateScannedWord = (index: number, field: 'german' | 'albanian', value: string) => {
+        if (!scannedWords) return;
+        const newWords = [...scannedWords];
+        newWords[index][field] = value;
+        setScannedWords(newWords);
+    };
+
+    const handleRemoveScannedWord = (index: number) => {
+        if (!scannedWords) return;
+        setScannedWords(scannedWords.filter((_, i) => i !== index));
+    };
+
     return (
         <div className="animate-fade-in flex-column gap-lg">
             <div className="flex-row justify-between align-center">
                 <h1>Your Lessons</h1>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => setShowNewLesson(!showNewLesson)}
-                >
-                    <Plus size={18} /> New Lesson
-                </button>
+                <div className="flex-row gap-sm align-center">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                    />
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        title="Upload Image to Scan"
+                    >
+                        {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                        {isUploading ? 'Scanning...' : 'Scan Image'}
+                    </button>
+
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => setShowNewLesson(!showNewLesson)}
+                    >
+                        <Plus size={18} /> New Lesson
+                    </button>
+                </div>
             </div>
+
+            {error && !showNewLesson && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
 
             {showNewLesson && (
                 <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'rgba(46, 160, 67, 0.05)', borderColor: 'var(--success-color)' }}>
@@ -152,6 +243,69 @@ export function Home({ onStartExercise }: HomeProps) {
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
                             <button className="btn btn-secondary" onClick={() => setLessonToDelete(null)}>Cancel</button>
                             <button className="btn btn-danger" onClick={() => { deleteLesson(lessonToDelete); setLessonToDelete(null); }}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {scannedWords && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}>
+
+                        <div className="flex-row justify-between align-center">
+                            <h3>Review Scanned Words</h3>
+                            <button className="btn btn-secondary" style={{ padding: '0.25rem' }} onClick={() => setScannedWords(null)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Edit the extracted words if needed, then save the lesson.</p>
+
+                        <div className="flex-column gap-sm">
+                            <label style={{ fontWeight: 600 }}>Lesson Name</label>
+                            <input
+                                className="input-field"
+                                value={scannedLessonName}
+                                onChange={(e) => setScannedLessonName(e.target.value)}
+                                placeholder="Lesson Name"
+                            />
+                        </div>
+
+                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                            <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
+                                <div style={{ flex: 1 }}>German</div>
+                                <div style={{ flex: 1 }}>Albanian</div>
+                                <div style={{ width: '40px' }}></div>
+                            </div>
+
+                            {scannedWords.map((word, idx) => (
+                                <div key={idx} className="flex-row gap-sm align-center">
+                                    <input
+                                        className="input-field"
+                                        style={{ flex: 1 }}
+                                        value={word.german}
+                                        onChange={e => handleUpdateScannedWord(idx, 'german', e.target.value)}
+                                    />
+                                    <input
+                                        className="input-field"
+                                        style={{ flex: 1 }}
+                                        value={word.albanian}
+                                        onChange={e => handleUpdateScannedWord(idx, 'albanian', e.target.value)}
+                                    />
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.5rem', border: 'none' }}
+                                        onClick={() => handleRemoveScannedWord(idx)}
+                                        title="Remove Word"
+                                    >
+                                        <Trash2 size={18} color="var(--danger-color)" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                            <button className="btn btn-secondary" onClick={() => setScannedWords(null)}>Cancel</button>
+                            <button className="btn btn-success" onClick={handleSaveScannedLesson}>Save {scannedWords.length} Words</button>
                         </div>
                     </div>
                 </div>
