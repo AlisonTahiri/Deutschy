@@ -20,9 +20,11 @@ export function Home({ onStartExercise }: HomeProps) {
     // Image Upload State
     const { settings } = useSettings();
     const [isUploading, setIsUploading] = useState(false);
+    const [scanProgress, setScanProgress] = useState(0);
     const [scannedWords, setScannedWords] = useState<ExtractedWordPair[] | null>(null);
     const [scannedLessonName, setScannedLessonName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const progressIntervalRef = useRef<number | null>(null);
 
     const handleCreateLesson = () => {
         setError('');
@@ -69,7 +71,18 @@ export function Home({ onStartExercise }: HomeProps) {
         }
 
         setIsUploading(true);
+        setScanProgress(0);
         setError('');
+
+        // Simulate progress up to 95% while waiting for Gemini
+        progressIntervalRef.current = window.setInterval(() => {
+            setScanProgress(prev => {
+                if (prev >= 95) return 95;
+                // Slower progress as it gets higher
+                const increment = prev < 50 ? 5 : prev < 80 ? 2 : 0.5;
+                return prev + increment;
+            });
+        }, 500);
 
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -77,16 +90,27 @@ export function Home({ onStartExercise }: HomeProps) {
             const mimeType = file.type;
 
             const words = await extractWordsFromImage(settings.aiApiKey, base64String, mimeType);
-            setIsUploading(false);
 
-            if (words && words.length > 0) {
-                setScannedWords(words);
-                setScannedLessonName(file.name.replace(/\.[^/.]+$/, "")); // Default name without extension
-            } else {
-                setError('Could not extract any words from the image. Please try again or check your API key.');
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
             }
 
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            setScanProgress(100);
+
+            // tiny delay to let user see 100%
+            setTimeout(() => {
+                setIsUploading(false);
+                setScanProgress(0);
+
+                if (words && words.length > 0) {
+                    setScannedWords(words);
+                    setScannedLessonName(file.name.replace(/\.[^/.]+$/, "")); // Default name without extension
+                } else {
+                    setError('Could not extract any words from the image. Please try again or check your API key.');
+                }
+
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }, 500);
         };
         reader.readAsDataURL(file);
     };
@@ -148,6 +172,18 @@ export function Home({ onStartExercise }: HomeProps) {
                     </button>
                 </div>
             </div>
+
+            {isUploading && (
+                <div className="glass-panel flex-column gap-sm animate-fade-in" style={{ padding: '1rem' }}>
+                    <div className="flex-row justify-between align-center">
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Scanning Image Details...</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{Math.round(scanProgress)}%</span>
+                    </div>
+                    <div style={{ width: '100%', backgroundColor: 'var(--bg-color)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${scanProgress}%`, backgroundColor: 'var(--accent-color)', transition: 'width 0.5s ease-out' }} />
+                    </div>
+                </div>
+            )}
 
             {error && !showNewLesson && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
 
