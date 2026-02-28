@@ -58,6 +58,30 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
         setIsSubmitted(true);
     };
 
+    const handleSpecialChar = (char: string) => {
+        if (isSubmitted) return;
+
+        // Get current cursor position if possible
+        const inputElement = inputRef.current;
+        if (inputElement) {
+            const start = inputElement.selectionStart || inputValue.length;
+            const end = inputElement.selectionEnd || inputValue.length;
+
+            const newValue = inputValue.substring(0, start) + char + inputValue.substring(end);
+            setInputValue(newValue);
+
+            // Focus and restore cursor pos after state update
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    inputRef.current.setSelectionRange(start + char.length, start + char.length);
+                }
+            }, 0);
+        } else {
+            setInputValue(prev => prev + char);
+        }
+    };
+
     const handleNext = () => {
         // If a hint was used, we automatically mark it as unlearned
         // so they have to try again later from memory
@@ -109,6 +133,23 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex-column gap-md">
+                    {!isSubmitted && (
+                        <div className="flex-row gap-sm justify-center flex-wrap" style={{ marginBottom: '-0.5rem' }}>
+                            {['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'].map(char => (
+                                <button
+                                    key={char}
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => handleSpecialChar(char)}
+                                    style={{ padding: '0.25rem 0.75rem', fontSize: '1.2rem', minWidth: '40px' }}
+                                    tabIndex={-1} // Prevents disrupting the normal tab flow
+                                >
+                                    {char}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <input
                         ref={inputRef}
                         className="input-field"
