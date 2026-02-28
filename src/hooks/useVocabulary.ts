@@ -42,6 +42,23 @@ export function useVocabulary() {
         setLessons(prev => prev.filter(l => l.id !== id));
     };
 
+    const updateLesson = (id: string, name: string, words?: any[]) => {
+        setLessons(prev => prev.map(l => {
+            if (l.id !== id) return l;
+            return { ...l, name, ...(words ? { words } : {}) };
+        }));
+    };
+
+    const deleteWord = (lessonId: string, wordId: string) => {
+        setLessons(prev => prev.map(l => {
+            if (l.id !== lessonId) return l;
+            return {
+                ...l,
+                words: l.words.filter(w => w.id !== wordId)
+            };
+        }));
+    };
+
     const updateWordStatus = (lessonId: string, wordId: string, learned: boolean) => {
         setLessons(prev => prev.map(lesson => {
             if (lesson.id !== lessonId) return lesson;
@@ -72,7 +89,9 @@ export function useVocabulary() {
     return {
         lessons,
         addLesson,
+        updateLesson,
         deleteLesson,
+        deleteWord,
         updateWordStatus,
         resetLessonProgress
     };

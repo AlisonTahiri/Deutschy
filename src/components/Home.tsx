@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -10,12 +10,17 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, addLesson, deleteLesson } = useVocabulary();
+    const { lessons, addLesson, deleteLesson, updateLesson } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+
+    // Edit Lesson State
+    const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+    const [editLessonName, setEditLessonName] = useState('');
+    const [editLessonWords, setEditLessonWords] = useState<any[]>([]);
 
     // Image Upload State
     const { settings } = useSettings();
@@ -142,6 +147,38 @@ export function Home({ onStartExercise }: HomeProps) {
         setScannedWords(scannedWords.filter((_, i) => i !== index));
     };
 
+    const openEditLessonModal = (lesson: Lesson) => {
+        setEditingLessonId(lesson.id);
+        setEditLessonName(lesson.name);
+        setEditLessonWords(JSON.parse(JSON.stringify(lesson.words)));
+    };
+
+    const handleSaveEditLesson = () => {
+        if (!editingLessonId) return;
+        if (!editLessonName.trim()) {
+            alert('Lesson name cannot be empty.');
+            return;
+        }
+
+        updateLesson(editingLessonId, editLessonName.trim(), editLessonWords);
+        setEditingLessonId(null);
+        setEditLessonName('');
+        setEditLessonWords([]);
+    };
+
+    const handleUpdateEditWord = (wordId: string, field: 'german' | 'albanian', value: string) => {
+        setEditLessonWords(prev => prev.map(w => {
+            if (w.id !== wordId) return w;
+            return { ...w, [field]: value, learned: false };
+        }));
+    };
+
+    const handleDeleteEditWord = (wordId: string) => {
+        setEditLessonWords(prev => prev.filter(w => w.id !== wordId));
+    };
+
+    const editingLesson = lessons.find(l => l.id === editingLessonId);
+
     return (
         <div className="animate-fade-in flex-column gap-lg">
             <div className="flex-row justify-between align-center">
@@ -240,14 +277,24 @@ export function Home({ onStartExercise }: HomeProps) {
                             <div>
                                 <div className="flex-row justify-between align-center" style={{ marginBottom: '0.5rem' }}>
                                     <h3 style={{ margin: 0 }}>{lesson.name}</h3>
-                                    <button
-                                        className="btn btn-secondary"
-                                        style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                        onClick={() => setLessonToDelete(lesson.id)}
-                                        title="Delete Lesson"
-                                    >
-                                        <Trash2 size={16} color="var(--danger-color)" />
-                                    </button>
+                                    <div className="flex-row gap-xs">
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                            onClick={() => openEditLessonModal(lesson)}
+                                            title="Edit Lesson"
+                                        >
+                                            <Edit2 size={16} color="var(--text-secondary)" />
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                            onClick={() => setLessonToDelete(lesson.id)}
+                                            title="Delete Lesson"
+                                        >
+                                            <Trash2 size={16} color="var(--danger-color)" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <p style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>{totalCount} words</p>
 
@@ -342,6 +389,76 @@ export function Home({ onStartExercise }: HomeProps) {
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                             <button className="btn btn-secondary" onClick={() => setScannedWords(null)}>Cancel</button>
                             <button className="btn btn-success" onClick={handleSaveScannedLesson}>Save {scannedWords.length} Words</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editingLesson && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}>
+
+                        <div className="flex-row justify-between align-center">
+                            <h3>Edit Lesson</h3>
+                            <button className="btn btn-secondary" style={{ padding: '0.25rem' }} onClick={() => setEditingLessonId(null)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-column gap-sm">
+                            <label style={{ fontWeight: 600 }}>Lesson Name</label>
+                            <input
+                                className="input-field"
+                                value={editLessonName}
+                                onChange={(e) => setEditLessonName(e.target.value)}
+                                placeholder="e.g. Lesson 1: Greetings"
+                            />
+                        </div>
+
+                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                            <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
+                                <div style={{ flex: 1 }}>German</div>
+                                <div style={{ flex: 1 }}>Albanian</div>
+                                <div style={{ width: '40px' }}></div>
+                            </div>
+
+                            {editLessonWords.map((word) => (
+                                <div key={word.id} className="flex-row gap-sm align-center">
+                                    <input
+                                        className="input-field"
+                                        style={{ flex: 1 }}
+                                        value={word.german}
+                                        onChange={e => handleUpdateEditWord(word.id, 'german', e.target.value)}
+                                    />
+                                    <input
+                                        className="input-field"
+                                        style={{ flex: 1 }}
+                                        value={word.albanian}
+                                        onChange={e => handleUpdateEditWord(word.id, 'albanian', e.target.value)}
+                                    />
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.5rem', border: 'none' }}
+                                        onClick={() => handleDeleteEditWord(word.id)}
+                                        title="Delete Word"
+                                    >
+                                        <Trash2 size={18} color="var(--danger-color)" />
+                                    </button>
+                                </div>
+                            ))}
+                            {editLessonWords.length === 0 && (
+                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>No words left in this lesson.</p>
+                            )}
+                        </div>
+
+                        <div className="flex-row gap-sm justify-between align-center" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Note: Editing a translation automatically resets the word to 'Unlearned'.</span>
+                            <div className="flex-row gap-sm">
+                                <button className="btn btn-secondary" onClick={() => setEditingLessonId(null)}>Cancel</button>
+                                <button className="btn btn-primary" onClick={handleSaveEditLesson}>
+                                    <Save size={18} /> Save Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
