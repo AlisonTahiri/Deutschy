@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { WordPair } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, RotateCcw } from 'lucide-react';
+import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
 
 interface FlashcardsProps {
     words: WordPair[];
@@ -16,6 +16,8 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showTranslation, setShowTranslation] = useState(false);
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
+    const [history, setHistory] = useState<{ index: number, pushedToQueue: boolean }[]>([]);
+    const [languageMode, setLanguageMode] = useState<'german' | 'albanian'>('german');
 
     const currentWord = queue[currentIndex];
 
@@ -37,11 +39,13 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
             onResult(currentWord.id, learned);
 
             let nextQueue = [...queue];
-            if (!learned) {
+            const pushedToQueue = !learned;
+            if (pushedToQueue) {
                 // If not learned, we push it to the end of the queue so it appears later.
                 nextQueue.push(currentWord);
             }
 
+            setHistory(prev => [...prev, { index: currentIndex, pushedToQueue }]);
             setQueue(nextQueue);
             setCurrentIndex(prev => prev + 1);
             setShowTranslation(false);
@@ -52,6 +56,21 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                 onComplete();
             }
         }, 300); // Wait for exit animation
+    };
+
+    const handleBack = () => {
+        if (history.length === 0) return;
+
+        const lastAction = history[history.length - 1];
+        setHistory(prev => prev.slice(0, -1));
+
+        if (lastAction.pushedToQueue) {
+            setQueue(prev => prev.slice(0, -1)); // Remove the duplicated word from end of queue
+        }
+
+        setCurrentIndex(lastAction.index);
+        setShowTranslation(false);
+        setDirection(null);
     };
 
     if (!currentWord) {
@@ -73,8 +92,16 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
 
             {/* Progress */}
             <div style={{ width: '100%', marginBottom: '1rem' }}>
-                <div className="flex-row justify-between" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                <div className="flex-row justify-between align-center" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                     <span>Card {currentIndex + 1} of {totalInQueue}</span>
+                    <button
+                        className="btn"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
+                        onClick={() => setLanguageMode(prev => prev === 'german' ? 'albanian' : 'german')}
+                    >
+                        <ArrowRightLeft size={14} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} />
+                        {languageMode === 'german' ? 'DE → AL' : 'AL → DE'}
+                    </button>
                 </div>
                 <div style={{ width: '100%', height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', backgroundColor: 'var(--accent-color)', width: `${progressPercent}%`, transition: 'width 0.3s ease' }} />
@@ -111,7 +138,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                         </div>
 
                         <h2 style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>
-                            {currentWord.german}
+                            {languageMode === 'german' ? currentWord.german : currentWord.albanian}
                         </h2>
 
                         <motion.div
@@ -120,7 +147,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                             animate={{ height: showTranslation ? 'auto' : 0, opacity: showTranslation ? 1 : 0 }}
                         >
                             <h3 style={{ fontSize: '1.75rem', color: 'var(--accent-color)', textAlign: 'center', fontWeight: '400' }}>
-                                {currentWord.albanian}
+                                {languageMode === 'german' ? currentWord.albanian : currentWord.german}
                             </h3>
                         </motion.div>
 
@@ -133,7 +160,19 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                 </AnimatePresence>
             </div>
 
-            <div className="flex-row justify-center gap-lg" style={{ marginTop: '2rem', width: '100%' }}>
+            <div className="flex-row justify-center align-center gap-lg" style={{ marginTop: '2rem', width: '100%' }}>
+                <div style={{ width: '48px' }}>
+                    {history.length > 0 && (
+                        <button
+                            className="btn-icon-circular"
+                            style={{ backgroundColor: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', width: '48px', height: '48px' }}
+                            onClick={handleBack}
+                            title="Undo"
+                        >
+                            <Undo2 size={24} />
+                        </button>
+                    )}
+                </div>
                 <button
                     className="btn-icon-circular"
                     style={{ backgroundColor: 'rgba(218, 54, 51, 0.1)', color: 'var(--danger-color)', border: '2px solid var(--danger-color)', width: '64px', height: '64px' }}
@@ -148,6 +187,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                 >
                     <Check size={32} />
                 </button>
+                <div style={{ width: '48px' }}></div> {/* Spacer for symmetry */}
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                 Swipe left/right or use the buttons below.
