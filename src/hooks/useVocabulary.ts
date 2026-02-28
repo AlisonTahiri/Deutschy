@@ -76,6 +76,23 @@ export function useVocabulary() {
         }));
     };
 
+    const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: any }[]) => {
+        setLessons(prev => prev.map(lesson => {
+            if (lesson.id !== lessonId) return lesson;
+            return {
+                ...lesson,
+                words: lesson.words.map(word => {
+                    const update = updates.find(u => u.wordId === word.id);
+                    if (!update) return word;
+                    return {
+                        ...word,
+                        mcq: update.mcq
+                    };
+                })
+            };
+        }));
+    };
+
     const resetLessonProgress = (lessonId: string) => {
         setLessons(prev => prev.map(lesson => {
             if (lesson.id !== lessonId) return lesson;
@@ -93,6 +110,7 @@ export function useVocabulary() {
         deleteLesson,
         deleteWord,
         updateWordStatus,
+        updateWordMCQs,
         resetLessonProgress
     };
 }

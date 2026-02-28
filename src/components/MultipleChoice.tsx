@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { WordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
-import { generateMCQ, type MCQResponse } from '../utils/ai';
 import { Loader2, ArrowRight } from 'lucide-react';
 
 interface MultipleChoiceProps {
@@ -14,32 +13,14 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
     const { settings } = useSettings();
     const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [questionData, setQuestionData] = useState<MCQResponse | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
 
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const currentWord = queue[currentIndex];
 
-    useEffect(() => {
-        if (currentWord && !isSubmitted && !selectedOption) {
-            loadQuestion();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentIndex, currentWord]);
-
-    const loadQuestion = async () => {
-        if (!settings.aiApiKey) return;
-        setIsLoading(true);
-        const data = await generateMCQ(settings.aiApiKey, currentWord.german, currentWord.albanian, settings.learningLevel);
-        if (data) {
-            // Shuffle options randomly
-            data.options = data.options.sort(() => Math.random() - 0.5);
-            setQuestionData(data);
-        }
-        setIsLoading(false);
-    };
+    // We get question data directly from the word object now. No need to generate on the fly
+    const questionData = currentWord?.mcq ? currentWord.mcq : null;
 
     const handleSubmit = () => {
         if (!selectedOption || isSubmitted) return;
@@ -59,7 +40,6 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
         setCurrentIndex(prev => prev + 1);
         setSelectedOption(null);
         setIsSubmitted(false);
-        setQuestionData(null);
 
         if (currentIndex + 1 >= nextQueue.length) {
             onComplete();
@@ -96,10 +76,10 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
             </div>
 
             <div className="glass-panel w-100 flex-column gap-lg" style={{ width: '100%' }}>
-                {isLoading || !questionData ? (
+                {!questionData ? (
                     <div className="flex-column align-center justify-center gap-md" style={{ minHeight: '200px' }}>
                         <Loader2 className="animate-spin" size={32} color="var(--accent-color)" />
-                        <p>Generating sentence by AI...</p>
+                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>AI is preparing this exercise based on the words you provided.</p>
                     </div>
                 ) : (
                     <div className="animate-fade-in flex-column gap-lg">
@@ -148,7 +128,10 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                         {isSubmitted && (
                             <div className="animate-fade-in flex-column align-center gap-sm" style={{ marginTop: '1rem', padding: '1rem', borderRadius: 'var(--border-radius-md)', backgroundColor: 'var(--bg-color-secondary)' }}>
                                 <p style={{ fontWeight: 600 }}>Translation: <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
-                                <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%' }}>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                                    {questionData.sentenceTranslation}
+                                </p>
+                                <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '0.5rem' }}>
                                     Next Slide <ArrowRight size={18} />
                                 </button>
                             </div>

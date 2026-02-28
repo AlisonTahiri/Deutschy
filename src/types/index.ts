@@ -12,6 +12,12 @@ export interface WordPair {
   albanian: string;
   learned: boolean;
   failCount: number;
+  mcq?: {
+    sentence: string;
+    sentenceTranslation: string;
+    options: string[];
+    correctAnswer: string;
+  };
 }
 
 export interface Lesson {

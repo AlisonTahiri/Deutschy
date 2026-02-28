@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
@@ -30,6 +30,18 @@ export function Home({ onStartExercise }: HomeProps) {
     const [scannedLessonName, setScannedLessonName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const progressIntervalRef = useRef<number | null>(null);
+
+    // Global Key Listener for Modals
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (scannedWords) setScannedWords(null);
+                if (editingLessonId) setEditingLessonId(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [scannedWords, editingLessonId]);
 
     const handleCreateLesson = () => {
         setError('');
@@ -332,8 +344,17 @@ export function Home({ onStartExercise }: HomeProps) {
             )}
 
             {scannedWords && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}>
+                <div
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, padding: '10vh 2rem 2rem 2rem' }}
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setScannedWords(null);
+                    }}
+                >
+                    <div
+                        className="glass-panel flex-column gap-md animate-fade-in"
+                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '80vh', overflow: 'hidden' }}
+                        onClick={e => e.stopPropagation()}
+                    >
 
                         <div className="flex-row justify-between align-center">
                             <h3>Review Scanned Words</h3>
@@ -353,7 +374,7 @@ export function Home({ onStartExercise }: HomeProps) {
                             />
                         </div>
 
-                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: '0.5rem' }}>
                             <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
                                 <div style={{ flex: 1 }}>German</div>
                                 <div style={{ flex: 1 }}>Albanian</div>
@@ -395,8 +416,17 @@ export function Home({ onStartExercise }: HomeProps) {
             )}
 
             {editingLesson && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}>
+                <div
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, padding: '10vh 2rem 2rem 2rem' }}
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setEditingLessonId(null);
+                    }}
+                >
+                    <div
+                        className="glass-panel flex-column gap-md animate-fade-in"
+                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '80vh', overflow: 'hidden' }}
+                        onClick={e => e.stopPropagation()}
+                    >
 
                         <div className="flex-row justify-between align-center">
                             <h3>Edit Lesson</h3>
@@ -415,7 +445,7 @@ export function Home({ onStartExercise }: HomeProps) {
                             />
                         </div>
 
-                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                        <div className="flex-column gap-sm" style={{ overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: '0.5rem' }}>
                             <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
                                 <div style={{ flex: 1 }}>German</div>
                                 <div style={{ flex: 1 }}>Albanian</div>

@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Home } from './components/Home';
 import { Settings } from './components/Settings';
 import { ExerciseContainer } from './components/ExerciseContainer';
+import { BackgroundMCQGenerator } from './components/BackgroundMCQGenerator';
 
 export type ViewState = 'home' | 'settings' | 'exercise';
 
@@ -22,6 +23,7 @@ function App() {
 
   return (
     <Layout currentView={currentView} onNavigate={handleNavigate}>
+      <BackgroundMCQGenerator />
       {currentView === 'home' && <Home onStartExercise={handleStartExercise} />}
       {currentView === 'settings' && <Settings />}
       {currentView === 'exercise' && activeLessonId && (

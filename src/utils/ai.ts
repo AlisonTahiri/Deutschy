@@ -1,35 +1,45 @@
 export interface MCQResponse {
+    wordId?: string; // We'll add this when batching
     sentence: string; // The German sentence with _____ replacing the target word
+    sentenceTranslation: string; // the translation of the full generated sentence
     options: string[]; // 4 options in German
     correctAnswer: string; // The correct option
 }
 
-export async function generateMCQ(
+export async function generateBatchMCQ(
     apiKey: string,
-    germanWord: string,
-    albanianTranslation: string,
+    words: { id: string; german: string; albanian: string }[],
     targetLevel: string
-): Promise<MCQResponse | null> {
-    if (!apiKey) return null;
+): Promise<(MCQResponse & { wordId: string })[] | null> {
+    if (!apiKey || words.length === 0) return null;
+
+    const wordsList = words.map(w => `- ID: ${w.id} | German: "${w.german}" | Albanian: "${w.albanian}"`).join('\n');
 
     const prompt = `
-You are a German language teacher. Create a multiple-choice question for a student at the ${targetLevel} level.
-The target vocabulary word is: "${germanWord}" (meaning "${albanianTranslation}" in Albanian).
+You are a German language teacher. Create a multiple-choice question for EACH of the following words for a student at the ${targetLevel} level.
 
-Instructions:
-1. Create a natural German sentence suitable for a ${targetLevel} student using the word "${germanWord}".
-2. Replace the word "${germanWord}" in the sentence with "_____".
-3. Provide 4 options for the missing word. One MUST be the correct word ("${germanWord}"), and 3 must be plausible but incorrect alternatives (in German).
-4. Return ONLY a valid JSON object with the following structure, no markdown formatting or extra text:
-{
-  "sentence": "Der Junge isst einen _____.",
-  "options": ["Apfel", "Auto", "Haus", "Baum"],
-  "correctAnswer": "Apfel"
-}
+Words list:
+${wordsList}
+
+Instructions for EACH word:
+1. Create a natural German sentence suitable for a ${targetLevel} student using the target German word.
+2. Provide the full Albanian translation of this sentence.
+3. Replace the target German word in the German sentence with "_____".
+4. Provide 4 options for the missing word. One MUST be the correct word, and 3 must be plausible but incorrect alternatives (in German).
+
+Return ONLY a valid JSON ARRAY of objects, with no markdown formatting or extra text. Each object must follow this structure exactly:
+[
+  {
+    "wordId": "the-id-provided-above",
+    "sentence": "Der Junge isst einen _____.",
+    "sentenceTranslation": "Djali po ha një mollë.",
+    "options": ["Apfel", "Auto", "Haus", "Baum"],
+    "correctAnswer": "Apfel"
+  }
+]
 `;
 
     try {
-        // Determine API type heuristically. If it starts with 'sk-', assume OpenAI.
         if (apiKey.startsWith('sk-')) {
             const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
@@ -45,12 +55,10 @@ Instructions:
             });
             const data = await res.json();
             const content = data.choices[0].message.content.trim();
-            // clean backticks if any
             const cleaned = content.replace(/^```json/g, '').replace(/```$/g, '').trim();
-            return JSON.parse(cleaned) as MCQResponse;
+            return JSON.parse(cleaned) as (MCQResponse & { wordId: string })[];
 
         } else {
-            // Assume Google Gemini 
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -64,10 +72,10 @@ Instructions:
             });
             const data = await res.json();
             const text = data.candidates[0].content.parts[0].text;
-            return JSON.parse(text) as MCQResponse;
+            return JSON.parse(text) as (MCQResponse & { wordId: string })[];
         }
     } catch (err) {
-        console.error('AI Generation Failed', err);
+        console.error('Batch AI Generation Failed', err);
         return null;
     }
 }
