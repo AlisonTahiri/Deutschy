@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -55,15 +55,18 @@ export function Home({ onStartExercise }: HomeProps) {
 
         const lines = pastedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const wordsData: { german: string; albanian: string }[] = [];
+        const seenGerman = new Set<string>();
 
         for (const line of lines) {
             const parts = line.split('-');
             if (parts.length >= 2) {
                 // Just in case a word has a hyphen, join the rest as albanian
                 const german = parts[0].trim();
+                const lowerGerman = german.toLowerCase();
                 const albanian = parts.slice(1).join('-').trim();
-                if (german && albanian) {
+                if (german && albanian && !seenGerman.has(lowerGerman)) {
                     wordsData.push({ german, albanian });
+                    seenGerman.add(lowerGerman);
                 }
             }
         }
@@ -145,7 +148,23 @@ export function Home({ onStartExercise }: HomeProps) {
             return;
         }
 
-        addLesson(scannedLessonName.trim(), scannedWords);
+        const validWords = scannedWords.filter(w => w.german.trim() && w.albanian.trim());
+        const seenGerman = new Set<string>();
+        const deduplicatedWords = validWords.filter(w => {
+            const lowerGerman = w.german.toLowerCase().trim();
+            if (seenGerman.has(lowerGerman)) {
+                return false; // Skip duplicate
+            }
+            seenGerman.add(lowerGerman);
+            return true;
+        });
+
+        if (deduplicatedWords.length === 0) {
+            alert('No valid unique words to save.');
+            return;
+        }
+
+        addLesson(scannedLessonName.trim(), deduplicatedWords);
         setScannedWords(null);
         setScannedLessonName('');
     };
@@ -207,7 +226,19 @@ export function Home({ onStartExercise }: HomeProps) {
             return;
         }
 
-        updateLesson(editingLessonId, editLessonName.trim(), editLessonWords);
+        // Filter out empty words and duplicates
+        const validWords = editLessonWords.filter(w => w.german.trim() && w.albanian.trim());
+        const seenGerman = new Set<string>();
+        const deduplicatedWords = validWords.filter(w => {
+            const lowerGerman = w.german.toLowerCase().trim();
+            if (seenGerman.has(lowerGerman)) {
+                return false; // Skip duplicate
+            }
+            seenGerman.add(lowerGerman);
+            return true;
+        });
+
+        updateLesson(editingLessonId, editLessonName.trim(), deduplicatedWords);
         setEditingLessonId(null);
         setEditLessonName('');
         setEditLessonWords([]);
@@ -222,6 +253,18 @@ export function Home({ onStartExercise }: HomeProps) {
 
     const handleDeleteEditWord = (wordId: string) => {
         setEditLessonWords(prev => prev.filter(w => w.id !== wordId));
+    };
+
+    const handleAddEditWordRow = () => {
+        const newWord = {
+            id: Date.now().toString(),
+            german: '',
+            albanian: '',
+            status: 'unlearned' as const,
+            correctCount: 0,
+            incorrectCount: 0
+        };
+        setEditLessonWords(prev => [...prev, newWord]);
     };
 
     const editingLesson = lessons.find(l => l.id === editingLessonId);
@@ -560,6 +603,12 @@ export function Home({ onStartExercise }: HomeProps) {
                             {editLessonWords.length === 0 && (
                                 <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>No words left in this lesson.</p>
                             )}
+
+                            <div style={{ padding: '0.5rem 0', display: 'flex', justifyContent: 'center' }}>
+                                <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }} onClick={handleAddEditWordRow}>
+                                    <ListPlus size={18} /> Add Word
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex-row gap-sm justify-between align-center mobile-col" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
