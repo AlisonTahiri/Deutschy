@@ -228,9 +228,9 @@ export function Home({ onStartExercise }: HomeProps) {
 
     return (
         <div className="animate-fade-in flex-column gap-lg">
-            <div className="flex-row justify-between align-center">
+            <div className="flex-row justify-between align-center mobile-col gap-md">
                 <h1>Your Lessons</h1>
-                <div className="flex-row gap-sm align-center">
+                <div className="flex-row gap-sm align-center mobile-flex-wrap justify-center" style={{ width: '100%' }}>
                     <input
                         type="file"
                         accept="image/*"
@@ -247,26 +247,29 @@ export function Home({ onStartExercise }: HomeProps) {
                     />
                     <button
                         className="btn btn-secondary"
+                        style={{ flex: '1 1 auto' }}
                         onClick={() => importInputRef.current?.click()}
                         title="Import Lesson JSON"
                     >
-                        <Upload size={18} /> Import Lesson
+                        <Upload size={18} /> Import
                     </button>
                     <button
                         className="btn btn-secondary"
+                        style={{ flex: '1 1 auto' }}
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
                         title="Upload Image to Scan"
                     >
                         {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                        {isUploading ? 'Scanning...' : 'Scan Image'}
+                        {isUploading ? 'Scanning...' : 'Scan'}
                     </button>
 
                     <button
                         className="btn btn-primary"
+                        style={{ flex: '1 1 auto' }}
                         onClick={() => setShowNewLesson(!showNewLesson)}
                     >
-                        <Plus size={18} /> New Lesson
+                        <Plus size={18} /> New
                     </button>
                 </div>
             </div>
@@ -423,19 +426,19 @@ export function Home({ onStartExercise }: HomeProps) {
 
             {scannedWords && (
                 <div
-                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, padding: '10vh 2rem 2rem 2rem' }}
+                    className="modal-overlay"
                     onMouseDown={(e) => {
                         if (e.target === e.currentTarget) setScannedWords(null);
                     }}
                 >
                     <div
                         className="glass-panel flex-column gap-md animate-fade-in"
-                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '80vh', overflow: 'hidden' }}
+                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}
                         onClick={e => e.stopPropagation()}
                     >
 
-                        <div className="flex-row justify-between align-center">
-                            <h3>Review Scanned Words</h3>
+                        <div className="flex-row justify-between align-center" style={{ marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0 }}>Review Scanned Words</h3>
                             <button className="btn btn-secondary" style={{ padding: '0.25rem' }} onClick={() => setScannedWords(null)}>
                                 <X size={20} />
                             </button>
@@ -456,30 +459,30 @@ export function Home({ onStartExercise }: HomeProps) {
                             <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
                                 <div style={{ flex: 1 }}>German</div>
                                 <div style={{ flex: 1 }}>Albanian</div>
-                                <div style={{ width: '40px' }}></div>
+                                <div style={{ width: '32px' }}></div>
                             </div>
 
                             {scannedWords.map((word, idx) => (
                                 <div key={idx} className="flex-row gap-sm align-center">
                                     <input
                                         className="input-field"
-                                        style={{ flex: 1 }}
+                                        style={{ flex: 1, minWidth: 0, padding: '0.4rem', fontSize: '0.875rem' }}
                                         value={word.german}
                                         onChange={e => handleUpdateScannedWord(idx, 'german', e.target.value)}
                                     />
                                     <input
                                         className="input-field"
-                                        style={{ flex: 1 }}
+                                        style={{ flex: 1, minWidth: 0, padding: '0.4rem', fontSize: '0.875rem' }}
                                         value={word.albanian}
                                         onChange={e => handleUpdateScannedWord(idx, 'albanian', e.target.value)}
                                     />
                                     <button
                                         className="btn btn-secondary"
-                                        style={{ padding: '0.5rem', border: 'none' }}
+                                        style={{ padding: '0.3rem', border: 'none' }}
                                         onClick={() => handleRemoveScannedWord(idx)}
                                         title="Remove Word"
                                     >
-                                        <Trash2 size={18} color="var(--danger-color)" />
+                                        <Trash2 size={16} color="var(--danger-color)" />
                                     </button>
                                 </div>
                             ))}
@@ -495,19 +498,19 @@ export function Home({ onStartExercise }: HomeProps) {
 
             {editingLesson && (
                 <div
-                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, padding: '10vh 2rem 2rem 2rem' }}
+                    className="modal-overlay"
                     onMouseDown={(e) => {
                         if (e.target === e.currentTarget) setEditingLessonId(null);
                     }}
                 >
                     <div
                         className="glass-panel flex-column gap-md animate-fade-in"
-                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '80vh', overflow: 'hidden' }}
+                        style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}
                         onClick={e => e.stopPropagation()}
                     >
 
-                        <div className="flex-row justify-between align-center">
-                            <h3>Edit Lesson</h3>
+                        <div className="flex-row justify-between align-center" style={{ marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0 }}>Edit Lesson</h3>
                             <button className="btn btn-secondary" style={{ padding: '0.25rem' }} onClick={() => setEditingLessonId(null)}>
                                 <X size={20} />
                             </button>
@@ -527,30 +530,30 @@ export function Home({ onStartExercise }: HomeProps) {
                             <div className="flex-row gap-sm" style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.875rem', padding: '0 0.5rem' }}>
                                 <div style={{ flex: 1 }}>German</div>
                                 <div style={{ flex: 1 }}>Albanian</div>
-                                <div style={{ width: '40px' }}></div>
+                                <div style={{ width: '32px' }}></div>
                             </div>
 
                             {editLessonWords.map((word) => (
                                 <div key={word.id} className="flex-row gap-sm align-center">
                                     <input
                                         className="input-field"
-                                        style={{ flex: 1 }}
+                                        style={{ flex: 1, minWidth: 0, padding: '0.4rem', fontSize: '0.875rem' }}
                                         value={word.german}
                                         onChange={e => handleUpdateEditWord(word.id, 'german', e.target.value)}
                                     />
                                     <input
                                         className="input-field"
-                                        style={{ flex: 1 }}
+                                        style={{ flex: 1, minWidth: 0, padding: '0.4rem', fontSize: '0.875rem' }}
                                         value={word.albanian}
                                         onChange={e => handleUpdateEditWord(word.id, 'albanian', e.target.value)}
                                     />
                                     <button
                                         className="btn btn-secondary"
-                                        style={{ padding: '0.5rem', border: 'none' }}
+                                        style={{ padding: '0.3rem', border: 'none' }}
                                         onClick={() => handleDeleteEditWord(word.id)}
                                         title="Delete Word"
                                     >
-                                        <Trash2 size={18} color="var(--danger-color)" />
+                                        <Trash2 size={16} color="var(--danger-color)" />
                                     </button>
                                 </div>
                             ))}
@@ -559,7 +562,7 @@ export function Home({ onStartExercise }: HomeProps) {
                             )}
                         </div>
 
-                        <div className="flex-row gap-sm justify-between align-center" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                        <div className="flex-row gap-sm justify-between align-center mobile-col" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Note: Editing a translation automatically resets the word to 'Unlearned'.</span>
                             <div className="flex-row gap-sm">
                                 <button className="btn btn-secondary" onClick={() => setEditingLessonId(null)}>Cancel</button>

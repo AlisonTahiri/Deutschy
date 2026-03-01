@@ -38,7 +38,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     if (!exerciseMode) {
         return (
             <div className="animate-fade-in flex-column gap-lg">
-                <div className="flex-row items-center gap-md">
+                <div className="flex-row items-center gap-md" style={{ marginBottom: '1rem' }}>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={onExit}>
                         <ArrowLeft size={20} />
                     </button>
@@ -59,26 +59,26 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                     {isFullyLearned ? 'Practicing all words.' : `${unlearnedWords.length} words remaining to learn.`} Choose an exercise mode:
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '3rem 1rem', border: '1px solid var(--border-color)' }} onClick={() => setExerciseMode('flashcards')}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('flashcards')}>
                         <Layers size={32} color="var(--accent-color)" />
                         <h3>Flashcards</h3>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Swipe right if you know it, left if you don't.</span>
                     </button>
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '3rem 1rem', border: '1px solid var(--border-color)' }} onClick={() => setExerciseMode('multiple-choice')}>
+                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('multiple-choice')}>
                         <MessageSquare size={32} color="var(--success-color)" />
                         <h3>Multiple Choice</h3>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>AI generated sentences. Guess the missing word.</span>
                     </button>
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '3rem 1rem', border: '1px solid var(--border-color)' }} onClick={() => setExerciseMode('writing')}>
+                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('writing')}>
                         <PenTool size={32} color="var(--warning-color)" />
                         <h3>Writing</h3>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Type the German translation accurately.</span>
                     </button>
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '3rem 1rem', border: '1px solid var(--border-color)', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))' }} onClick={() => setExerciseMode('mixed')}>
+                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))', height: '100%' }} onClick={() => setExerciseMode('mixed')}>
                         <Shuffle size={32} color="var(--text-primary)" />
                         <h3>Mixed Mode</h3>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>A mixture of all exercises for best retention.</span>
@@ -89,23 +89,23 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     }
 
     return (
-        <div className="animate-fade-in flex-column" style={{ height: 'calc(100vh - 4rem)' }}>
-            <div className="flex-row align-center gap-md" style={{ marginBottom: '2rem' }}>
-                <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={() => setExerciseMode(null)}>
+        <div className="animate-fade-in flex-column" style={{ height: '100%', display: 'flex' }}>
+            <div className="flex-row align-center gap-sm mobile-flex-wrap" style={{ marginBottom: '0.5rem' }}>
+                <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => setExerciseMode(null)}>
                     <ArrowLeft size={20} />
                 </button>
-                <h3 style={{ margin: 0 }}>
+                <h3 style={{ margin: 0, flex: 1, fontSize: '1.25rem' }}>
                     {exerciseMode === 'flashcards' && 'Flashcards'}
                     {exerciseMode === 'multiple-choice' && 'Multiple Choice'}
                     {exerciseMode === 'writing' && 'Writing Practice'}
                     {exerciseMode === 'mixed' && 'Mixed Practice'}
                 </h3>
-                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                     {wordsToPractice.length} words left
                 </span>
             </div>
 
-            <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 {exerciseMode === 'flashcards' && (
                     <Flashcards words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}

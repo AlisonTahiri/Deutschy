@@ -227,9 +227,88 @@ textarea.input-field {
   gap: 2rem;
 }
 
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 10vh 2rem 2rem 2rem;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Typography Mobile Adjustments */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .glass-panel {
+    padding: 1.25rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .mobile-col {
+    flex-direction: column !important;
+  }
+
+  .mobile-col>* {
+    width: 100% !important;
+  }
+
+  .mobile-flex-wrap {
+    flex-wrap: wrap;
+  }
+
+  .mobile-text-center {
+    text-align: center;
+  }
+
+  .modal-overlay {
+    padding: 2vh 0.25rem 0.25rem 0.25rem;
+  }
 }
 
 ::-webkit-scrollbar-track {

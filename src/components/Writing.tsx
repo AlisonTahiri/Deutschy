@@ -111,7 +111,7 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
 
     return (
-        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem' }}>
 
             {/* Progress */}
             <div style={{ width: '100%', marginBottom: '1rem' }}>
@@ -123,8 +123,8 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
                 </div>
             </div>
 
-            <div className="glass-panel w-100 flex-column gap-lg" style={{ width: '100%', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--accent-color)', fontWeight: 400 }}>
+            <div className="glass-panel w-100 flex-column gap-md" style={{ width: '100%', textAlign: 'center', padding: '1.25rem' }}>
+                <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', color: 'var(--accent-color)', fontWeight: 400 }}>
                     {currentWord.albanian}
                 </h2>
 
@@ -134,19 +134,35 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
 
                 <form onSubmit={handleSubmit} className="flex-column gap-md">
                     {!isSubmitted && (
-                        <div className="flex-row gap-sm justify-center flex-wrap" style={{ marginBottom: '-0.5rem' }}>
-                            {['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'].map(char => (
-                                <button
-                                    key={char}
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => handleSpecialChar(char)}
-                                    style={{ padding: '0.25rem 0.75rem', fontSize: '1.2rem', minWidth: '40px' }}
-                                    tabIndex={-1} // Prevents disrupting the normal tab flow
-                                >
-                                    {char}
-                                </button>
-                            ))}
+                        <div className="flex-column gap-sm align-center" style={{ marginBottom: '-0.25rem' }}>
+                            <div className="flex-row gap-sm justify-center flex-wrap">
+                                {['ä', 'ö', 'ü', 'ß'].map(char => (
+                                    <button
+                                        key={char}
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => handleSpecialChar(char)}
+                                        style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '44px' }}
+                                        tabIndex={-1}
+                                    >
+                                        {char}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex-row gap-sm justify-center flex-wrap">
+                                {['Ä', 'Ö', 'Ü'].map(char => (
+                                    <button
+                                        key={char}
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => handleSpecialChar(char)}
+                                        style={{ padding: '0.5rem', fontSize: '1.2rem', minWidth: '44px' }}
+                                        tabIndex={-1}
+                                    >
+                                        {char}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -154,9 +170,10 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
                         ref={inputRef}
                         className="input-field"
                         style={{
-                            fontSize: '1.5rem',
+                            fontSize: '1.25rem',
                             textAlign: 'center',
-                            padding: '1rem',
+                            padding: '0.75rem',
+                            minHeight: '3rem',
                             borderColor: isSubmitted ? (isCorrect ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--border-color)'
                         }}
                         value={inputValue}
@@ -167,11 +184,11 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
                     />
 
                     {!isSubmitted && (
-                        <div className="flex-row gap-sm justify-center">
-                            <button type="button" className="btn btn-secondary" onClick={handleHint}>
+                        <div className="flex-row gap-sm justify-center mobile-col" style={{ width: '100%' }}>
+                            <button type="button" className="btn btn-secondary" onClick={handleHint} style={{ flex: 1, padding: '1rem' }}>
                                 <Lightbulb size={18} color="var(--warning-color)" /> Hint
                             </button>
-                            <button type="submit" className="btn btn-primary">Check</button>
+                            <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '1rem' }}>Check</button>
                         </div>
                     )}
                 </form>
@@ -189,7 +206,7 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
                             </div>
                         )}
 
-                        <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '1rem' }}>
+                        <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '1rem', padding: '1rem' }}>
                             Next <ArrowRight size={18} />
                         </button>
                     </div>

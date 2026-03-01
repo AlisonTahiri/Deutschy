@@ -94,7 +94,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
 
     return (
-        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '600px', margin: '0 auto', padding: '0 0.5rem' }}>
 
             {/* Progress */}
             <div style={{ width: '100%', marginBottom: '1rem' }}>
@@ -113,9 +113,9 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                         <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>AI is preparing this exercise based on the words you provided.</p>
                     </div>
                 ) : (
-                    <div className="animate-fade-in flex-column gap-lg">
+                    <div className="animate-fade-in flex-column gap-md">
 
-                        <h2 style={{ lineHeight: 1.4, textAlign: 'center', fontSize: '1.5rem', fontWeight: 500 }}>
+                        <h2 style={{ lineHeight: 1.3, textAlign: 'center', fontSize: '1.25rem', fontWeight: 500, margin: '0.5rem 0' }}>
                             {questionData.sentence}
                         </h2>
 
@@ -143,7 +143,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                                     <button
                                         key={idx}
                                         className="btn btn-secondary"
-                                        style={{ justifyContent: 'flex-start', padding: '1rem', height: 'auto', ...btnStyle }}
+                                        style={{ justifyContent: 'flex-start', padding: '0.75rem 1rem', height: 'auto', textAlign: 'left', minHeight: '3rem', ...btnStyle }}
                                         onClick={() => !isSubmitted && setSelectedOption(option)}
                                         disabled={isSubmitted}
                                     >
@@ -157,12 +157,12 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                         </div>
 
                         {isSubmitted && (
-                            <div className="animate-fade-in flex-column align-center gap-sm" style={{ marginTop: '1rem', padding: '1rem', borderRadius: 'var(--border-radius-md)', backgroundColor: 'var(--bg-color-secondary)' }}>
-                                <p style={{ fontWeight: 600 }}>Translation: <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
-                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                            <div className="animate-fade-in flex-column align-center gap-sm" style={{ marginTop: '0.5rem', padding: '0.75rem', borderRadius: 'var(--border-radius-md)', backgroundColor: 'var(--bg-color-secondary)' }}>
+                                <p style={{ fontWeight: 600, margin: 0 }}>Translation: <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center', margin: '0.25rem 0' }}>
                                     {questionData.sentenceTranslation}
                                 </p>
-                                <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '0.5rem' }}>
+                                <button className="btn btn-primary" onClick={handleNext} style={{ width: '100%', marginTop: '0.25rem', padding: '0.75rem' }}>
                                     Next Slide <ArrowRight size={18} />
                                 </button>
                             </div>
@@ -171,7 +171,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                         {!isSubmitted && (
                             <button
                                 className="btn btn-primary"
-                                style={{ width: '100%', marginTop: '1rem' }}
+                                style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}
                                 disabled={!selectedOption}
                                 onClick={handleSubmit}
                             >

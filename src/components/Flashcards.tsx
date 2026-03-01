@@ -88,7 +88,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
     const progressPercent = Math.min(100, Math.round((currentIndex / totalInQueue) * 100));
 
     return (
-        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem' }}>
 
             {/* Progress */}
             <div style={{ width: '100%', marginBottom: '1rem' }}>
@@ -165,7 +165,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                     {history.length > 0 && (
                         <button
                             className="btn-icon-circular"
-                            style={{ backgroundColor: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', width: '48px', height: '48px' }}
+                            style={{ backgroundColor: 'var(--bg-color-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', width: '48px', height: '48px' }}
                             onClick={handleBack}
                             title="Undo"
                         >

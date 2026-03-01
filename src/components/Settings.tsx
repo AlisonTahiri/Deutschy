@@ -5,10 +5,10 @@ export function Settings() {
     const { settings, updateApiKey, updateLevel } = useSettings();
 
     return (
-        <div className="animate-fade-in flex-column gap-md">
+        <div className="animate-fade-in flex-column gap-md" style={{ padding: '0 0.5rem' }}>
             <h1>Settings</h1>
 
-            <div className="glass-panel flex-column gap-md" style={{ maxWidth: '600px' }}>
+            <div className="glass-panel flex-column gap-md" style={{ maxWidth: '600px', width: '100%' }}>
                 <div>
                     <h3>AI Configuration</h3>
                     <p>Provide your Google Gemini or OpenAI API key to generate context sentences for exercises.</p>
