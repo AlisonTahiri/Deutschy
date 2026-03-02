@@ -11,7 +11,7 @@ export default defineConfig({
       includeAssets: ['vite.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'Deutchi',
-        short_name: 'GermanApp',
+        short_name: 'Deutchi',
         description: 'Learn German words offline and track your progress.',
         theme_color: '#ffffff',
         icons: [
