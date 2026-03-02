@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Lesson } from '../types';
+import type { Lesson, WordPair } from '../types';
 
 const VOCAB_KEY = 'german_app_vocabulary_lessons';
 
@@ -103,6 +103,75 @@ export function useVocabulary() {
         }));
     };
 
+    const splitLesson = (lessonId: string, parts: number) => {
+        setLessons(prev => {
+            const lesson = prev.find(l => l.id === lessonId);
+            if (!lesson) return prev;
+
+            const totalWords = lesson.words.length;
+            if (totalWords < parts) return prev; // Cannot split
+
+            const baseSize = Math.floor(totalWords / parts);
+            const remainder = totalWords % parts;
+
+            const newLessons: Lesson[] = [];
+            let currentOffset = 0;
+
+            for (let i = 0; i < parts; i++) {
+                const partSize = baseSize + (i === parts - 1 ? remainder : 0);
+                const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
+
+                newLessons.push({
+                    ...lesson,
+                    id: crypto.randomUUID(),
+                    name: `${lesson.name} (Part ${i + 1})`,
+                    words: partWords.map(w => ({ ...w })), // keep existing word IDs or regenerate? Better to keep as they are just splitting
+                    splitGroupId: lesson.id,
+                    originalName: lesson.name
+                });
+
+                currentOffset += partSize;
+            }
+
+            // Replace original lesson with the new ones at its original index
+            const originalIndex = prev.findIndex(l => l.id === lessonId);
+            const nextLessons = [...prev];
+            nextLessons.splice(originalIndex, 1, ...newLessons);
+            return nextLessons;
+        });
+    };
+
+    const reattachLesson = (splitGroupId: string) => {
+        setLessons(prev => {
+            const parts = prev.filter(l => l.splitGroupId === splitGroupId);
+            if (parts.length === 0) return prev;
+
+            // Combine all words and deduplicate just in case 
+            // (Wait, they already have unique IDs but are from same original pool)
+            const combinedWords: WordPair[] = [];
+            for (const part of parts) {
+                combinedWords.push(...part.words);
+            }
+
+            const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
+
+            const reattachedLesson: Lesson = {
+                id: splitGroupId, // Restore original ID
+                name: originalName,
+                createdAt: Date.now(), // Or find min created date from parts, but fine to renew
+                words: combinedWords
+            };
+
+            // Remove all parts and add the merged lesson where the first part was
+            const firstIndex = prev.findIndex(l => l.splitGroupId === splitGroupId);
+            const nextLessons = prev.filter(l => l.splitGroupId !== splitGroupId);
+            // Insert the reattached lesson at the position of the first part
+            nextLessons.splice(firstIndex, 0, reattachedLesson);
+
+            return nextLessons;
+        });
+    };
+
     const importLesson = (data: unknown) => {
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid file format. Expected a JSON object.');
@@ -148,6 +217,8 @@ export function useVocabulary() {
         updateWordStatus,
         updateWordMCQs,
         resetLessonProgress,
-        importLesson
+        importLesson,
+        splitLesson,
+        reattachLesson
     };
 }

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus, Scissors, Combine } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -10,13 +10,14 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress } = useVocabulary();
+    const { lessons, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
     const [lessonToReset, setLessonToReset] = useState<string | null>(null);
+    const [lessonToSplit, setLessonToSplit] = useState<string | null>(null);
 
     // Edit Lesson State
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
@@ -40,11 +41,12 @@ export function Home({ onStartExercise }: HomeProps) {
                 if (scannedWords) setScannedWords(null);
                 if (editingLessonId) setEditingLessonId(null);
                 if (lessonToReset) setLessonToReset(null);
+                if (lessonToSplit) setLessonToSplit(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [scannedWords, editingLessonId, lessonToReset]);
+    }, [scannedWords, editingLessonId, lessonToReset, lessonToSplit]);
 
     const handleCreateLesson = () => {
         setError('');
@@ -393,6 +395,26 @@ export function Home({ onStartExercise }: HomeProps) {
                                         >
                                             <RotateCcw size={16} color="var(--text-secondary)" />
                                         </button>
+                                        {lesson.splitGroupId ? (
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                onClick={() => reattachLesson(lesson.splitGroupId!)}
+                                                title="Reattach Lesson"
+                                            >
+                                                <Combine size={16} color="var(--text-secondary)" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                onClick={() => setLessonToSplit(lesson.id)}
+                                                title="Split Lesson"
+                                                disabled={totalCount < 2}
+                                            >
+                                                <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-secondary)"} />
+                                            </button>
+                                        )}
                                         <button
                                             className="btn btn-secondary"
                                             style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
@@ -462,6 +484,40 @@ export function Home({ onStartExercise }: HomeProps) {
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
                             <button className="btn btn-secondary" onClick={() => setLessonToReset(null)}>Cancel</button>
                             <button className="btn btn-primary" onClick={() => { resetLessonProgress(lessonToReset); setLessonToReset(null); }}>Reset</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {lessonToSplit && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+                        <h3>Split Lesson</h3>
+                        <p>How many parts would you like to split this lesson into?</p>
+                        <div className="flex-column gap-sm" style={{ marginTop: '1rem' }}>
+                            <button
+                                className="btn btn-primary"
+                                style={{ width: '100%', justifyContent: 'center' }}
+                                onClick={() => { splitLesson(lessonToSplit, 2); setLessonToSplit(null); }}
+                            >
+                                Split into 2 parts
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                style={{ width: '100%', justifyContent: 'center' }}
+                                onClick={() => { splitLesson(lessonToSplit, 3); setLessonToSplit(null); }}
+                                disabled={(lessons.find(l => l.id === lessonToSplit)?.words.length || 0) < 3}
+                                title={(lessons.find(l => l.id === lessonToSplit)?.words.length || 0) < 3 ? "Need at least 3 words to split into 3 parts." : ""}
+                            >
+                                Split into 3 parts
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+                                onClick={() => setLessonToSplit(null)}
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 </div>

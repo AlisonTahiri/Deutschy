@@ -25,6 +25,8 @@ export interface Lesson {
   name: string;
   createdAt: number;
   words: WordPair[];
+  splitGroupId?: string;
+  originalName?: string;
 }
 
 export type ExerciseType = 'flashcards' | 'multiple-choice' | 'writing' | 'mixed';
