@@ -88,7 +88,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
     const progressPercent = Math.min(100, Math.round((currentIndex / totalInQueue) * 100));
 
     return (
-        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem' }}>
+        <div className="flex-column align-center justify-center gap-lg" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem', overflow: 'hidden' }}>
 
             {/* Progress */}
             <div style={{ width: '100%', marginBottom: '1rem' }}>
