@@ -133,11 +133,11 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                         whileDrag={{ cursor: 'grabbing', scale: 1.05 }}
                         className="glass-panel flex-column align-center justify-center p-4"
                     >
-                        <div style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--text-secondary)' }} title="Tap to flip">
+                        <div style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--text-primary)' }} title="Tap to flip">
                             <RotateCcw size={20} />
                         </div>
 
-                        <h2 style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>
+                        <h2 style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '1rem' }}>
                             {languageMode === 'german' ? currentWord.german : currentWord.albanian}
                         </h2>
 
@@ -152,7 +152,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                         </motion.div>
 
                         {!showTranslation && (
-                            <p style={{ position: 'absolute', bottom: '2rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                            <p style={{ position: 'absolute', bottom: '2rem', color: 'var(--text-primary)', fontSize: '0.875rem' }}>
                                 Tap card to reveal translation
                             </p>
                         )}
@@ -189,7 +189,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                 </button>
                 <div style={{ width: '48px' }}></div> {/* Spacer for symmetry */}
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+            <p style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
                 Swipe left/right or use the buttons below.
             </p>
         </div>

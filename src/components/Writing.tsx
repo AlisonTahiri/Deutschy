@@ -185,8 +185,8 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
 
                     {!isSubmitted && (
                         <div className="flex-row gap-sm justify-center mobile-col" style={{ width: '100%' }}>
-                            <button type="button" className="btn btn-secondary" onClick={handleHint} style={{ flex: 1, padding: '1rem' }}>
-                                <Lightbulb size={18} color="var(--warning-color)" /> Hint
+                            <button type="button" className="btn btn-subtle" onClick={handleHint} style={{ flex: 1, padding: '1rem' }}>
+                                <Lightbulb size={18} color="var(--text-primary)" /> Hint
                             </button>
                             <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '1rem' }}>Check</button>
                         </div>

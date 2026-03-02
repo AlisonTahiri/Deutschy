@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { BookOpen, Settings as SettingsIcon, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useSettings } from '../hooks/useSettings';
 
 interface LayoutProps {
     children: ReactNode;
@@ -10,6 +11,8 @@ interface LayoutProps {
 
 export function Layout({ children, currentView, onNavigate }: LayoutProps) {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const { settings } = useSettings();
+    const isLight = settings.theme === 'light';
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -32,8 +35,8 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                     zIndex: 50
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <BookOpen color="var(--accent-color)" size={24} />
-                        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Deutchi</h2>
+                        <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={24} />
+                        <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)' }}>Deutchi</h2>
                     </div>
                 </header>
 
@@ -51,7 +54,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                     display: 'flex',
                     justifyContent: 'space-around',
                     alignItems: 'center',
-                    backgroundColor: 'var(--bg-color-secondary)',
+                    backgroundColor: 'var(--bg-color)',
                     borderTop: '1px solid var(--border-color)',
                     padding: '0.5rem 0',
                     zIndex: 50,
@@ -65,7 +68,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                             gap: '4px',
                             background: 'none',
                             border: 'none',
-                            color: currentView === 'home' || currentView === 'exercise' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                            color: currentView === 'home' || currentView === 'exercise' ? 'var(--accent-color)' : (isLight ? 'var(--text-primary)' : 'var(--text-secondary)'),
                             cursor: 'pointer',
                             flex: 1,
                             padding: '0.5rem'
@@ -83,7 +86,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                             gap: '4px',
                             background: 'none',
                             border: 'none',
-                            color: currentView === 'settings' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                            color: currentView === 'settings' ? 'var(--accent-color)' : (isLight ? 'var(--text-primary)' : 'var(--text-secondary)'),
                             cursor: 'pointer',
                             flex: 1,
                             padding: '0.5rem'
@@ -103,7 +106,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
             <aside style={{
                 width: '240px',
                 borderRight: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-color-secondary)',
+                backgroundColor: 'var(--bg-color)',
                 padding: '2rem 1rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -113,8 +116,8 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                 height: '100vh'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', padding: '0 0.5rem' }}>
-                    <BookOpen color="var(--accent-color)" size={28} />
-                    <h2 style={{ fontSize: '1.25rem', marginBottom: 0 }}>Deutchi</h2>
+                    <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={28} />
+                    <h2 style={{ fontSize: '1.25rem', marginBottom: 0, color: 'var(--text-primary)' }}>Deutchi</h2>
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

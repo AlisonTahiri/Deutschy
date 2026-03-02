@@ -291,7 +291,7 @@ export function Home({ onStartExercise }: HomeProps) {
                         onChange={handleImportLesson}
                     />
                     <button
-                        className="btn btn-secondary"
+                        className="btn btn-subtle"
                         style={{ flex: '1 1 auto' }}
                         onClick={() => importInputRef.current?.click()}
                         title="Import Lesson JSON"
@@ -299,7 +299,7 @@ export function Home({ onStartExercise }: HomeProps) {
                         <Upload size={18} /> Import
                     </button>
                     <button
-                        className="btn btn-secondary"
+                        className="btn btn-subtle"
                         style={{ flex: '1 1 auto' }}
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
@@ -334,7 +334,7 @@ export function Home({ onStartExercise }: HomeProps) {
             {error && !showNewLesson && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
 
             {showNewLesson && (
-                <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'rgba(46, 160, 67, 0.05)', borderColor: 'var(--success-color)' }}>
+                <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-accent-subtle)', borderColor: 'var(--accent-color)', borderWidth: '1px', borderStyle: 'solid' }}>
                     <h3>Create New Lesson</h3>
                     {error && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
 
@@ -393,7 +393,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                             onClick={() => setLessonToReset(lesson.id)}
                                             title="Reset Lesson Progress"
                                         >
-                                            <RotateCcw size={16} color="var(--text-secondary)" />
+                                            <RotateCcw size={16} color="var(--text-primary)" />
                                         </button>
                                         {lesson.splitGroupId ? (
                                             <button
@@ -402,7 +402,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                                 onClick={() => reattachLesson(lesson.splitGroupId!)}
                                                 title="Reattach Lesson"
                                             >
-                                                <Combine size={16} color="var(--text-secondary)" />
+                                                <Combine size={16} color="var(--text-primary)" />
                                             </button>
                                         ) : (
                                             <button
@@ -412,7 +412,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                                 title="Split Lesson"
                                                 disabled={totalCount < 2}
                                             >
-                                                <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-secondary)"} />
+                                                <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-primary)"} />
                                             </button>
                                         )}
                                         <button
@@ -421,7 +421,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                             onClick={() => handleDownloadLesson(lesson)}
                                             title="Download Lesson"
                                         >
-                                            <Download size={16} color="var(--text-secondary)" />
+                                            <Download size={16} color="var(--text-primary)" />
                                         </button>
                                         <button
                                             className="btn btn-secondary"
@@ -429,7 +429,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                             onClick={() => openEditLessonModal(lesson)}
                                             title="Edit Lesson"
                                         >
-                                            <Edit2 size={16} color="var(--text-secondary)" />
+                                            <Edit2 size={16} color="var(--text-primary)" />
                                         </button>
                                         <button
                                             className="btn btn-secondary"
@@ -447,7 +447,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                 <div style={{ width: '100%', backgroundColor: 'var(--bg-color)', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
                                     <div style={{ height: '100%', width: `${progress}%`, backgroundColor: 'var(--success-color)', transition: 'width 0.3s ease' }} />
                                 </div>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'right' }}>{progress}% learned</p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', textAlign: 'right' }}>{progress}% learned</p>
                             </div>
 
                             <button

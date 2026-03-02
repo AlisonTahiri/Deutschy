@@ -136,7 +136,11 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                                         btnStyle = { opacity: 0.5 };
                                     }
                                 } else if (option === selectedOption) {
-                                    btnStyle = { borderColor: 'var(--accent-color)', backgroundColor: 'rgba(88, 166, 255, 0.1)' };
+                                    btnStyle = {
+                                        backgroundColor: 'var(--accent-color)',
+                                        color: '#FFFFFF',
+                                        borderColor: 'var(--accent-color)'
+                                    };
                                 }
 
                                 return (

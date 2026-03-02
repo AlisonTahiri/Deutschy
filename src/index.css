@@ -7,8 +7,8 @@
   --text-primary: #e6edf3;
   --text-secondary: #7d8590;
 
-  --accent-color: #58a6ff;
-  --accent-hover: #3182ce;
+  --accent-color: #2ea043;
+  --accent-hover: #238636;
   --success-color: #2ea043;
   --success-hover: #238636;
   --danger-color: #da3633;
@@ -25,25 +25,28 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(88, 166, 255, 0.2);
+  --shadow-glow: 0 0 20px rgba(46, 160, 67, 0.2);
+  --bg-accent-subtle: rgba(46, 160, 67, 0.05);
 }
 
 :root.light {
-  --bg-color: #f6f8fa;
-  --bg-color-secondary: #ffffff;
-  --text-primary: #1f2328;
-  --text-secondary: #656d76;
+  --bg-color: #F5F7FA;
+  --bg-color-secondary: #FFFFFF;
+  --bg-subtle: #E0E4E8;
+  --text-primary: #2C3E50;
+  --text-secondary: #5E6C79;
 
-  --accent-color: #0969da;
-  --accent-hover: #0550ae;
-  --success-color: #1f883d;
-  --success-hover: #1a7f37;
-  --danger-color: #cf222e;
-  --danger-hover: #a40e26;
-  --warning-color: #9a6700;
+  --accent-color: #2ECC71;
+  --accent-hover: #27AE60;
+  --success-color: #2ECC71;
+  --success-hover: #27AE60;
+  --danger-color: #E74C3C;
+  --danger-hover: #D63031;
+  --warning-color: #F1C40F;
 
-  --border-color: #d0d7de;
-  --shadow-glow: 0 0 20px rgba(9, 105, 218, 0.2);
+  --border-color: #E0E4E8;
+  --shadow-glow: 0 0 20px rgba(46, 204, 113, 0.15);
+  --bg-accent-subtle: rgba(46, 204, 113, 0.05);
 }
 
 * {
@@ -99,6 +102,21 @@ p {
   box-shadow: var(--shadow-lg);
 }
 
+.light .glass-panel {
+  background: var(--bg-color-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.light .glass-panel.border-only {
+  background: transparent;
+  box-shadow: none;
+}
+
+.light .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
 /* Button variants */
 .btn {
   display: inline-flex;
@@ -138,7 +156,24 @@ p {
   border: 1px solid var(--border-color);
 }
 
-.btn-secondary:not(:disabled):hover {
+.light .btn-secondary {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+.btn-subtle {
+  background-color: var(--bg-color-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.light .btn-subtle {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:not(:disabled):hover,
+.btn-subtle:not(:disabled):hover {
   border-color: var(--text-secondary);
 }
 

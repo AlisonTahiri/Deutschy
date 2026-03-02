@@ -8,7 +8,7 @@ export function Settings() {
         <div className="animate-fade-in flex-column gap-md" style={{ padding: '0 0.5rem' }}>
             <h1>Settings</h1>
 
-            <div className="glass-panel flex-column gap-md" style={{ maxWidth: '600px', width: '100%' }}>
+            <div className="glass-panel border-only flex-column gap-md" style={{ maxWidth: '600px', width: '100%' }}>
                 <div>
                     <h3>Appearance</h3>
                     <p>Choose your preferred color theme. Light mode is easy on the eyes during the day.</p>
