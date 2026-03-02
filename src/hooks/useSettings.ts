@@ -26,14 +26,23 @@ export function useSettings() {
         } catch (error) {
             console.warn('Error setting localStorage for settings', error);
         }
+
+        // Apply theme to document
+        if (settings.theme === 'light') {
+            document.documentElement.classList.add('light');
+        } else {
+            document.documentElement.classList.remove('light');
+        }
     }, [settings]);
 
     const updateApiKey = (key: string) => setSettings(s => ({ ...s, aiApiKey: key }));
     const updateLevel = (level: LearningLevel) => setSettings(s => ({ ...s, learningLevel: level }));
+    const updateTheme = (theme: 'light' | 'dark') => setSettings(s => ({ ...s, theme }));
 
     return {
         settings,
         updateApiKey,
-        updateLevel
+        updateLevel,
+        updateTheme
     };
 }

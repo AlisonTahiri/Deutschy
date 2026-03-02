@@ -2,7 +2,7 @@ import { useSettings } from '../hooks/useSettings';
 import type { LearningLevel } from '../types';
 
 export function Settings() {
-    const { settings, updateApiKey, updateLevel } = useSettings();
+    const { settings, updateApiKey, updateLevel, updateTheme } = useSettings();
 
     return (
         <div className="animate-fade-in flex-column gap-md" style={{ padding: '0 0.5rem' }}>
@@ -10,6 +10,23 @@ export function Settings() {
 
             <div className="glass-panel flex-column gap-md" style={{ maxWidth: '600px', width: '100%' }}>
                 <div>
+                    <h3>Appearance</h3>
+                    <p>Choose your preferred color theme. Light mode is easy on the eyes during the day.</p>
+                    <div className="flex-column gap-sm">
+                        <label htmlFor="theme" style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Theme</label>
+                        <select
+                            id="theme"
+                            className="input-field select-field"
+                            value={settings.theme}
+                            onChange={(e) => updateTheme(e.target.value as 'dark' | 'light')}
+                        >
+                            <option value="dark">Dark Theme (Default)</option>
+                            <option value="light">Light Theme</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{ marginTop: '1rem' }}>
                     <h3>AI Configuration</h3>
                     <p>Provide your Google Gemini or OpenAI API key to generate context sentences for exercises.</p>
                     <div className="flex-column gap-sm">

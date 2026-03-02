@@ -28,6 +28,24 @@
   --shadow-glow: 0 0 20px rgba(88, 166, 255, 0.2);
 }
 
+:root.light {
+  --bg-color: #f6f8fa;
+  --bg-color-secondary: #ffffff;
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+
+  --accent-color: #0969da;
+  --accent-hover: #0550ae;
+  --success-color: #1f883d;
+  --success-hover: #1a7f37;
+  --danger-color: #cf222e;
+  --danger-hover: #a40e26;
+  --warning-color: #9a6700;
+
+  --border-color: #d0d7de;
+  --shadow-glow: 0 0 20px rgba(9, 105, 218, 0.2);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
