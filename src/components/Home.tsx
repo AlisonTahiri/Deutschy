@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
@@ -463,9 +464,9 @@ export function Home({ onStartExercise }: HomeProps) {
                 })}
             </div>
 
-            {lessonToDelete && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+            {lessonToDelete && createPortal(
+                <div className="modal-overlay" onMouseDown={() => setLessonToDelete(null)}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Delete Lesson?</h3>
                         <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
@@ -473,12 +474,13 @@ export function Home({ onStartExercise }: HomeProps) {
                             <button className="btn btn-danger" onClick={() => { deleteLesson(lessonToDelete); setLessonToDelete(null); }}>Delete</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {lessonToReset && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+            {lessonToReset && createPortal(
+                <div className="modal-overlay" onMouseDown={() => setLessonToReset(null)}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Reset Progress?</h3>
                         <p>Are you sure you want to reset all progress for this lesson? All words will be marked as 'Unlearned'.</p>
                         <div className="flex-row gap-sm justify-end" style={{ marginTop: '1rem' }}>
@@ -486,12 +488,13 @@ export function Home({ onStartExercise }: HomeProps) {
                             <button className="btn btn-primary" onClick={() => { resetLessonProgress(lessonToReset); setLessonToReset(null); }}>Reset</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {lessonToSplit && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }}>
+            {lessonToSplit && createPortal(
+                <div className="modal-overlay" onMouseDown={() => setLessonToSplit(null)}>
+                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Split Lesson</h3>
                         <p>How many parts would you like to split this lesson into?</p>
                         <div className="flex-column gap-sm" style={{ marginTop: '1rem' }}>
@@ -520,10 +523,11 @@ export function Home({ onStartExercise }: HomeProps) {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {scannedWords && (
+            {scannedWords && createPortal(
                 <div
                     className="modal-overlay"
                     onMouseDown={(e) => {
@@ -535,7 +539,6 @@ export function Home({ onStartExercise }: HomeProps) {
                         style={{ backgroundColor: 'var(--bg-color)', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden' }}
                         onClick={e => e.stopPropagation()}
                     >
-
                         <div className="flex-row justify-between align-center" style={{ marginBottom: '1rem' }}>
                             <h3 style={{ margin: 0 }}>Review Scanned Words</h3>
                             <button className="btn btn-secondary" style={{ padding: '0.25rem' }} onClick={() => setScannedWords(null)}>
@@ -592,10 +595,11 @@ export function Home({ onStartExercise }: HomeProps) {
                             <button className="btn btn-success" onClick={handleSaveScannedLesson}>Save {scannedWords.length} Words</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {editingLesson && (
+            {editingLesson && createPortal(
                 <div
                     className="modal-overlay"
                     onMouseDown={(e) => {
@@ -677,7 +681,8 @@ export function Home({ onStartExercise }: HomeProps) {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

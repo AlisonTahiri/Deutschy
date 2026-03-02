@@ -119,9 +119,7 @@ p {
   box-shadow: none;
 }
 
-.light .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.3);
-}
+
 
 /* Button variants */
 .btn {
@@ -366,8 +364,30 @@ textarea.input-field {
   }
 
   .modal-overlay {
-    padding: 2vh 0.25rem 0.25rem 0.25rem;
+    padding: 1rem;
+    align-items: center;
+    justify-content: center;
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 1rem;
+}
+
+.light .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 ::-webkit-scrollbar-track {
