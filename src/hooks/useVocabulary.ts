@@ -44,171 +44,163 @@ export function useVocabulary() {
                 failCount: 0
             }))
         };
-        setLessons(prev => [...prev, newLesson]);
+        setLessons([...lessons, newLesson]);
         persistLesson(newLesson);
     };
 
     const deleteLesson = (id: string) => {
-        setLessons(prev => prev.filter(l => l.id !== id));
+        setLessons(lessons.filter(l => l.id !== id));
         dbService.deleteLesson(id).catch(err => console.error("Failed to delete lesson", err));
     };
 
     const updateLesson = (id: string, name: string, words?: any[]) => {
-        setLessons(prev => {
-            const next = [...prev];
-            const idx = next.findIndex(l => l.id === id);
-            if (idx === -1) return prev;
+        const idx = lessons.findIndex(l => l.id === id);
+        if (idx === -1) return;
 
-            const updated = { ...next[idx], name, ...(words ? { words } : {}) };
-            next[idx] = updated;
-            persistLesson(updated);
-            return next;
-        });
+        const updated = { ...lessons[idx], name, ...(words ? { words } : {}) };
+        const next = [...lessons];
+        next[idx] = updated;
+
+        setLessons(next);
+        persistLesson(updated);
     };
 
     const deleteWord = (lessonId: string, wordId: string) => {
-        setLessons(prev => {
-            const next = [...prev];
-            const idx = next.findIndex(l => l.id === lessonId);
-            if (idx === -1) return prev;
+        const idx = lessons.findIndex(l => l.id === lessonId);
+        if (idx === -1) return;
 
-            const updated = {
-                ...next[idx],
-                words: next[idx].words.filter(w => w.id !== wordId)
-            };
-            next[idx] = updated;
-            persistLesson(updated);
-            return next;
-        });
+        const updated = {
+            ...lessons[idx],
+            words: lessons[idx].words.filter(w => w.id !== wordId)
+        };
+        const next = [...lessons];
+        next[idx] = updated;
+
+        setLessons(next);
+        persistLesson(updated);
     };
 
     const updateWordStatus = (lessonId: string, wordId: string, learned: boolean) => {
-        setLessons(prev => {
-            const next = [...prev];
-            const idx = next.findIndex(l => l.id === lessonId);
-            if (idx === -1) return prev;
+        const idx = lessons.findIndex(l => l.id === lessonId);
+        if (idx === -1) return;
 
-            const updated = {
-                ...next[idx],
-                words: next[idx].words.map(w => {
-                    if (w.id !== wordId) return w;
-                    return { ...w, learned, failCount: learned ? w.failCount : w.failCount + 1 };
-                })
-            };
-            next[idx] = updated;
-            persistLesson(updated);
-            return next;
-        });
+        const updated = {
+            ...lessons[idx],
+            words: lessons[idx].words.map(w => {
+                if (w.id !== wordId) return w;
+                return { ...w, learned, failCount: learned ? w.failCount : w.failCount + 1 };
+            })
+        };
+        const next = [...lessons];
+        next[idx] = updated;
+
+        setLessons(next);
+        persistLesson(updated);
     };
 
     const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: any }[]) => {
-        setLessons(prev => {
-            const next = [...prev];
-            const idx = next.findIndex(l => l.id === lessonId);
-            if (idx === -1) return prev;
+        const idx = lessons.findIndex(l => l.id === lessonId);
+        if (idx === -1) return;
 
-            const updated = {
-                ...next[idx],
-                words: next[idx].words.map(w => {
-                    const up = updates.find(u => u.wordId === w.id);
-                    if (!up) return w;
-                    return { ...w, mcq: up.mcq };
-                })
-            };
-            next[idx] = updated;
-            persistLesson(updated);
-            return next;
-        });
+        const updated = {
+            ...lessons[idx],
+            words: lessons[idx].words.map(w => {
+                const up = updates.find(u => u.wordId === w.id);
+                if (!up) return w;
+                return { ...w, mcq: up.mcq };
+            })
+        };
+        const next = [...lessons];
+        next[idx] = updated;
+
+        setLessons(next);
+        persistLesson(updated);
     };
 
     const resetLessonProgress = (lessonId: string) => {
-        setLessons(prev => {
-            const next = [...prev];
-            const idx = next.findIndex(l => l.id === lessonId);
-            if (idx === -1) return prev;
+        const idx = lessons.findIndex(l => l.id === lessonId);
+        if (idx === -1) return;
 
-            const updated = {
-                ...next[idx],
-                words: next[idx].words.map(w => ({ ...w, learned: false, failCount: 0 }))
-            };
-            next[idx] = updated;
-            persistLesson(updated);
-            return next;
-        });
+        const updated = {
+            ...lessons[idx],
+            words: lessons[idx].words.map(w => ({ ...w, learned: false, failCount: 0 }))
+        };
+        const next = [...lessons];
+        next[idx] = updated;
+
+        setLessons(next);
+        persistLesson(updated);
     };
 
     const splitLesson = (lessonId: string, parts: number) => {
-        setLessons(prev => {
-            const lesson = prev.find(l => l.id === lessonId);
-            if (!lesson) return prev;
+        const lesson = lessons.find(l => l.id === lessonId);
+        if (!lesson) return;
 
-            const totalWords = lesson.words.length;
-            if (totalWords < parts) return prev;
+        const totalWords = lesson.words.length;
+        if (totalWords < parts) return;
 
-            const baseSize = Math.floor(totalWords / parts);
-            const remainder = totalWords % parts;
+        const baseSize = Math.floor(totalWords / parts);
+        const remainder = totalWords % parts;
 
-            const newLessons: Lesson[] = [];
-            let currentOffset = 0;
+        const newLessons: Lesson[] = [];
+        let currentOffset = 0;
 
-            for (let i = 0; i < parts; i++) {
-                const partSize = baseSize + (i === parts - 1 ? remainder : 0);
-                const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
+        for (let i = 0; i < parts; i++) {
+            const partSize = baseSize + (i === parts - 1 ? remainder : 0);
+            const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
 
-                const newL: Lesson = {
-                    ...lesson,
-                    id: crypto.randomUUID(),
-                    name: `${lesson.name} (Part ${i + 1})`,
-                    words: partWords.map(w => ({ ...w })),
-                    splitGroupId: lesson.id,
-                    originalName: lesson.name
-                };
-                newLessons.push(newL);
-            }
+            const newL: Lesson = {
+                ...lesson,
+                id: crypto.randomUUID(),
+                name: `${lesson.name} (Part ${i + 1})`,
+                words: partWords.map(w => ({ ...w })),
+                splitGroupId: lesson.id,
+                originalName: lesson.name
+            };
+            newLessons.push(newL);
+            currentOffset += partSize;
+        }
 
-            const originalIndex = prev.findIndex(l => l.id === lessonId);
-            const nextLessons = [...prev];
-            nextLessons.splice(originalIndex, 1, ...newLessons);
+        const originalIndex = lessons.findIndex(l => l.id === lessonId);
+        const nextLessons = [...lessons];
+        nextLessons.splice(originalIndex, 1, ...newLessons);
 
-            dbService.deleteLesson(lessonId).catch(err => console.error(err));
-            for (const nL of newLessons) {
-                persistLesson(nL);
-            }
+        setLessons(nextLessons);
 
-            return nextLessons;
-        });
+        dbService.deleteLesson(lessonId).catch(err => console.error(err));
+        for (const nL of newLessons) {
+            persistLesson(nL);
+        }
     };
 
     const reattachLesson = (splitGroupId: string) => {
-        setLessons(prev => {
-            const parts = prev.filter(l => l.splitGroupId === splitGroupId);
-            if (parts.length === 0) return prev;
+        const parts = lessons.filter(l => l.splitGroupId === splitGroupId);
+        if (parts.length === 0) return;
 
-            const combinedWords: WordPair[] = [];
-            for (const part of parts) {
-                combinedWords.push(...part.words);
-            }
+        const combinedWords: WordPair[] = [];
+        for (const part of parts) {
+            combinedWords.push(...part.words);
+        }
 
-            const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
+        const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
 
-            const reattachedLesson: Lesson = {
-                id: splitGroupId,
-                name: originalName,
-                createdAt: Date.now(),
-                words: combinedWords
-            };
+        const reattachedLesson: Lesson = {
+            id: splitGroupId,
+            name: originalName,
+            createdAt: Date.now(),
+            words: combinedWords
+        };
 
-            const firstIndex = prev.findIndex(l => l.splitGroupId === splitGroupId);
-            const nextLessons = prev.filter(l => l.splitGroupId !== splitGroupId);
-            nextLessons.splice(firstIndex, 0, reattachedLesson);
+        const firstIndex = lessons.findIndex(l => l.splitGroupId === splitGroupId);
+        const nextLessons = lessons.filter(l => l.splitGroupId !== splitGroupId);
+        nextLessons.splice(firstIndex, 0, reattachedLesson);
 
-            for (const part of parts) {
-                dbService.deleteLesson(part.id).catch(err => console.error(err));
-            }
-            persistLesson(reattachedLesson);
+        setLessons(nextLessons);
 
-            return nextLessons;
-        });
+        for (const part of parts) {
+            dbService.deleteLesson(part.id).catch(err => console.error(err));
+        }
+        persistLesson(reattachedLesson);
     };
 
     const importLesson = (data: unknown) => {
@@ -244,7 +236,7 @@ export function useVocabulary() {
             }))
         };
 
-        setLessons(prev => [...prev, newLesson]);
+        setLessons([...lessons, newLesson]);
         persistLesson(newLesson);
     };
 
