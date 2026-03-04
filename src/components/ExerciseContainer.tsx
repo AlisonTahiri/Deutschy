@@ -13,9 +13,17 @@ interface ExerciseContainerProps {
 }
 
 export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
-    const { lessons, updateWordStatus, resetLessonProgress } = useVocabulary();
+    const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
+
+    if (isLoading) {
+        return (
+            <div className="flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
+                <p>Loading lesson...</p>
+            </div>
+        );
+    }
 
     if (!lesson) {
         return (

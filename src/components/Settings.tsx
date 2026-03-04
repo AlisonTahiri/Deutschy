@@ -2,7 +2,15 @@ import { useSettings } from '../hooks/useSettings';
 import type { LearningLevel } from '../types';
 
 export function Settings() {
-    const { settings, updateApiKey, updateLevel, updateTheme } = useSettings();
+    const { settings, isLoading, updateApiKey, updateLevel, updateTheme } = useSettings();
+
+    if (isLoading) {
+        return (
+            <div className="animate-fade-in flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
+                <h2>Loading Settings...</h2>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fade-in flex-column gap-md" style={{ padding: '0 0.5rem' }}>

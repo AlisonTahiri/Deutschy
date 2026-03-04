@@ -11,7 +11,7 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
+    const { lessons, isLoading, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
@@ -370,100 +370,107 @@ export function Home({ onStartExercise }: HomeProps) {
                 </div>
             )}
 
-            {lessons.length === 0 && !showNewLesson && (
+            {isLoading ? (
+                <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                    <Loader2 className="animate-spin" size={32} style={{ margin: '0 auto', color: 'var(--accent-color)' }} />
+                    <h3 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Loading lessons...</h3>
+                </div>
+            ) : lessons.length === 0 && !showNewLesson ? (
                 <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
                     <h3 style={{ color: 'var(--text-secondary)' }}>No lessons yet.</h3>
                     <p>Create your first lesson to start exercising!</p>
                 </div>
-            )}
+            ) : null}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {lessons.map((lesson: Lesson) => {
-                    const learnedCount = lesson.words.filter(w => w.learned).length;
-                    const totalCount = lesson.words.length;
-                    const progress = totalCount === 0 ? 0 : Math.round((learnedCount / totalCount) * 100);
+            {!isLoading && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                    {lessons.map((lesson: Lesson) => {
+                        const learnedCount = lesson.words.filter(w => w.learned).length;
+                        const totalCount = lesson.words.length;
+                        const progress = totalCount === 0 ? 0 : Math.round((learnedCount / totalCount) * 100);
 
-                    return (
-                        <div key={lesson.id} className="glass-panel flex-column justify-between gap-md" style={{ padding: '1.5rem', transition: 'transform 0.2s', cursor: 'default' }}>
-                            <div>
-                                <div className="flex-row justify-between align-center" style={{ marginBottom: '0.5rem' }}>
-                                    <h3 style={{ margin: 0 }}>{lesson.name}</h3>
-                                    <div className="flex-row gap-xs">
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                            onClick={() => setLessonToReset(lesson.id)}
-                                            title="Reset Lesson Progress"
-                                        >
-                                            <RotateCcw size={16} color="var(--text-primary)" />
-                                        </button>
-                                        {lesson.splitGroupId ? (
+                        return (
+                            <div key={lesson.id} className="glass-panel flex-column justify-between gap-md" style={{ padding: '1.5rem', transition: 'transform 0.2s', cursor: 'default' }}>
+                                <div>
+                                    <div className="flex-row justify-between align-center" style={{ marginBottom: '0.5rem' }}>
+                                        <h3 style={{ margin: 0 }}>{lesson.name}</h3>
+                                        <div className="flex-row gap-xs">
                                             <button
                                                 className="btn btn-secondary"
                                                 style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                onClick={() => reattachLesson(lesson.splitGroupId!)}
-                                                title="Reattach Lesson"
+                                                onClick={() => setLessonToReset(lesson.id)}
+                                                title="Reset Lesson Progress"
                                             >
-                                                <Combine size={16} color="var(--text-primary)" />
+                                                <RotateCcw size={16} color="var(--text-primary)" />
                                             </button>
-                                        ) : (
+                                            {lesson.splitGroupId ? (
+                                                <button
+                                                    className="btn btn-secondary"
+                                                    style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                    onClick={() => reattachLesson(lesson.splitGroupId!)}
+                                                    title="Reattach Lesson"
+                                                >
+                                                    <Combine size={16} color="var(--text-primary)" />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-secondary"
+                                                    style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                    onClick={() => setLessonToSplit(lesson.id)}
+                                                    title="Split Lesson"
+                                                    disabled={totalCount < 2}
+                                                >
+                                                    <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-primary)"} />
+                                                </button>
+                                            )}
                                             <button
                                                 className="btn btn-secondary"
                                                 style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                onClick={() => setLessonToSplit(lesson.id)}
-                                                title="Split Lesson"
-                                                disabled={totalCount < 2}
+                                                onClick={() => handleDownloadLesson(lesson)}
+                                                title="Download Lesson"
                                             >
-                                                <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-primary)"} />
+                                                <Download size={16} color="var(--text-primary)" />
                                             </button>
-                                        )}
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                            onClick={() => handleDownloadLesson(lesson)}
-                                            title="Download Lesson"
-                                        >
-                                            <Download size={16} color="var(--text-primary)" />
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                            onClick={() => openEditLessonModal(lesson)}
-                                            title="Edit Lesson"
-                                        >
-                                            <Edit2 size={16} color="var(--text-primary)" />
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                            onClick={() => setLessonToDelete(lesson.id)}
-                                            title="Delete Lesson"
-                                        >
-                                            <Trash2 size={16} color="var(--danger-color)" />
-                                        </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                onClick={() => openEditLessonModal(lesson)}
+                                                title="Edit Lesson"
+                                            >
+                                                <Edit2 size={16} color="var(--text-primary)" />
+                                            </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                onClick={() => setLessonToDelete(lesson.id)}
+                                                title="Delete Lesson"
+                                            >
+                                                <Trash2 size={16} color="var(--danger-color)" />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                                <p style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>{totalCount} words</p>
+                                    <p style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>{totalCount} words</p>
 
-                                {/* Progress Bar */}
-                                <div style={{ width: '100%', backgroundColor: 'var(--bg-color)', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-                                    <div style={{ height: '100%', width: `${progress}%`, backgroundColor: 'var(--success-color)', transition: 'width 0.3s ease' }} />
+                                    {/* Progress Bar */}
+                                    <div style={{ width: '100%', backgroundColor: 'var(--bg-color)', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                                        <div style={{ height: '100%', width: `${progress}%`, backgroundColor: 'var(--success-color)', transition: 'width 0.3s ease' }} />
+                                    </div>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', textAlign: 'right' }}>{progress}% learned</p>
                                 </div>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', textAlign: 'right' }}>{progress}% learned</p>
+
+                                <button
+                                    className="btn btn-primary"
+                                    style={{ width: '100%' }}
+                                    onClick={() => onStartExercise(lesson.id)}
+                                    disabled={totalCount === 0}
+                                >
+                                    <Play size={16} /> Start Exercise
+                                </button>
                             </div>
-
-                            <button
-                                className="btn btn-primary"
-                                style={{ width: '100%' }}
-                                onClick={() => onStartExercise(lesson.id)}
-                                disabled={totalCount === 0}
-                            >
-                                <Play size={16} /> Start Exercise
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {lessonToDelete && createPortal(
                 <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setLessonToDelete(null); }}>

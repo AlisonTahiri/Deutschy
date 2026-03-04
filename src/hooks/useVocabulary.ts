@@ -1,26 +1,35 @@
 import { useState, useEffect } from 'react';
 import type { Lesson, WordPair } from '../types';
-
-const VOCAB_KEY = 'german_app_vocabulary_lessons';
+import { dbService } from '../services/db/provider';
 
 export function useVocabulary() {
-    const [lessons, setLessons] = useState<Lesson[]>(() => {
+    const [lessons, setLessons] = useState<Lesson[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadLessons = async () => {
         try {
-            const item = window.localStorage.getItem(VOCAB_KEY);
-            return item ? JSON.parse(item) : [];
-        } catch (error) {
-            console.warn('Error reading localStorage for lessons', error);
-            return [];
+            setIsLoading(true);
+            if (!dbService.isInitialized()) await dbService.init();
+            const loaded = await dbService.getLessons();
+            setLessons(loaded);
+        } catch (err) {
+            console.error("Failed to load lessons from DB", err);
+        } finally {
+            setIsLoading(false);
         }
-    });
+    };
 
     useEffect(() => {
+        loadLessons();
+    }, []);
+
+    const persistLesson = async (lesson: Lesson) => {
         try {
-            window.localStorage.setItem(VOCAB_KEY, JSON.stringify(lessons));
-        } catch (error) {
-            console.warn('Error setting localStorage for lessons', error);
+            await dbService.saveLesson(lesson);
+        } catch (err) {
+            console.error("Failed to persist lesson", err);
         }
-    }, [lessons]);
+    };
 
     const addLesson = (name: string, wordsData: { german: string; albanian: string }[]) => {
         const newLesson: Lesson = {
@@ -36,71 +45,96 @@ export function useVocabulary() {
             }))
         };
         setLessons(prev => [...prev, newLesson]);
+        persistLesson(newLesson);
     };
 
     const deleteLesson = (id: string) => {
         setLessons(prev => prev.filter(l => l.id !== id));
+        dbService.deleteLesson(id).catch(err => console.error("Failed to delete lesson", err));
     };
 
     const updateLesson = (id: string, name: string, words?: any[]) => {
-        setLessons(prev => prev.map(l => {
-            if (l.id !== id) return l;
-            return { ...l, name, ...(words ? { words } : {}) };
-        }));
+        setLessons(prev => {
+            const next = [...prev];
+            const idx = next.findIndex(l => l.id === id);
+            if (idx === -1) return prev;
+
+            const updated = { ...next[idx], name, ...(words ? { words } : {}) };
+            next[idx] = updated;
+            persistLesson(updated);
+            return next;
+        });
     };
 
     const deleteWord = (lessonId: string, wordId: string) => {
-        setLessons(prev => prev.map(l => {
-            if (l.id !== lessonId) return l;
-            return {
-                ...l,
-                words: l.words.filter(w => w.id !== wordId)
+        setLessons(prev => {
+            const next = [...prev];
+            const idx = next.findIndex(l => l.id === lessonId);
+            if (idx === -1) return prev;
+
+            const updated = {
+                ...next[idx],
+                words: next[idx].words.filter(w => w.id !== wordId)
             };
-        }));
+            next[idx] = updated;
+            persistLesson(updated);
+            return next;
+        });
     };
 
     const updateWordStatus = (lessonId: string, wordId: string, learned: boolean) => {
-        setLessons(prev => prev.map(lesson => {
-            if (lesson.id !== lessonId) return lesson;
-            return {
-                ...lesson,
-                words: lesson.words.map(word => {
-                    if (word.id !== wordId) return word;
-                    return {
-                        ...word,
-                        learned,
-                        failCount: learned ? word.failCount : word.failCount + 1
-                    };
+        setLessons(prev => {
+            const next = [...prev];
+            const idx = next.findIndex(l => l.id === lessonId);
+            if (idx === -1) return prev;
+
+            const updated = {
+                ...next[idx],
+                words: next[idx].words.map(w => {
+                    if (w.id !== wordId) return w;
+                    return { ...w, learned, failCount: learned ? w.failCount : w.failCount + 1 };
                 })
             };
-        }));
+            next[idx] = updated;
+            persistLesson(updated);
+            return next;
+        });
     };
 
     const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: any }[]) => {
-        setLessons(prev => prev.map(lesson => {
-            if (lesson.id !== lessonId) return lesson;
-            return {
-                ...lesson,
-                words: lesson.words.map(word => {
-                    const update = updates.find(u => u.wordId === word.id);
-                    if (!update) return word;
-                    return {
-                        ...word,
-                        mcq: update.mcq
-                    };
+        setLessons(prev => {
+            const next = [...prev];
+            const idx = next.findIndex(l => l.id === lessonId);
+            if (idx === -1) return prev;
+
+            const updated = {
+                ...next[idx],
+                words: next[idx].words.map(w => {
+                    const up = updates.find(u => u.wordId === w.id);
+                    if (!up) return w;
+                    return { ...w, mcq: up.mcq };
                 })
             };
-        }));
+            next[idx] = updated;
+            persistLesson(updated);
+            return next;
+        });
     };
 
     const resetLessonProgress = (lessonId: string) => {
-        setLessons(prev => prev.map(lesson => {
-            if (lesson.id !== lessonId) return lesson;
-            return {
-                ...lesson,
-                words: lesson.words.map(word => ({ ...word, learned: false, failCount: 0 }))
+        setLessons(prev => {
+            const next = [...prev];
+            const idx = next.findIndex(l => l.id === lessonId);
+            if (idx === -1) return prev;
+
+            const updated = {
+                ...next[idx],
+                words: next[idx].words.map(w => ({ ...w, learned: false, failCount: 0 }))
             };
-        }));
+            next[idx] = updated;
+            persistLesson(updated);
+            return next;
+        });
     };
 
     const splitLesson = (lessonId: string, parts: number) => {
@@ -109,7 +143,7 @@ export function useVocabulary() {
             if (!lesson) return prev;
 
             const totalWords = lesson.words.length;
-            if (totalWords < parts) return prev; // Cannot split
+            if (totalWords < parts) return prev;
 
             const baseSize = Math.floor(totalWords / parts);
             const remainder = totalWords % parts;
@@ -121,22 +155,26 @@ export function useVocabulary() {
                 const partSize = baseSize + (i === parts - 1 ? remainder : 0);
                 const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
 
-                newLessons.push({
+                const newL: Lesson = {
                     ...lesson,
                     id: crypto.randomUUID(),
                     name: `${lesson.name} (Part ${i + 1})`,
-                    words: partWords.map(w => ({ ...w })), // keep existing word IDs or regenerate? Better to keep as they are just splitting
+                    words: partWords.map(w => ({ ...w })),
                     splitGroupId: lesson.id,
                     originalName: lesson.name
-                });
-
-                currentOffset += partSize;
+                };
+                newLessons.push(newL);
             }
 
-            // Replace original lesson with the new ones at its original index
             const originalIndex = prev.findIndex(l => l.id === lessonId);
             const nextLessons = [...prev];
             nextLessons.splice(originalIndex, 1, ...newLessons);
+
+            dbService.deleteLesson(lessonId).catch(err => console.error(err));
+            for (const nL of newLessons) {
+                persistLesson(nL);
+            }
+
             return nextLessons;
         });
     };
@@ -146,8 +184,6 @@ export function useVocabulary() {
             const parts = prev.filter(l => l.splitGroupId === splitGroupId);
             if (parts.length === 0) return prev;
 
-            // Combine all words and deduplicate just in case 
-            // (Wait, they already have unique IDs but are from same original pool)
             const combinedWords: WordPair[] = [];
             for (const part of parts) {
                 combinedWords.push(...part.words);
@@ -156,17 +192,20 @@ export function useVocabulary() {
             const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
 
             const reattachedLesson: Lesson = {
-                id: splitGroupId, // Restore original ID
+                id: splitGroupId,
                 name: originalName,
-                createdAt: Date.now(), // Or find min created date from parts, but fine to renew
+                createdAt: Date.now(),
                 words: combinedWords
             };
 
-            // Remove all parts and add the merged lesson where the first part was
             const firstIndex = prev.findIndex(l => l.splitGroupId === splitGroupId);
             const nextLessons = prev.filter(l => l.splitGroupId !== splitGroupId);
-            // Insert the reattached lesson at the position of the first part
             nextLessons.splice(firstIndex, 0, reattachedLesson);
+
+            for (const part of parts) {
+                dbService.deleteLesson(part.id).catch(err => console.error(err));
+            }
+            persistLesson(reattachedLesson);
 
             return nextLessons;
         });
@@ -206,10 +245,12 @@ export function useVocabulary() {
         };
 
         setLessons(prev => [...prev, newLesson]);
+        persistLesson(newLesson);
     };
 
     return {
         lessons,
+        isLoading,
         addLesson,
         updateLesson,
         deleteLesson,

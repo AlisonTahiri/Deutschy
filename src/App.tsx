@@ -1,15 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { Home } from './components/Home';
 import { Settings } from './components/Settings';
 import { ExerciseContainer } from './components/ExerciseContainer';
 import { BackgroundMCQGenerator } from './components/BackgroundMCQGenerator';
+import { dbService } from './services/db/provider';
 
 export type ViewState = 'home' | 'settings' | 'exercise';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [isDbReady, setIsDbReady] = useState(false);
+
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        await dbService.init();
+        setIsDbReady(true);
+      } catch (err) {
+        console.error("Critical: Failed to initialize database", err);
+      }
+    };
+    initDb();
+  }, []);
 
   const handleStartExercise = (lessonId: string) => {
     setActiveLessonId(lessonId);
@@ -20,6 +34,19 @@ function App() {
     setCurrentView(view);
     setActiveLessonId(null);
   };
+
+  if (!isDbReady) {
+    return (
+      <div className="flex-column align-center justify-center gap-md" style={{ height: '100vh', backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)' }}>
+        <div className="loader" style={{ width: '40px', height: '40px', border: '4px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <h2>Initializing Database...</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>Please wait a moment.</p>
+        <style>{`
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <Layout currentView={currentView} onNavigate={handleNavigate}>
