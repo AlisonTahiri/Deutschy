@@ -43,11 +43,12 @@ export function Home({ onStartExercise }: HomeProps) {
                 if (editingLessonId) setEditingLessonId(null);
                 if (lessonToReset) setLessonToReset(null);
                 if (lessonToSplit) setLessonToSplit(null);
+                if (lessonToDelete) setLessonToDelete(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [scannedWords, editingLessonId, lessonToReset, lessonToSplit]);
+    }, [scannedWords, editingLessonId, lessonToReset, lessonToSplit, lessonToDelete]);
 
     const handleCreateLesson = () => {
         setError('');
@@ -465,7 +466,7 @@ export function Home({ onStartExercise }: HomeProps) {
             </div>
 
             {lessonToDelete && createPortal(
-                <div className="modal-overlay" onMouseDown={() => setLessonToDelete(null)}>
+                <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setLessonToDelete(null); }}>
                     <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Delete Lesson?</h3>
                         <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
@@ -479,7 +480,7 @@ export function Home({ onStartExercise }: HomeProps) {
             )}
 
             {lessonToReset && createPortal(
-                <div className="modal-overlay" onMouseDown={() => setLessonToReset(null)}>
+                <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setLessonToReset(null); }}>
                     <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Reset Progress?</h3>
                         <p>Are you sure you want to reset all progress for this lesson? All words will be marked as 'Unlearned'.</p>
@@ -493,7 +494,7 @@ export function Home({ onStartExercise }: HomeProps) {
             )}
 
             {lessonToSplit && createPortal(
-                <div className="modal-overlay" onMouseDown={() => setLessonToSplit(null)}>
+                <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setLessonToSplit(null); }}>
                     <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
                         <h3>Split Lesson</h3>
                         <p>How many parts would you like to split this lesson into?</p>
