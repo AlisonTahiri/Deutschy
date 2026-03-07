@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Settings, Lesson } from '../../types';
+import type { Settings, LocalLesson } from '../../types';
 import type { IDatabaseService } from './IDatabaseService';
 
 interface DBSettings extends Settings {
@@ -9,7 +9,7 @@ interface DBSettings extends Settings {
 export class DexieService implements IDatabaseService {
     private db: Dexie & {
         settings: EntityTable<DBSettings, 'id'>,
-        lessons: EntityTable<Lesson, 'id'>
+        lessons: EntityTable<LocalLesson, 'id'>
     };
     private _initialized = false;
 
@@ -66,11 +66,11 @@ export class DexieService implements IDatabaseService {
         await this.db.settings.put({ ...settings, id: 1 });
     }
 
-    async getLessons(): Promise<Lesson[]> {
+    async getLessons(): Promise<LocalLesson[]> {
         return await this.db.lessons.toArray();
     }
 
-    async saveLesson(lesson: Lesson): Promise<void> {
+    async saveLesson(lesson: LocalLesson): Promise<void> {
         await this.db.lessons.put(lesson);
     }
 

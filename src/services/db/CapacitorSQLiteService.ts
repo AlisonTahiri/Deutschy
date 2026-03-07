@@ -1,5 +1,5 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
-import type { Settings, Lesson } from '../../types';
+import type { Settings, LocalLesson } from '../../types';
 import type { IDatabaseService } from './IDatabaseService';
 
 const DB_NAME = "german_app_db";
@@ -99,11 +99,11 @@ export class CapacitorSQLiteService implements IDatabaseService {
         );
     }
 
-    async getLessons(): Promise<Lesson[]> {
+    async getLessons(): Promise<LocalLesson[]> {
         const lessonsRes = await this.db.query("SELECT * FROM lessons ORDER BY createdAt DESC");
         const wordsRes = await this.db.query("SELECT * FROM words");
 
-        const lessons: Lesson[] = (lessonsRes.values || []).map(l => ({
+        const lessons: LocalLesson[] = (lessonsRes.values || []).map(l => ({
             id: l.id,
             name: l.name,
             createdAt: l.createdAt,
@@ -130,7 +130,7 @@ export class CapacitorSQLiteService implements IDatabaseService {
         return lessons;
     }
 
-    async saveLesson(lesson: Lesson): Promise<void> {
+    async saveLesson(lesson: LocalLesson): Promise<void> {
         // We'll perform an upsert for the lesson, then wipe and re-insert its words.
         // This is safe because `words` only belong to one lesson, and this matches Dexie's "put" paradigm.
 

@@ -5,7 +5,7 @@ import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
 import { useAuth } from '../hooks/useAuth';
 import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, RotateCcw, ListPlus, Scissors, Combine, LogOut } from 'lucide-react';
-import type { Lesson } from '../types';
+import type { LocalLesson } from '../types';
 
 interface HomeProps {
     onStartExercise: (lessonId: string) => void;
@@ -187,7 +187,7 @@ export function Home({ onStartExercise }: HomeProps) {
         setScannedWords(scannedWords.filter((_, i) => i !== index));
     };
 
-    const openEditLessonModal = (lesson: Lesson) => {
+    const openEditLessonModal = (lesson: LocalLesson) => {
         setEditingLessonId(lesson.id);
         setEditLessonName(lesson.name);
         setEditLessonWords(JSON.parse(JSON.stringify(lesson.words)));
@@ -203,7 +203,7 @@ export function Home({ onStartExercise }: HomeProps) {
         // Filter out empty words and duplicates
         const validWords = editLessonWords.filter(w => w.german.trim() && w.albanian.trim());
         const seenGerman = new Set<string>();
-        const deduplicatedWords = validWords.filter(w => {
+        const deduplicatedWords = validWords.filter((w: any) => {
             const lowerGerman = w.german.toLowerCase().trim();
             if (seenGerman.has(lowerGerman)) {
                 return false; // Skip duplicate
@@ -358,7 +358,7 @@ export function Home({ onStartExercise }: HomeProps) {
 
             {!isLoading && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                    {lessons.map((lesson: Lesson) => {
+                    {lessons.map((lesson: LocalLesson) => {
                         const learnedCount = lesson.words.filter(w => w.learned).length;
                         const totalCount = lesson.words.length;
                         const progress = totalCount === 0 ? 0 : Math.round((learnedCount / totalCount) * 100);

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { Lesson, WordPair } from '../types';
+import type { LocalLesson, WordPair } from '../types';
 import { dbService } from '../services/db/provider';
 
 export function useVocabulary() {
-    const [lessons, setLessons] = useState<Lesson[]>([]);
+    const [lessons, setLessons] = useState<LocalLesson[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadLessons = async () => {
@@ -23,16 +23,16 @@ export function useVocabulary() {
         loadLessons();
     }, []);
 
-    const persistLesson = async (lesson: Lesson) => {
+    const persistLesson = async (lesson: LocalLesson) => {
         try {
-            await dbService.saveLesson(lesson);
+            await dbService.saveLesson(lesson as any); // Type cast due to db provider divergence, will be refactored with Sync
         } catch (err) {
             console.error("Failed to persist lesson", err);
         }
     };
 
     const addLesson = (name: string, wordsData: { german: string; albanian: string }[]) => {
-        const newLesson: Lesson = {
+        const newLesson: LocalLesson = {
             id: crypto.randomUUID(),
             name,
             createdAt: Date.now(),
@@ -142,14 +142,14 @@ export function useVocabulary() {
         const baseSize = Math.floor(totalWords / parts);
         const remainder = totalWords % parts;
 
-        const newLessons: Lesson[] = [];
+        const newLessons: LocalLesson[] = [];
         let currentOffset = 0;
 
         for (let i = 0; i < parts; i++) {
             const partSize = baseSize + (i === parts - 1 ? remainder : 0);
             const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
 
-            const newL: Lesson = {
+            const newL: LocalLesson = {
                 ...lesson,
                 id: crypto.randomUUID(),
                 name: `${lesson.name} (Part ${i + 1})`,
@@ -184,7 +184,7 @@ export function useVocabulary() {
 
         const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
 
-        const reattachedLesson: Lesson = {
+        const reattachedLesson: LocalLesson = {
             id: splitGroupId,
             name: originalName,
             createdAt: Date.now(),

@@ -1,4 +1,4 @@
-import type { Settings, Lesson } from '../../types';
+import type { Settings, LocalLesson } from '../../types';
 
 export interface IDatabaseService {
     /**
@@ -16,7 +16,7 @@ export interface IDatabaseService {
     saveSettings(settings: Settings): Promise<void>;
 
     // --- Lessons & Words ---
-    getLessons(): Promise<Lesson[]>;
-    saveLesson(lesson: Lesson): Promise<void>;
+    getLessons(): Promise<LocalLesson[]>;
+    saveLesson(lesson: LocalLesson): Promise<void>;
     deleteLesson(id: string): Promise<void>;
 }

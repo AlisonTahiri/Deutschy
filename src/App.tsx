@@ -8,8 +8,9 @@ import { dbService } from './services/db/provider';
 import { useAuth } from './hooks/useAuth';
 import { Auth } from './components/Auth';
 import { SocialLoginService } from './services/auth/SocialLoginService';
+import { Admin } from './components/Admin';
 
-export type ViewState = 'home' | 'settings' | 'exercise';
+export type ViewState = 'home' | 'settings' | 'exercise' | 'admin';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
@@ -35,7 +36,7 @@ function App() {
     setCurrentView('exercise');
   };
 
-  const handleNavigate = (view: 'home' | 'settings') => {
+  const handleNavigate = (view: ViewState) => {
     setCurrentView(view);
     setActiveLessonId(null);
   };
@@ -62,6 +63,7 @@ function App() {
       <BackgroundMCQGenerator />
       {currentView === 'home' && <Home onStartExercise={handleStartExercise} />}
       {currentView === 'settings' && <Settings />}
+      {currentView === 'admin' && <Admin />}
       {currentView === 'exercise' && activeLessonId && (
         <ExerciseContainer
           lessonId={activeLessonId}
