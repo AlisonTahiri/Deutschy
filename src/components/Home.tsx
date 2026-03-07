@@ -4,7 +4,7 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
 import { useAuth } from '../hooks/useAuth';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus, Scissors, Combine, LogOut } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, RotateCcw, ListPlus, Scissors, Combine, LogOut } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -12,7 +12,7 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, isLoading, addLesson, deleteLesson, updateLesson, importLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
+    const { lessons, isLoading, addLesson, deleteLesson, updateLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
@@ -26,7 +26,7 @@ export function Home({ onStartExercise }: HomeProps) {
     const [editLessonName, setEditLessonName] = useState('');
     const [editLessonWords, setEditLessonWords] = useState<any[]>([]);
 
-    const { session, signOut } = useAuth();
+    const { session, role, signOut } = useAuth();
 
     // Image Upload State
     const { settings } = useSettings();
@@ -35,7 +35,6 @@ export function Home({ onStartExercise }: HomeProps) {
     const [scannedWords, setScannedWords] = useState<ExtractedWordPair[] | null>(null);
     const [scannedLessonName, setScannedLessonName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const importInputRef = useRef<HTMLInputElement>(null);
     const progressIntervalRef = useRef<number | null>(null);
 
     // Global Key Listener for Modals
@@ -188,38 +187,6 @@ export function Home({ onStartExercise }: HomeProps) {
         setScannedWords(scannedWords.filter((_, i) => i !== index));
     };
 
-    const handleDownloadLesson = (lesson: Lesson) => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lesson, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `${lesson.name}.json`);
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    };
-
-    const handleImportLesson = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const json = JSON.parse(event.target?.result as string);
-                importLesson(json);
-                setError('');
-            } catch (err: any) {
-                setError(err.message || 'Error parsing lesson file.');
-            }
-            if (importInputRef.current) importInputRef.current.value = '';
-        };
-        reader.onerror = () => {
-            setError('Error reading file.');
-            if (importInputRef.current) importInputRef.current.value = '';
-        };
-        reader.readAsText(file);
-    };
-
     const openEditLessonModal = (lesson: Lesson) => {
         setEditingLessonId(lesson.id);
         setEditLessonName(lesson.name);
@@ -305,31 +272,18 @@ export function Home({ onStartExercise }: HomeProps) {
                         ref={fileInputRef}
                         onChange={handleImageUpload}
                     />
-                    <input
-                        type="file"
-                        accept=".json"
-                        style={{ display: 'none' }}
-                        ref={importInputRef}
-                        onChange={handleImportLesson}
-                    />
-                    <button
-                        className="btn btn-subtle"
-                        style={{ flex: '1 1 auto' }}
-                        onClick={() => importInputRef.current?.click()}
-                        title="Import Lesson JSON"
-                    >
-                        <Upload size={18} /> Import
-                    </button>
-                    <button
-                        className="btn btn-subtle"
-                        style={{ flex: '1 1 auto' }}
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        title="Upload Image to Scan"
-                    >
-                        {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                        {isUploading ? 'Scanning...' : 'Scan'}
-                    </button>
+                    {role === 'admin' && (
+                        <button
+                            className="btn btn-subtle"
+                            style={{ flex: '1 1 auto' }}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            title="Upload Image to Scan"
+                        >
+                            {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                            {isUploading ? 'Scanning...' : 'Scan'}
+                        </button>
+                    )}
 
                     <button
                         className="btn btn-primary"
@@ -408,6 +362,8 @@ export function Home({ onStartExercise }: HomeProps) {
                         const learnedCount = lesson.words.filter(w => w.learned).length;
                         const totalCount = lesson.words.length;
                         const progress = totalCount === 0 ? 0 : Math.round((learnedCount / totalCount) * 100);
+                        const hasMCQs = lesson.words.some(w => !!w.mcq);
+                        const canEditDelete = role === 'admin' || !hasMCQs;
 
                         return (
                             <div key={lesson.id} className="glass-panel flex-column justify-between gap-md" style={{ padding: '1.5rem', transition: 'transform 0.2s', cursor: 'default' }}>
@@ -443,30 +399,26 @@ export function Home({ onStartExercise }: HomeProps) {
                                                     <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-primary)"} />
                                                 </button>
                                             )}
-                                            <button
-                                                className="btn btn-secondary"
-                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                onClick={() => handleDownloadLesson(lesson)}
-                                                title="Download Lesson"
-                                            >
-                                                <Download size={16} color="var(--text-primary)" />
-                                            </button>
-                                            <button
-                                                className="btn btn-secondary"
-                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                onClick={() => openEditLessonModal(lesson)}
-                                                title="Edit Lesson"
-                                            >
-                                                <Edit2 size={16} color="var(--text-primary)" />
-                                            </button>
-                                            <button
-                                                className="btn btn-secondary"
-                                                style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                onClick={() => setLessonToDelete(lesson.id)}
-                                                title="Delete Lesson"
-                                            >
-                                                <Trash2 size={16} color="var(--danger-color)" />
-                                            </button>
+                                            {canEditDelete && (
+                                                <>
+                                                    <button
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                        onClick={() => openEditLessonModal(lesson)}
+                                                        title="Edit Lesson"
+                                                    >
+                                                        <Edit2 size={16} color="var(--text-primary)" />
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
+                                                        onClick={() => setLessonToDelete(lesson.id)}
+                                                        title="Delete Lesson"
+                                                    >
+                                                        <Trash2 size={16} color="var(--danger-color)" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <p style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>{totalCount} words</p>

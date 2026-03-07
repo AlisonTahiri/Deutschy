@@ -6,6 +6,7 @@ import { Writing } from './Writing';
 import { Mixed } from './Mixed';
 import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle } from 'lucide-react';
 import { useVocabulary } from '../hooks/useVocabulary';
+import { useAuth } from '../hooks/useAuth';
 
 interface ExerciseContainerProps {
     lessonId: string;
@@ -14,6 +15,7 @@ interface ExerciseContainerProps {
 
 export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
     const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();
+    const { role } = useAuth();
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
 
@@ -37,6 +39,8 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     const unlearnedWords = lesson.words.filter(w => !w.learned);
     const isFullyLearned = unlearnedWords.length === 0 && lesson.words.length > 0;
     const wordsToPractice = isFullyLearned ? lesson.words : unlearnedWords;
+    const hasMCQs = lesson.words.some(w => !!w.mcq);
+    const canDoQuiz = role === 'admin' || hasMCQs;
 
     // Handle saving word learning status
     const handleWordResult = (wordId: string, learned: boolean) => {
@@ -74,11 +78,13 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Swipe right if you know it, left if you don't.</span>
                     </button>
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('multiple-choice')}>
-                        <MessageSquare size={32} color="var(--success-color)" />
-                        <h3>Multiple Choice</h3>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>AI generated sentences. Guess the missing word.</span>
-                    </button>
+                    {canDoQuiz && (
+                        <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('multiple-choice')}>
+                            <MessageSquare size={32} color="var(--success-color)" />
+                            <h3>Multiple Choice</h3>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>AI generated sentences. Guess the missing word.</span>
+                        </button>
+                    )}
 
                     <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('writing')}>
                         <PenTool size={32} color="var(--warning-color)" />
@@ -86,11 +92,13 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Type the German translation accurately.</span>
                     </button>
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))', height: '100%' }} onClick={() => setExerciseMode('mixed')}>
-                        <Shuffle size={32} color="var(--text-primary)" />
-                        <h3>Mixed Mode</h3>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>A mixture of all exercises for best retention.</span>
-                    </button>
+                    {canDoQuiz && (
+                        <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))', height: '100%' }} onClick={() => setExerciseMode('mixed')}>
+                            <Shuffle size={32} color="var(--text-primary)" />
+                            <h3>Mixed Mode</h3>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>A mixture of all exercises for best retention.</span>
+                        </button>
+                    )}
                 </div>
             </div>
         );
