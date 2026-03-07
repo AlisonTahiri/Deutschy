@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { LocalLesson, WordPair } from '../types';
+import type { LocalLesson } from '../types';
 import { dbService } from '../services/db/provider';
 
 export function useVocabulary() {
@@ -21,6 +21,16 @@ export function useVocabulary() {
 
     useEffect(() => {
         loadLessons();
+
+        const handleSyncUpdate = () => {
+            loadLessons();
+        };
+
+        window.addEventListener('local-db-updated', handleSyncUpdate);
+
+        return () => {
+            window.removeEventListener('local-db-updated', handleSyncUpdate);
+        };
     }, []);
 
     const persistLesson = async (lesson: LocalLesson) => {
@@ -132,76 +142,7 @@ export function useVocabulary() {
         persistLesson(updated);
     };
 
-    const splitLesson = (lessonId: string, parts: number) => {
-        const lesson = lessons.find(l => l.id === lessonId);
-        if (!lesson) return;
 
-        const totalWords = lesson.words.length;
-        if (totalWords < parts) return;
-
-        const baseSize = Math.floor(totalWords / parts);
-        const remainder = totalWords % parts;
-
-        const newLessons: LocalLesson[] = [];
-        let currentOffset = 0;
-
-        for (let i = 0; i < parts; i++) {
-            const partSize = baseSize + (i === parts - 1 ? remainder : 0);
-            const partWords = lesson.words.slice(currentOffset, currentOffset + partSize);
-
-            const newL: LocalLesson = {
-                ...lesson,
-                id: crypto.randomUUID(),
-                name: `${lesson.name} (Part ${i + 1})`,
-                words: partWords.map(w => ({ ...w })),
-                splitGroupId: lesson.id,
-                originalName: lesson.name
-            };
-            newLessons.push(newL);
-            currentOffset += partSize;
-        }
-
-        const originalIndex = lessons.findIndex(l => l.id === lessonId);
-        const nextLessons = [...lessons];
-        nextLessons.splice(originalIndex, 1, ...newLessons);
-
-        setLessons(nextLessons);
-
-        dbService.deleteLesson(lessonId).catch(err => console.error(err));
-        for (const nL of newLessons) {
-            persistLesson(nL);
-        }
-    };
-
-    const reattachLesson = (splitGroupId: string) => {
-        const parts = lessons.filter(l => l.splitGroupId === splitGroupId);
-        if (parts.length === 0) return;
-
-        const combinedWords: WordPair[] = [];
-        for (const part of parts) {
-            combinedWords.push(...part.words);
-        }
-
-        const originalName = parts[0].originalName || parts[0].name.replace(/ \(Part \d+\)$/, '');
-
-        const reattachedLesson: LocalLesson = {
-            id: splitGroupId,
-            name: originalName,
-            createdAt: Date.now(),
-            words: combinedWords
-        };
-
-        const firstIndex = lessons.findIndex(l => l.splitGroupId === splitGroupId);
-        const nextLessons = lessons.filter(l => l.splitGroupId !== splitGroupId);
-        nextLessons.splice(firstIndex, 0, reattachedLesson);
-
-        setLessons(nextLessons);
-
-        for (const part of parts) {
-            dbService.deleteLesson(part.id).catch(err => console.error(err));
-        }
-        persistLesson(reattachedLesson);
-    };
 
     return {
         lessons,
@@ -212,8 +153,6 @@ export function useVocabulary() {
         deleteWord,
         updateWordStatus,
         updateWordMCQs,
-        resetLessonProgress,
-        splitLesson,
-        reattachLesson
+        resetLessonProgress
     };
 }

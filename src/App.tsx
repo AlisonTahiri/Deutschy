@@ -9,6 +9,7 @@ import { useAuth } from './hooks/useAuth';
 import { Auth } from './components/Auth';
 import { SocialLoginService } from './services/auth/SocialLoginService';
 import { Admin } from './components/Admin';
+import { useSubscription } from './hooks/useSubscription';
 
 export type ViewState = 'home' | 'settings' | 'exercise' | 'admin';
 
@@ -17,6 +18,9 @@ function App() {
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
   const { session, isLoading: authLoading } = useAuth();
+
+  // Initialize revenuecat and sync subscription
+  useSubscription();
 
   useEffect(() => {
     const initApp = async () => {

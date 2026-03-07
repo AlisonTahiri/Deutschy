@@ -9,6 +9,7 @@
         "@capacitor/android": "^8.1.0",
         "@capacitor/core": "^8.1.0",
         "@capgo/capacitor-social-login": "^8.3.8",
+        "@revenuecat/purchases-capacitor": "^12.2.2",
         "@supabase/supabase-js": "^2.98.0",
         "dexie": "^4.3.0",
         "framer-motion": "^12.34.3",
@@ -393,6 +394,10 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
+
+    "@revenuecat/purchases-capacitor": ["@revenuecat/purchases-capacitor@12.2.2", "", { "dependencies": { "@revenuecat/purchases-typescript-internal-esm": "17.42.0" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-3mlrJHw1EPuZi6S36n6a4rni67J5WDfft9dOB8m2aAGRyasjvyvrUslq8m7RHGixdNw4NilLZ8Ewa68LFJ+z/Q=="],
+
+    "@revenuecat/purchases-typescript-internal-esm": ["@revenuecat/purchases-typescript-internal-esm@17.42.0", "", {}, "sha512-8nzWr0a6iX3hrEUJdjS+ul1q+ec6uROk0CvqLu+i2VvLCrTt0Kp1zKY0IcupT7DMMrfUezGUhCaxSmLJ9irELA=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-rc.3", "", {}, "sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q=="],
 

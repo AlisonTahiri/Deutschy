@@ -4,7 +4,7 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
 import { useAuth } from '../hooks/useAuth';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, RotateCcw, ListPlus, Scissors, Combine, LogOut } from 'lucide-react';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, RotateCcw, ListPlus, LogOut } from 'lucide-react';
 import type { LocalLesson } from '../types';
 
 interface HomeProps {
@@ -12,14 +12,13 @@ interface HomeProps {
 }
 
 export function Home({ onStartExercise }: HomeProps) {
-    const { lessons, isLoading, addLesson, deleteLesson, updateLesson, resetLessonProgress, splitLesson, reattachLesson } = useVocabulary();
+    const { lessons, isLoading, addLesson, deleteLesson, updateLesson, resetLessonProgress } = useVocabulary();
     const [showNewLesson, setShowNewLesson] = useState(false);
     const [lessonName, setLessonName] = useState('');
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
     const [lessonToReset, setLessonToReset] = useState<string | null>(null);
-    const [lessonToSplit, setLessonToSplit] = useState<string | null>(null);
 
     // Edit Lesson State
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
@@ -44,13 +43,12 @@ export function Home({ onStartExercise }: HomeProps) {
                 if (scannedWords) setScannedWords(null);
                 if (editingLessonId) setEditingLessonId(null);
                 if (lessonToReset) setLessonToReset(null);
-                if (lessonToSplit) setLessonToSplit(null);
                 if (lessonToDelete) setLessonToDelete(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [scannedWords, editingLessonId, lessonToReset, lessonToSplit, lessonToDelete]);
+    }, [scannedWords, editingLessonId, lessonToReset, lessonToDelete]);
 
     const handleCreateLesson = () => {
         setError('');
@@ -362,8 +360,8 @@ export function Home({ onStartExercise }: HomeProps) {
                         const learnedCount = lesson.words.filter(w => w.learned).length;
                         const totalCount = lesson.words.length;
                         const progress = totalCount === 0 ? 0 : Math.round((learnedCount / totalCount) * 100);
-                        const hasMCQs = lesson.words.some(w => !!w.mcq);
-                        const canEditDelete = role === 'admin' || !hasMCQs;
+                        const isSynced = !!lesson.isSupabaseSynced;
+                        const canEditDelete = role === 'admin' || !isSynced;
 
                         return (
                             <div key={lesson.id} className="glass-panel flex-column justify-between gap-md" style={{ padding: '1.5rem', transition: 'transform 0.2s', cursor: 'default' }}>
@@ -379,26 +377,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                             >
                                                 <RotateCcw size={16} color="var(--text-primary)" />
                                             </button>
-                                            {lesson.splitGroupId ? (
-                                                <button
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                    onClick={() => reattachLesson(lesson.splitGroupId!)}
-                                                    title="Reattach Lesson"
-                                                >
-                                                    <Combine size={16} color="var(--text-primary)" />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '0.25rem', borderRadius: '4px', border: 'none' }}
-                                                    onClick={() => setLessonToSplit(lesson.id)}
-                                                    title="Split Lesson"
-                                                    disabled={totalCount < 2}
-                                                >
-                                                    <Scissors size={16} color={totalCount < 2 ? "var(--border-color)" : "var(--text-primary)"} />
-                                                </button>
-                                            )}
+
                                             {canEditDelete && (
                                                 <>
                                                     <button
@@ -472,40 +451,7 @@ export function Home({ onStartExercise }: HomeProps) {
                 document.body
             )}
 
-            {lessonToSplit && createPortal(
-                <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setLessonToSplit(null); }}>
-                    <div className="glass-panel flex-column gap-md animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', minWidth: '300px' }} onClick={e => e.stopPropagation()}>
-                        <h3>Split Lesson</h3>
-                        <p>How many parts would you like to split this lesson into?</p>
-                        <div className="flex-column gap-sm" style={{ marginTop: '1rem' }}>
-                            <button
-                                className="btn btn-primary"
-                                style={{ width: '100%', justifyContent: 'center' }}
-                                onClick={() => { splitLesson(lessonToSplit, 2); setLessonToSplit(null); }}
-                            >
-                                Split into 2 parts
-                            </button>
-                            <button
-                                className="btn btn-primary"
-                                style={{ width: '100%', justifyContent: 'center' }}
-                                onClick={() => { splitLesson(lessonToSplit, 3); setLessonToSplit(null); }}
-                                disabled={(lessons.find(l => l.id === lessonToSplit)?.words.length || 0) < 3}
-                                title={(lessons.find(l => l.id === lessonToSplit)?.words.length || 0) < 3 ? "Need at least 3 words to split into 3 parts." : ""}
-                            >
-                                Split into 3 parts
-                            </button>
-                            <button
-                                className="btn btn-secondary"
-                                style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
-                                onClick={() => setLessonToSplit(null)}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+
 
             {scannedWords && createPortal(
                 <div

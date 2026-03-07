@@ -126,7 +126,7 @@ export function Admin() {
                 const { data: pendingWords, error } = await supabase
                     .from('lesson_words')
                     .select('id, german, albanian')
-                    .eq('lesson_part_id', activePart.id)
+                    .eq('part_id', activePart.id)
                     .is('mcq_sentence', null)
                     .limit(10);
 

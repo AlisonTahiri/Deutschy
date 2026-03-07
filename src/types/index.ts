@@ -27,7 +27,7 @@ export interface LocalLesson {
   words: WordPair[];
   splitGroupId?: string;
   originalName?: string;
-  isOfficial?: boolean; // Flag to indicate if it came from Supabase (can't be edited/deleted by members)
+  isSupabaseSynced?: boolean; // Flag to indicate if it came from Supabase (can't be edited/deleted by members)
 }
 
 // --- Supabase DB Types ---

@@ -49,7 +49,8 @@ export class CapacitorSQLiteService implements IDatabaseService {
                 name TEXT,
                 createdAt INTEGER,
                 splitGroupId TEXT,
-                originalName TEXT
+                originalName TEXT,
+                isSupabaseSynced INTEGER DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS words (
@@ -64,6 +65,13 @@ export class CapacitorSQLiteService implements IDatabaseService {
         `;
 
         await this.db.execute(schema);
+
+        // Try adding isSupabaseSynced column for schema evolution
+        try {
+            await this.db.execute("ALTER TABLE lessons ADD COLUMN isSupabaseSynced INTEGER DEFAULT 0;");
+        } catch (e) {
+            // Column likely already exists
+        }
 
         // Seed settings if not exists
         const res = await this.db.query("SELECT * FROM settings WHERE id = 1");
@@ -109,6 +117,7 @@ export class CapacitorSQLiteService implements IDatabaseService {
             createdAt: l.createdAt,
             splitGroupId: l.splitGroupId,
             originalName: l.originalName,
+            isSupabaseSynced: l.isSupabaseSynced === 1,
             words: []
         }));
 
@@ -144,11 +153,11 @@ export class CapacitorSQLiteService implements IDatabaseService {
 
             const existing = await this.db.query("SELECT id FROM lessons WHERE id = ?", [lesson.id]);
             if (existing.values && existing.values.length > 0) {
-                await this.db.run("UPDATE lessons SET name = ?, splitGroupId = ?, originalName = ? WHERE id = ?",
-                    [lesson.name, lesson.splitGroupId, lesson.originalName, lesson.id]);
+                await this.db.run("UPDATE lessons SET name = ?, splitGroupId = ?, originalName = ?, isSupabaseSynced = ? WHERE id = ?",
+                    [lesson.name, lesson.splitGroupId, lesson.originalName, lesson.isSupabaseSynced ? 1 : 0, lesson.id]);
             } else {
-                await this.db.run("INSERT INTO lessons (id, name, createdAt, splitGroupId, originalName) VALUES (?, ?, ?, ?, ?)",
-                    [lesson.id, lesson.name, lesson.createdAt, lesson.splitGroupId, lesson.originalName]);
+                await this.db.run("INSERT INTO lessons (id, name, createdAt, splitGroupId, originalName, isSupabaseSynced) VALUES (?, ?, ?, ?, ?, ?)",
+                    [lesson.id, lesson.name, lesson.createdAt, lesson.splitGroupId, lesson.originalName, lesson.isSupabaseSynced ? 1 : 0]);
             }
 
             // Wipe existing words for this lesson

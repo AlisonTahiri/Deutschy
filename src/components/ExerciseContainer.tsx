@@ -40,7 +40,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     const isFullyLearned = unlearnedWords.length === 0 && lesson.words.length > 0;
     const wordsToPractice = isFullyLearned ? lesson.words : unlearnedWords;
     const hasMCQs = lesson.words.some(w => !!w.mcq);
-    const canDoQuiz = role === 'admin' || hasMCQs;
+    const canDoQuiz = role === 'admin' || (!!lesson.isSupabaseSynced && hasMCQs);
 
     // Handle saving word learning status
     const handleWordResult = (wordId: string, learned: boolean) => {
