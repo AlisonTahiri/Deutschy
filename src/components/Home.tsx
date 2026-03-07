@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useSettings } from '../hooks/useSettings';
 import { extractWordsFromImage, type ExtractedWordPair } from '../utils/ai';
-import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus, Scissors, Combine } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { Plus, Trash2, Play, Image as ImageIcon, Loader2, X, Edit2, Save, Download, Upload, RotateCcw, ListPlus, Scissors, Combine, LogOut } from 'lucide-react';
 import type { Lesson } from '../types';
 
 interface HomeProps {
@@ -24,6 +25,8 @@ export function Home({ onStartExercise }: HomeProps) {
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
     const [editLessonName, setEditLessonName] = useState('');
     const [editLessonWords, setEditLessonWords] = useState<any[]>([]);
+
+    const { session, signOut } = useAuth();
 
     // Image Upload State
     const { settings } = useSettings();
@@ -273,10 +276,27 @@ export function Home({ onStartExercise }: HomeProps) {
 
     const editingLesson = lessons.find(l => l.id === editingLessonId);
 
+    const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
+
     return (
         <div className="animate-fade-in flex-column gap-lg">
             <div className="flex-row justify-between align-center mobile-col gap-md">
-                <h1>Your Lessons</h1>
+                <div className="flex-column gap-xs">
+                    <h1 style={{ margin: 0 }}>Your Lessons</h1>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        Signed in as <strong>{userEmail}</strong>
+                    </span>
+                    <button
+                        onClick={() => session && signOut()}
+                        style={{
+                            background: 'none', border: 'none', color: 'var(--danger-color)',
+                            fontSize: '0.8rem', padding: 0, marginTop: '4px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '4px', width: 'fit-content'
+                        }}
+                    >
+                        <LogOut size={14} /> Sign Out
+                    </button>
+                </div>
                 <div className="flex-row gap-sm align-center mobile-flex-wrap justify-center" style={{ width: '100%' }}>
                     <input
                         type="file"
