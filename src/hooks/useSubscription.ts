@@ -25,14 +25,32 @@ export function useSubscription() {
         const initRevenueCat = async () => {
             setIsChecking(true);
             try {
-                // Initialize RevenueCat
-                await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+                // In development/debug builds, use the RevenueCat Test Store key so purchases
+                // work without a Google Play Console account. Switch to platform-specific keys
+                // for production. See: https://www.revenuecat.com/docs/test-and-launch/sandbox/test-store
+                // We skip checking isDev so we can use Test Store key on device builds
+                const testStoreKey = import.meta.env.VITE_REVENUECAT_TEST_STORE_KEY as string;
+                const androidKey = import.meta.env.VITE_REVENUECAT_ANDROID_KEY as string;
 
-                if (Capacitor.getPlatform() === 'ios') {
-                    await Purchases.configure({ apiKey: "YOUR_APPLE_API_KEY", appUserID: session.user.id });
-                } else if (Capacitor.getPlatform() === 'android') {
-                    await Purchases.configure({ apiKey: "YOUR_GOOGLE_API_KEY", appUserID: session.user.id });
+                let apiKey: string | undefined;
+                
+                // If we have a production android key and are on android, use it.
+                // Otherwise, fall back to the test store key so developer testing works on device.
+                if (Capacitor.getPlatform() === 'android' && androidKey) {
+                    apiKey = androidKey;
+                    console.log('[RevenueCat] Using Android production key');
+                } else if (testStoreKey) {
+                    apiKey = testStoreKey;
+                    console.log('[RevenueCat] Using Test Store key (fallback/development)');
                 }
+
+                if (!apiKey) {
+                    console.warn('[RevenueCat] No API key configured. Set VITE_REVENUECAT_TEST_STORE_KEY in .env for development.');
+                    return;
+                }
+
+                await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+                await Purchases.configure({ apiKey, appUserID: session.user.id });
 
                 // Check active entitlements
                 const { customerInfo } = await Purchases.getCustomerInfo();

@@ -1,9 +1,65 @@
+import { Capacitor } from '@capacitor/core';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
+import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { useState } from 'react';
 
 export function Settings() {
     const { settings, isLoading, updateApiKey, updateTheme } = useSettings();
     const { role } = useAuth();
+    const [isPurchasing, setIsPurchasing] = useState(false);
+    const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
+    const testPurchase = async () => {
+        setIsPurchasing(true);
+        setPurchaseError(null);
+        try {
+            if (!Capacitor.isNativePlatform()) {
+                console.log('[RevenueCat Debug] Web environment detected. Mocking successful purchase for B2...');
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                alert('Web Test: Mock purchase successful for B2!');
+                return;
+            }
+
+            try {
+                // Manually configure RevenueCat here to catch the exact error
+                const testStoreKey = import.meta.env.VITE_REVENUECAT_TEST_STORE_KEY as string;
+                const androidKey = import.meta.env.VITE_REVENUECAT_ANDROID_KEY as string;
+                let apiKey = (Capacitor.getPlatform() === 'android' && androidKey) ? androidKey : testStoreKey;
+
+                // Call configure to see if it throws
+                await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+                // We use any ID for testing just to see if configure itself fails
+                await Purchases.configure({ apiKey, appUserID: 'test_user_123' });
+            } catch (configError: any) {
+                alert(`Configuration failed: ${configError.message}`);
+                setPurchaseError(`Configuration Error: ${configError.message}`);
+                return;
+            }
+
+            const offerings = await Purchases.getOfferings();
+            console.log('[RevenueCat Debug] Offerings:', offerings);
+            
+            if (offerings.current && offerings.current.availablePackages.length > 0) {
+                // Buy the first available package in the current offering
+                const pkg = offerings.current.availablePackages[0];
+                console.log('[RevenueCat Debug] Purchasing package:', pkg);
+                const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
+                console.log('[RevenueCat Debug] Purchase successful. Customer info:', customerInfo);
+                alert('Test purchase successful! Check active entitlements in Logcat or useSubscription hook.');
+            } else {
+                setPurchaseError('No offerings or packages found. Did you create them in the RevenueCat Dashboard Test Store?');
+            }
+        } catch (error: any) {
+            console.error('[RevenueCat Debug] Purchase failed:', error);
+            if (!error.userCancelled) {
+                setPurchaseError(error.message || 'Purchase failed');
+            }
+        } finally {
+            setIsPurchasing(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -50,6 +106,27 @@ export function Settings() {
                                 placeholder="sk-..."
                             />
                         </div>
+                    </div>
+                )}
+
+                {/* Developer testing section - only visible to members for RevenueCat Test Store */}
+                {role === 'member' && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(218, 54, 51, 0.1)', border: '1px solid var(--danger-color)', borderRadius: 'var(--border-radius-md)' }}>
+                        <h3 style={{ color: 'var(--danger-color)' }}>Developer Testing</h3>
+                        <p style={{ fontSize: '0.9rem' }}>Trigger a Test Store purchase. You must have offerings configured in the RevenueCat Dashboard first.</p>
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ width: '100%', marginTop: '0.5rem' }}
+                            onClick={testPurchase}
+                            disabled={isPurchasing}
+                        >
+                            {isPurchasing ? 'Processing...' : 'Test Purchase Flow'}
+                        </button>
+                        {purchaseError && (
+                            <p style={{ color: 'var(--danger-color)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                                {purchaseError}
+                            </p>
+                        )}
                     </div>
                 )}
             </div>
