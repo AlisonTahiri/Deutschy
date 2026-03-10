@@ -140,48 +140,50 @@ export class CapacitorSQLiteService implements IDatabaseService {
     }
 
     async saveLesson(lesson: LocalLesson): Promise<void> {
-        // We'll perform an upsert for the lesson, then wipe and re-insert its words.
-        // This is safe because `words` only belong to one lesson, and this matches Dexie's "put" paradigm.
-
-        await this.db.execute("BEGIN TRANSACTION;");
-
         try {
-            // 1. Delete existing lesson AND words (thanks to ON DELETE CASCADE) if it exists,
-            // or we can just REPLACE INTO (Upsert). `REPLACE INTO` acts as delete-and-insert.
-            // Since `words` has `ON DELETE CASCADE`, replacing the lesson might delete words anyway depending on SQLite version.
-            // Let's explicitly delete the words and UPDATE/INSERT the lesson.
-
+            const set: any[] = [];
+            
+            // 1. Lesson Insert/Upsert
             const existing = await this.db.query("SELECT id FROM lessons WHERE id = ?", [lesson.id]);
             if (existing.values && existing.values.length > 0) {
-                await this.db.run("UPDATE lessons SET name = ?, splitGroupId = ?, originalName = ?, isSupabaseSynced = ? WHERE id = ?",
-                    [lesson.name, lesson.splitGroupId, lesson.originalName, lesson.isSupabaseSynced ? 1 : 0, lesson.id]);
+                set.push({
+                    statement: "UPDATE lessons SET name = ?, splitGroupId = ?, originalName = ?, isSupabaseSynced = ? WHERE id = ?",
+                    values: [lesson.name, lesson.splitGroupId || null, lesson.originalName || null, lesson.isSupabaseSynced ? 1 : 0, lesson.id]
+                });
             } else {
-                await this.db.run("INSERT INTO lessons (id, name, createdAt, splitGroupId, originalName, isSupabaseSynced) VALUES (?, ?, ?, ?, ?, ?)",
-                    [lesson.id, lesson.name, lesson.createdAt, lesson.splitGroupId, lesson.originalName, lesson.isSupabaseSynced ? 1 : 0]);
+                set.push({
+                    statement: "INSERT INTO lessons (id, name, createdAt, splitGroupId, originalName, isSupabaseSynced) VALUES (?, ?, ?, ?, ?, ?)",
+                    values: [lesson.id, lesson.name, lesson.createdAt, lesson.splitGroupId || null, lesson.originalName || null, lesson.isSupabaseSynced ? 1 : 0]
+                });
             }
 
-            // Wipe existing words for this lesson
-            await this.db.run("DELETE FROM words WHERE lessonId = ?", [lesson.id]);
+            // 2. Wipe existing words
+            set.push({
+                statement: "DELETE FROM words WHERE lessonId = ?",
+                values: [lesson.id]
+            });
 
-            // Re-insert ALL words attached to this lesson object
-            for (const w of lesson.words) {
-                await this.db.run(
-                    "INSERT INTO words (id, lessonId, german, albanian, learned, failCount, mcq) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    [
-                        w.id,
-                        lesson.id,
-                        w.german,
-                        w.albanian,
-                        w.learned ? 1 : 0,
-                        w.failCount || 0,
-                        w.mcq ? JSON.stringify(w.mcq) : null
-                    ]
-                );
+            // 3. Re-insert words
+            if (lesson.words && lesson.words.length > 0) {
+                const insertWordsStatement = "INSERT INTO words (id, lessonId, german, albanian, learned, failCount, mcq) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                for (const w of lesson.words) {
+                    set.push({
+                        statement: insertWordsStatement,
+                        values: [
+                            w.id,
+                            lesson.id,
+                            w.german,
+                            w.albanian,
+                            w.learned ? 1 : 0,
+                            w.failCount || 0,
+                            w.mcq ? JSON.stringify(w.mcq) : null
+                        ]
+                    });
+                }
             }
 
-            await this.db.execute("COMMIT TRANSACTION;");
+            await this.db.executeSet(set);
         } catch (error) {
-            await this.db.execute("ROLLBACK TRANSACTION;");
             console.error("Failed to save lesson", error);
             throw error;
         }

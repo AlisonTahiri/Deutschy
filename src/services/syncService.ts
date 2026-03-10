@@ -37,6 +37,9 @@ export const syncService = {
             if (wErr) throw wErr;
 
             // 4. Transform and save to Local DB
+            // First, get currently loaded lessons to preserve progress
+            const existingLessons = await dbService.getLessons();
+
             // We map each Server Part to a Local Lesson
             for (const part of parts) {
                 const parentLesson = lessons.find(l => l.id === part.lesson_id);
@@ -44,25 +47,29 @@ export const syncService = {
                 const localLessonName = parentLesson ? `${parentLesson.name} - ${part.name}` : part.name;
 
                 const partWords = (words || []).filter(w => w.part_id === part.id);
+                const existingLesson = existingLessons.find(l => l.id === part.id);
 
-                const mappedWords: WordPair[] = partWords.map(w => ({
-                    id: w.id,
-                    german: w.german,
-                    albanian: w.albanian,
-                    learned: false,
-                    failCount: 0,
-                    mcq: w.mcq_sentence ? {
-                        sentence: w.mcq_sentence,
-                        sentenceTranslation: w.mcq_sentence_translation || '',
-                        options: w.mcq_options || [],
-                        correctAnswer: w.mcq_correct_answer || ''
-                    } : undefined
-                }));
+                const mappedWords: WordPair[] = partWords.map(w => {
+                    const existingWord = existingLesson?.words.find(ew => ew.id === w.id);
+                    return {
+                        id: w.id,
+                        german: w.german,
+                        albanian: w.albanian,
+                        learned: existingWord ? existingWord.learned : false,
+                        failCount: existingWord ? existingWord.failCount : 0,
+                        mcq: w.mcq_sentence ? {
+                            sentence: w.mcq_sentence,
+                            sentenceTranslation: w.mcq_sentence_translation || '',
+                            options: w.mcq_options || [],
+                            correctAnswer: w.mcq_correct_answer || ''
+                        } : undefined
+                    };
+                });
 
                 const localLesson: LocalLesson = {
                     id: part.id,
                     name: localLessonName,
-                    createdAt: Date.now(),
+                    createdAt: existingLesson ? existingLesson.createdAt : Date.now(),
                     words: mappedWords,
                     isSupabaseSynced: true
                 };

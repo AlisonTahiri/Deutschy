@@ -10,6 +10,7 @@ import { Auth } from './components/Auth';
 import { SocialLoginService } from './services/auth/SocialLoginService';
 import { Admin } from './components/Admin';
 import { useSubscription } from './hooks/useSubscription';
+import { Paywall } from './components/Paywall';
 
 export type ViewState = 'home' | 'settings' | 'exercise' | 'admin';
 
@@ -17,10 +18,10 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
-  const { session, isLoading: authLoading } = useAuth();
+  const { session, role, isLoading: authLoading } = useAuth();
 
   // Initialize revenuecat and sync subscription
-  useSubscription();
+  const { isChecking, activeLevelId, checkSubscription } = useSubscription();
 
   useEffect(() => {
     const initApp = async () => {
@@ -65,7 +66,13 @@ function App() {
   return (
     <Layout currentView={currentView} onNavigate={handleNavigate}>
       <BackgroundMCQGenerator />
-      {currentView === 'home' && <Home onStartExercise={handleStartExercise} />}
+      {currentView === 'home' && (
+        role === 'member' && !activeLevelId && !isChecking ? (
+          <Paywall onPurchaseSuccess={checkSubscription} />
+        ) : (
+          <Home onStartExercise={handleStartExercise} />
+        )
+      )}
       {currentView === 'settings' && <Settings />}
       {currentView === 'admin' && <Admin />}
       {currentView === 'exercise' && activeLessonId && (
