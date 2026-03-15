@@ -16,6 +16,7 @@
     "@capacitor/core": "^8.1.0",
     "@capgo/capacitor-social-login": "^8.3.8",
     "@revenuecat/purchases-capacitor": "^12.2.2",
+    "@revenuecat/purchases-js": "^1.27.0",
     "@supabase/supabase-js": "^2.98.0",
     "dexie": "^4.3.0",
     "framer-motion": "^12.34.3",
