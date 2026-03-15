@@ -11,7 +11,7 @@ export class SocialLoginService {
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    // Can add redirectTo here if needed
+                    redirectTo: window.location.origin,
                 }
             });
             if (error) throw error;
