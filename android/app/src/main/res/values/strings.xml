@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Deutchi</string>
-    <string name="title_activity_main">Deutchi</string>
-    <string name="package_name">com.duitche.app</string>
-    <string name="custom_url_scheme">com.duitche.app</string>
-</resources>

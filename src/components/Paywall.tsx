@@ -1,15 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Purchases } from '@revenuecat/purchases-capacitor';
-import type { PurchasesPackage } from '@revenuecat/purchases-capacitor';
-import { Capacitor } from '@capacitor/core';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+
+export interface MockPackage {
+    identifier: string;
+    packageType: string;
+    product: {
+        identifier: string;
+        description: string;
+        title: string;
+        price: number;
+        priceString: string;
+        currencyCode: string;
+        productCategory: string;
+    }
+}
 
 interface PaywallProps {
     onPurchaseSuccess: () => Promise<void>;
 }
 
 export function Paywall({ onPurchaseSuccess }: PaywallProps) {
-    const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+    const [packages, setPackages] = useState<MockPackage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -18,61 +29,49 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
         const fetchOfferings = async () => {
             try {
                 setIsLoading(true);
-                if (!Capacitor.isNativePlatform()) {
-                    // Mock data for web development
-                    console.log('[Paywall] Mocking packages for web environment');
-                    setPackages([
-                        {
-                            identifier: '$rc_monthly',
-                            packageType: 'MONTHLY',
-                            product: {
-                                identifier: 'monthly',
-                                description: 'Monthly subscription',
-                                title: 'Monthly',
-                                price: 9.99,
-                                priceString: '$9.99',
-                                currencyCode: 'USD',
-                                productCategory: 'SUBSCRIPTION'
-                            }
-                        } as unknown as PurchasesPackage,
-                        {
-                            identifier: '$rc_annual',
-                            packageType: 'ANNUAL',
-                            product: {
-                                identifier: 'yearly',
-                                description: 'Yearly subscription',
-                                title: 'Yearly',
-                                price: 99.99,
-                                priceString: '$99.99',
-                                currencyCode: 'USD',
-                                productCategory: 'SUBSCRIPTION'
-                            }
-                        } as unknown as PurchasesPackage,
-                        {
-                            identifier: '$rc_lifetime',
-                            packageType: 'LIFETIME',
-                            product: {
-                                identifier: 'lifetime',
-                                description: 'Lifetime access',
-                                title: 'Lifetime',
-                                price: 199.99,
-                                priceString: '$199.99',
-                                currencyCode: 'USD',
-                                productCategory: 'NON_SUBSCRIPTION'
-                            }
-                        } as unknown as PurchasesPackage
-                    ]);
-                    setIsLoading(false);
-                    return;
-                }
-
-                const offerings = await Purchases.getOfferings();
-                if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
-                    console.log('Available packages:', offerings.current.availablePackages);
-                    setPackages(offerings.current.availablePackages);
-                } else {
-                    setError('No subscription products are available right now. Please try again later.');
-                }
+                // Mock data for web development
+                console.log('[Paywall] Mocking packages for web environment');
+                setPackages([
+                    {
+                        identifier: '$rc_monthly',
+                        packageType: 'MONTHLY',
+                        product: {
+                            identifier: 'monthly',
+                            description: 'Monthly subscription',
+                            title: 'Monthly',
+                            price: 9.99,
+                            priceString: '$9.99',
+                            currencyCode: 'USD',
+                            productCategory: 'SUBSCRIPTION'
+                        }
+                    },
+                    {
+                        identifier: '$rc_annual',
+                        packageType: 'ANNUAL',
+                        product: {
+                            identifier: 'yearly',
+                            description: 'Yearly subscription',
+                            title: 'Yearly',
+                            price: 99.99,
+                            priceString: '$99.99',
+                            currencyCode: 'USD',
+                            productCategory: 'SUBSCRIPTION'
+                        }
+                    },
+                    {
+                        identifier: '$rc_lifetime',
+                        packageType: 'LIFETIME',
+                        product: {
+                            identifier: 'lifetime',
+                            description: 'Lifetime access',
+                            title: 'Lifetime',
+                            price: 199.99,
+                            priceString: '$199.99',
+                            currencyCode: 'USD',
+                            productCategory: 'NON_SUBSCRIPTION'
+                        }
+                    }
+                ]);
             } catch (err: any) {
                 console.error('Error fetching offerings:', err);
                 setError(`Failed to load subscription options: ${err.message || 'Unknown error'}`);
@@ -84,29 +83,14 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
         fetchOfferings();
     }, []);
 
-    const handlePurchase = async (pkg: PurchasesPackage) => {
+    const handlePurchase = async (_pkg: MockPackage) => {
         try {
             setIsPurchasing(true);
             setError(null);
 
-            if (!Capacitor.isNativePlatform()) {
-                console.log('[Paywall] Web environment: mocking successful purchase');
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                await onPurchaseSuccess();
-                return;
-            }
-
-            const purchaseResult = await Purchases.purchasePackage({ aPackage: pkg });
-            
-            // Check if the purchase granted the pro_b2 entitlement
-            if (purchaseResult.customerInfo.entitlements.active['pro_b2']) {
-                console.log('Purchase successful! Entitlement granted.');
-                
-                // Trigger the callback to checkSubscription() and re-render the app
-                await onPurchaseSuccess();
-            } else {
-                setError('Purchase completed, but the expected entitlement was not granted. Please contact support.');
-            }
+            console.log('[Paywall] Web environment: mocking successful purchase');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await onPurchaseSuccess();
         } catch (err: any) {
             // Check if it's a user cancellation (error code can vary, but standard behavior is to just ignore it)
             if (err.userCancelled) {

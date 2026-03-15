@@ -1,7 +1,5 @@
-import { Capacitor } from '@capacitor/core';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
-import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import { useState } from 'react';
 
 export function Settings() {
@@ -14,43 +12,11 @@ export function Settings() {
         setIsPurchasing(true);
         setPurchaseError(null);
         try {
-            if (!Capacitor.isNativePlatform()) {
-                console.log('[RevenueCat Debug] Web environment detected. Mocking successful purchase for B2...');
-                // Simulate network delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                alert('Web Test: Mock purchase successful for B2!');
-                return;
-            }
-
-            try {
-                // Manually configure RevenueCat here to catch the exact error
-                const testStoreKey = import.meta.env.VITE_REVENUECAT_TEST_STORE_KEY as string;
-                const androidKey = import.meta.env.VITE_REVENUECAT_ANDROID_KEY as string;
-                let apiKey = (Capacitor.getPlatform() === 'android' && androidKey) ? androidKey : testStoreKey;
-
-                // Call configure to see if it throws
-                await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-                // We use any ID for testing just to see if configure itself fails
-                await Purchases.configure({ apiKey, appUserID: 'test_user_123' });
-            } catch (configError: any) {
-                alert(`Configuration failed: ${configError.message}`);
-                setPurchaseError(`Configuration Error: ${configError.message}`);
-                return;
-            }
-
-            const offerings = await Purchases.getOfferings();
-            console.log('[RevenueCat Debug] Offerings:', offerings);
-            
-            if (offerings.current && offerings.current.availablePackages.length > 0) {
-                // Buy the first available package in the current offering
-                const pkg = offerings.current.availablePackages[0];
-                console.log('[RevenueCat Debug] Purchasing package:', pkg);
-                const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
-                console.log('[RevenueCat Debug] Purchase successful. Customer info:', customerInfo);
-                alert('Test purchase successful! Check active entitlements in Logcat or useSubscription hook.');
-            } else {
-                setPurchaseError('No offerings or packages found. Did you create them in the RevenueCat Dashboard Test Store?');
-            }
+            console.log('[RevenueCat Debug] Web environment detected. Mocking successful purchase for B2...');
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            alert('Web Test: Mock purchase successful for B2!');
+            return;
         } catch (error: any) {
             console.error('[RevenueCat Debug] Purchase failed:', error);
             if (!error.userCancelled) {

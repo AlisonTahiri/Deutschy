@@ -74,7 +74,7 @@ export const syncService = {
                     isSupabaseSynced: true
                 };
 
-                // Use the configured database provider (Capacitor DB / Dexie)
+                // Use the configured database provider (Dexie)
                 await dbService.saveLesson(localLesson);
             }
 
