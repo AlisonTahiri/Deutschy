@@ -64,7 +64,7 @@ export function Auth() {
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent'
                     }}>
-                        Deutchi
+                        Dardha
                     </h1>
                     <p style={{ margin: 0, color: 'var(--text-secondary)', textAlign: 'center' }}>
                         Learn German vocabulary seamlessly.

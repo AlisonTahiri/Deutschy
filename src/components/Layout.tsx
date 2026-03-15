@@ -38,7 +38,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={24} />
-                        <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)' }}>Deutchi</h2>
+                        <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)' }}>Dardha</h2>
                     </div>
                 </header> */}
 
@@ -139,7 +139,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', padding: '0 0.5rem' }}>
                     <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={28} />
-                    <h2 style={{ fontSize: '1.25rem', marginBottom: 0, color: 'var(--text-primary)' }}>Deutchi</h2>
+                    <h2 style={{ fontSize: '1.25rem', marginBottom: 0, color: 'var(--text-primary)' }}>Dardha</h2>
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
