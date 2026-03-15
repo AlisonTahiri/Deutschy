@@ -25,7 +25,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
     if (isMobile) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', paddingBottom: '70px' }}>
-                <header style={{
+                {/* <header style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -40,7 +40,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                         <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={24} />
                         <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)' }}>Deutchi</h2>
                     </div>
-                </header>
+                </header> */}
 
                 <main style={{ flex: 1, overflowY: 'auto' }}>
                     <div className="container">
