@@ -28,6 +28,11 @@ export interface LocalLesson {
   splitGroupId?: string;
   originalName?: string;
   isSupabaseSynced?: boolean; // Flag to indicate if it came from Supabase (can't be edited/deleted by members)
+  level_id?: string;
+  level_name?: string;
+  lesson_id?: string;
+  lesson_name?: string;
+  part_name?: string;
 }
 
 // --- Supabase DB Types ---

@@ -9,6 +9,14 @@ export const syncService = {
      */
     async syncLevelToLocal(levelId: string): Promise<void> {
         try {
+            // 0. Fetch level
+            const { data: level, error: lvlErr } = await supabase
+                .from('levels')
+                .select('id, name')
+                .eq('id', levelId)
+                .single();
+            if (lvlErr) throw lvlErr;
+
             // 1. Fetch lessons
             const { data: lessons, error: leErr } = await supabase
                 .from('lessons')
@@ -71,7 +79,12 @@ export const syncService = {
                     name: localLessonName,
                     createdAt: existingLesson ? existingLesson.createdAt : Date.now(),
                     words: mappedWords,
-                    isSupabaseSynced: true
+                    isSupabaseSynced: true,
+                    level_id: levelId,
+                    level_name: level.name,
+                    lesson_id: parentLesson?.id,
+                    lesson_name: parentLesson?.name,
+                    part_name: part.name
                 };
 
                 // Use the configured database provider (Dexie)
