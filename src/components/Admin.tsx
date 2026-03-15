@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import { adminContentService } from '../services/db/adminContentService';
-import type { DbLevel, DbLesson, DbLessonPart, DbLessonWord, LearningLevel } from '../types';
+import type { DbLevel, DbMethod, DbLesson, DbLessonPart, DbLessonWord, LearningLevel } from '../types';
 import { Plus, Trash2, Folder, FileText, List, Image as ImageIcon, Loader2, Edit2, Check, X, Play, Square } from 'lucide-react';
 import { extractWordsFromImage, generateBatchMCQ } from '../utils/ai';
 import { supabase } from '../lib/supabase';
@@ -13,12 +13,14 @@ export function Admin() {
 
     // Data State
     const [levels, setLevels] = useState<DbLevel[]>([]);
+    const [methods, setMethods] = useState<DbMethod[]>([]);
     const [lessons, setLessons] = useState<DbLesson[]>([]);
     const [parts, setParts] = useState<DbLessonPart[]>([]);
     const [words, setWords] = useState<DbLessonWord[]>([]);
 
     // Selection State
     const [activeLevel, setActiveLevel] = useState<DbLevel | null>(null);
+    const [activeMethod, setActiveMethod] = useState<DbMethod | null>(null);
     const [activeLesson, setActiveLesson] = useState<DbLesson | null>(null);
     const [activePart, setActivePart] = useState<DbLessonPart | null>(null);
 
@@ -33,6 +35,7 @@ export function Admin() {
 
     // Input State
     const [newLevelName, setNewLevelName] = useState('');
+    const [newMethodName, setNewMethodName] = useState('');
     const [newLessonName, setNewLessonName] = useState('');
     const [newPartName, setNewPartName] = useState('');
 
@@ -57,7 +60,9 @@ export function Admin() {
         setIsLoading(true);
         try {
             const data = await adminContentService.getLevels();
-            setLevels(data);
+            // Sort levels alphabetically
+            const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+            setLevels(sortedData);
         } catch (err: any) {
             setError('Failed to load levels: ' + err.message);
         } finally {
@@ -65,15 +70,35 @@ export function Admin() {
         }
     };
 
-    const loadLessonsForLevel = async (level: DbLevel) => {
+    const loadMethodsForLevel = async (level: DbLevel) => {
         setIsLoading(true);
         setActiveLevel(level);
+        setActiveMethod(null);
+        setActiveLesson(null);
+        setActivePart(null);
+        setLessons([]);
+        setParts([]);
+        setWords([]);
+        try {
+            const data = await adminContentService.getMethodsForLevel(level.id);
+            const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+            setMethods(sortedData);
+        } catch (err: any) {
+            setError('Failed to load methods: ' + err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loadLessonsForMethod = async (method: DbMethod) => {
+        setIsLoading(true);
+        setActiveMethod(method);
         setActiveLesson(null);
         setActivePart(null);
         setParts([]);
         setWords([]);
         try {
-            const data = await adminContentService.getLessonsForLevel(level.id);
+            const data = await adminContentService.getLessonsForMethod(method.id);
             setLessons(data);
         } catch (err: any) {
             setError('Failed to load lessons: ' + err.message);
@@ -81,6 +106,7 @@ export function Admin() {
             setIsLoading(false);
         }
     };
+
 
     const loadPartsForLesson = async (lesson: DbLesson) => {
         setIsLoading(true);
@@ -202,12 +228,35 @@ export function Admin() {
         }
     };
 
-    const handleCreateLesson = async () => {
-        if (!newLessonName.trim() || !activeLevel) return;
+    const handleCreateMethod = async () => {
+        if (!newMethodName.trim() || !activeLevel) return;
         try {
-            await adminContentService.createLesson(activeLevel.id, newLessonName.trim());
+            await adminContentService.createMethod(activeLevel.id, newMethodName.trim());
+            setNewMethodName('');
+            loadMethodsForLevel(activeLevel);
+        } catch (err: any) {
+            setError('Failed to create method: ' + err.message);
+        }
+    };
+
+    const handleDeleteMethod = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Are you sure? This will delete all lessons and parts inside this method.')) return;
+        try {
+            await adminContentService.deleteMethod(id);
+            if (activeMethod?.id === id) setActiveMethod(null);
+            if (activeLevel) loadMethodsForLevel(activeLevel);
+        } catch (err: any) {
+            setError('Failed to delete method: ' + err.message);
+        }
+    };
+
+    const handleCreateLesson = async () => {
+        if (!newLessonName.trim() || !activeMethod) return;
+        try {
+            await adminContentService.createLesson(activeMethod.id, newLessonName.trim());
             setNewLessonName('');
-            loadLessonsForLevel(activeLevel);
+            loadLessonsForMethod(activeMethod);
         } catch (err: any) {
             setError('Failed to create lesson: ' + err.message);
         }
@@ -219,9 +268,9 @@ export function Admin() {
         try {
             await adminContentService.deleteLesson(id);
             if (activeLesson?.id === id) setActiveLesson(null);
-            if (activeLevel) loadLessonsForLevel(activeLevel);
+            if (activeMethod) loadLessonsForMethod(activeMethod);
         } catch (err: any) {
-            setError('Failed to delete: ' + err.message);
+            setError('Failed to delete lesson: ' + err.message);
         }
     };
 
@@ -290,7 +339,7 @@ export function Admin() {
         try {
             await adminContentService.updateLesson(id, { name: editValue1.trim() });
             setEditingId(null);
-            if (activeLevel) loadLessonsForLevel(activeLevel);
+            if (activeMethod) loadLessonsForMethod(activeMethod);
         } catch (err: any) {
             setError('Failed to update: ' + err.message);
         }
@@ -412,16 +461,24 @@ export function Admin() {
             {error && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
 
             {/* Breadcrumb Navigation */}
-            {(activeLevel || activeLesson || activePart) && (
+            {(activeLevel || activeMethod || activeLesson || activePart) && (
                 <div className="flex-row gap-sm align-center glass-panel" style={{ padding: '0.75rem 1rem' }}>
-                    <button className="btn btn-subtle" style={{ padding: '0.25rem' }} onClick={() => { setActiveLevel(null); setActiveLesson(null); setActivePart(null); }}>
+                    <button className="btn btn-subtle" style={{ padding: '0.25rem' }} onClick={() => { setActiveLevel(null); setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
                         <Folder size={18} /> Levels
                     </button>
                     {activeLevel && (
                         <>
                             <span>/</span>
-                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activeLesson ? 600 : 'normal', color: !activeLesson ? 'var(--accent-color)' : 'inherit' }} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
+                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activeMethod ? 600 : 'normal', color: !activeMethod ? 'var(--accent-color)' : 'inherit' }} onClick={() => { setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
                                 <FileText size={18} /> {activeLevel.name}
+                            </button>
+                        </>
+                    )}
+                    {activeMethod && (
+                        <>
+                            <span>/</span>
+                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activeLesson ? 600 : 'normal', color: !activeLesson ? 'var(--accent-color)' : 'inherit' }} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
+                                <Folder size={18} /> {activeMethod.name}
                             </button>
                         </>
                     )}
@@ -465,7 +522,7 @@ export function Admin() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
                         {levels.map(level => (
-                            <div key={level.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadLessonsForLevel(level)}>
+                            <div key={level.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadMethodsForLevel(level)}>
                                 <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
                                     <Folder size={24} color="var(--accent-color)" />
                                     {editingId === level.id ? (
@@ -510,14 +567,51 @@ export function Admin() {
                 </div>
             )}
 
-            {/* VIEW: LESSONS (Inside a Level) */}
-            {activeLevel && !activeLesson && !isLoading && (
+            {/* VIEW: METHODS (Inside a Level) */}
+            {activeLevel && !activeMethod && !isLoading && (
                 <div className="flex-column gap-md animate-fade-in">
                     <div className="glass-panel flex-row gap-sm align-center">
                         <input
                             type="text"
                             className="input-field"
-                            placeholder="New Lesson Title (e.g., Greetings & Introductions)"
+                            placeholder="New Method Name (e.g., Schritte)"
+                            value={newMethodName}
+                            onChange={(e) => setNewMethodName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCreateMethod()}
+                        />
+                        <button className="btn btn-primary" onClick={handleCreateMethod} disabled={!newMethodName.trim()}>
+                            <Plus size={18} /> Add Method
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                        {methods.map(method => (
+                            <div key={method.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadLessonsForMethod(method)}>
+                                <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
+                                    <Folder size={24} color="var(--success-color)" />
+                                    {/* Inline editing for method is currently skipped to keep code short, could be added later */}
+                                    <h3 style={{ margin: 0 }}>{method.name}</h3>
+                                </div>
+                                <div className="flex-row gap-xs" onClick={e => e.stopPropagation()}>
+                                    <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleDeleteMethod(method.id, e)}>
+                                        <Trash2 size={18} color="var(--danger-color)" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {methods.length === 0 && <p style={{ color: 'var(--text-secondary)', padding: '1rem' }}>No learning methods created yet.</p>}
+                    </div>
+                </div>
+            )}
+
+            {/* VIEW: LESSONS (Inside a Method) */}
+            {activeMethod && !activeLesson && !isLoading && (
+                <div className="flex-column gap-md animate-fade-in">
+                    <div className="glass-panel flex-row gap-sm align-center">
+                        <input
+                            type="text"
+                            className="input-field"
+                            placeholder="New Lesson Title (e.g., Lektion 1)"
                             value={newLessonName}
                             onChange={(e) => setNewLessonName(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCreateLesson()}

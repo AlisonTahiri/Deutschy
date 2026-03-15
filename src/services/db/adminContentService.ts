@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { DbLevel, DbLesson, DbLessonPart, DbLessonWord } from '../../types';
+import type { DbLevel, DbMethod, DbLesson, DbLessonPart, DbLessonWord } from '../../types';
 
 export const adminContentService = {
     // --- Levels ---
@@ -38,10 +38,10 @@ export const adminContentService = {
         if (error) throw error;
     },
 
-    // --- Lessons ---
-    async getLessonsForLevel(levelId: string): Promise<DbLesson[]> {
+    // --- Methods ---
+    async getMethodsForLevel(levelId: string): Promise<DbMethod[]> {
         const { data, error } = await supabase
-            .from('lessons')
+            .from('methods')
             .select('*')
             .eq('level_id', levelId)
             .order('order_index', { ascending: true });
@@ -49,10 +49,47 @@ export const adminContentService = {
         return data || [];
     },
 
-    async createLesson(levelId: string, name: string, description: string = ''): Promise<DbLesson> {
+    async createMethod(levelId: string, name: string, description: string = ''): Promise<DbMethod> {
+        const { data, error } = await supabase
+            .from('methods')
+            .insert([{ level_id: levelId, name, description }])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async updateMethod(id: string, updates: Partial<Omit<DbMethod, 'id' | 'created_at'>>): Promise<DbMethod> {
+        const { data, error } = await supabase
+            .from('methods')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteMethod(id: string): Promise<void> {
+        const { error } = await supabase.from('methods').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // --- Lessons ---
+    async getLessonsForMethod(methodId: string): Promise<DbLesson[]> {
         const { data, error } = await supabase
             .from('lessons')
-            .insert([{ level_id: levelId, name, description }])
+            .select('*')
+            .eq('method_id', methodId)
+            .order('order_index', { ascending: true });
+        if (error) throw error;
+        return data || [];
+    },
+
+    async createLesson(methodId: string, name: string, description: string = ''): Promise<DbLesson> {
+        const { data, error } = await supabase
+            .from('lessons')
+            .insert([{ method_id: methodId, name, description }])
             .select()
             .single();
         if (error) throw error;

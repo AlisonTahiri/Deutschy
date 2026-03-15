@@ -30,6 +30,8 @@ export interface LocalLesson {
   isSupabaseSynced?: boolean; // Flag to indicate if it came from Supabase (can't be edited/deleted by members)
   level_id?: string;
   level_name?: string;
+  method_id?: string;
+  method_name?: string;
   lesson_id?: string;
   lesson_name?: string;
   part_name?: string;
@@ -45,9 +47,18 @@ export interface DbLevel {
   created_at: string;
 }
 
-export interface DbLesson {
+export interface DbMethod {
   id: string;
   level_id: string;
+  name: string;
+  description: string | null;
+  order_index: number;
+  created_at: string;
+}
+
+export interface DbLesson {
+  id: string;
+  method_id: string;
   name: string;
   description: string | null;
   order_index: number;

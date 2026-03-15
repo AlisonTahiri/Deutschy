@@ -17,17 +17,27 @@ export const syncService = {
                 .single();
             if (lvlErr) throw lvlErr;
 
-            // 1. Fetch lessons
-            const { data: lessons, error: leErr } = await supabase
-                .from('lessons')
+            // 1. Fetch methods for this level
+            const { data: methods, error: mErr } = await supabase
+                .from('methods')
                 .select('id, name')
                 .eq('level_id', levelId);
+            if (mErr) throw mErr;
+            if (!methods || methods.length === 0) return;
+
+            const methodIds = methods.map(m => m.id);
+
+            // 2. Fetch lessons for these methods
+            const { data: lessons, error: leErr } = await supabase
+                .from('lessons')
+                .select('id, name, method_id')
+                .in('method_id', methodIds);
             if (leErr) throw leErr;
             if (!lessons || lessons.length === 0) return;
 
             const lessonIds = lessons.map(l => l.id);
 
-            // 2. Fetch parts
+            // 3. Fetch parts
             const { data: parts, error: pErr } = await supabase
                 .from('lesson_parts')
                 .select('id, lesson_id, name')
@@ -37,21 +47,19 @@ export const syncService = {
 
             const partIds = parts.map(p => p.id);
 
-            // 3. Fetch words
+            // 4. Fetch words
             const { data: words, error: wErr } = await supabase
                 .from('lesson_words')
                 .select('*')
                 .in('part_id', partIds);
             if (wErr) throw wErr;
 
-            // 4. Transform and save to Local DB
-            // First, get currently loaded lessons to preserve progress
+            // 5. Transform and save to Local DB, preserving existing progress
             const existingLessons = await dbService.getLessons();
 
-            // We map each Server Part to a Local Lesson
             for (const part of parts) {
                 const parentLesson = lessons.find(l => l.id === part.lesson_id);
-                // e.g. "Sicher B2 Lektion 1 - Part 1"
+                const parentMethod = methods.find(m => m.id === parentLesson?.method_id);
                 const localLessonName = parentLesson ? `${parentLesson.name} - ${part.name}` : part.name;
 
                 const partWords = (words || []).filter(w => w.part_id === part.id);
@@ -82,12 +90,13 @@ export const syncService = {
                     isSupabaseSynced: true,
                     level_id: levelId,
                     level_name: level.name,
+                    method_id: parentMethod?.id,
+                    method_name: parentMethod?.name,
                     lesson_id: parentLesson?.id,
                     lesson_name: parentLesson?.name,
                     part_name: part.name
                 };
 
-                // Use the configured database provider (Dexie)
                 await dbService.saveLesson(localLesson);
             }
 
