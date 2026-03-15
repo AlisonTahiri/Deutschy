@@ -2,6 +2,9 @@ import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { useState } from 'react';
 
+const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed';
+const inputField = 'w-full px-4 py-3 rounded-xl border text-base outline-none transition-all duration-200 focus:ring-2 focus:ring-[var(--accent-color)]';
+
 export function Settings() {
     const { settings, isLoading, updateApiKey, updateTheme } = useSettings();
     const { role } = useAuth();
@@ -13,15 +16,11 @@ export function Settings() {
         setPurchaseError(null);
         try {
             console.log('[RevenueCat Debug] Web environment detected. Mocking successful purchase for B2...');
-            // Simulate network delay
             await new Promise(resolve => setTimeout(resolve, 1500));
             alert('Web Test: Mock purchase successful for B2!');
-            return;
         } catch (error: any) {
             console.error('[RevenueCat Debug] Purchase failed:', error);
-            if (!error.userCancelled) {
-                setPurchaseError(error.message || 'Purchase failed');
-            }
+            if (!error.userCancelled) setPurchaseError(error.message || 'Purchase failed');
         } finally {
             setIsPurchasing(false);
         }
@@ -29,25 +28,29 @@ export function Settings() {
 
     if (isLoading) {
         return (
-            <div className="animate-fade-in flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
+            <div className="flex flex-col items-center justify-center gap-4 animate-[fadeIn_0.4s_ease-out]" style={{ minHeight: '50vh' }}>
                 <h2>Loading Settings...</h2>
             </div>
         );
     }
 
     return (
-        <div className="animate-fade-in flex-column gap-md" style={{ padding: '0 0.5rem' }}>
+        <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out] px-2">
             <h1>Settings</h1>
 
-            <div className="glass-panel border-only flex-column gap-md" style={{ maxWidth: '600px', width: '100%' }}>
+            <div
+                className="flex flex-col gap-4 border rounded-3xl p-8 max-w-[600px] w-full"
+                style={{ borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}
+            >
                 <div>
                     <h3>Appearance</h3>
                     <p>Choose your preferred color theme. Light mode is easy on the eyes during the day.</p>
-                    <div className="flex-column gap-sm">
-                        <label htmlFor="theme" style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Theme</label>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="theme" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>Theme</label>
                         <select
                             id="theme"
-                            className="input-field select-field"
+                            className={`${inputField} appearance-none`}
+                            style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                             value={settings.theme}
                             onChange={(e) => updateTheme(e.target.value as 'dark' | 'light')}
                         >
@@ -58,15 +61,16 @@ export function Settings() {
                 </div>
 
                 {role === 'admin' && (
-                    <div style={{ marginTop: '1rem' }}>
+                    <div className="mt-4">
                         <h3>AI Configuration</h3>
                         <p>Provide your Google Gemini or OpenAI API key to generate context sentences for exercises.</p>
-                        <div className="flex-column gap-sm">
-                            <label htmlFor="apiKey" style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>API Key</label>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="apiKey" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>API Key</label>
                             <input
                                 id="apiKey"
                                 type="password"
-                                className="input-field"
+                                className={inputField}
+                                style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                                 value={settings.aiApiKey}
                                 onChange={(e) => updateApiKey(e.target.value)}
                                 placeholder="sk-..."
@@ -75,23 +79,19 @@ export function Settings() {
                     </div>
                 )}
 
-                {/* Developer testing section - only visible to members for RevenueCat Test Store */}
                 {role === 'member' && (
-                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(218, 54, 51, 0.1)', border: '1px solid var(--danger-color)', borderRadius: 'var(--border-radius-md)' }}>
+                    <div className="mt-4 p-4 rounded-xl border" style={{ background: 'rgba(218, 54, 51, 0.1)', borderColor: 'var(--danger-color)' }}>
                         <h3 style={{ color: 'var(--danger-color)' }}>Developer Testing</h3>
-                        <p style={{ fontSize: '0.9rem' }}>Trigger a Test Store purchase. You must have offerings configured in the RevenueCat Dashboard first.</p>
-                        <button 
-                            className="btn btn-primary" 
-                            style={{ width: '100%', marginTop: '0.5rem' }}
+                        <p className="text-sm">Trigger a Test Store purchase. You must have offerings configured in the RevenueCat Dashboard first.</p>
+                        <button
+                            className={`${btnPrimary} w-full mt-2`}
                             onClick={testPurchase}
                             disabled={isPurchasing}
                         >
                             {isPurchasing ? 'Processing...' : 'Test Purchase Flow'}
                         </button>
                         {purchaseError && (
-                            <p style={{ color: 'var(--danger-color)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                                {purchaseError}
-                            </p>
+                            <p className="text-sm mt-2" style={{ color: 'var(--danger-color)' }}>{purchaseError}</p>
                         )}
                     </div>
                 )}

@@ -29,57 +29,18 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
         const fetchOfferings = async () => {
             try {
                 setIsLoading(true);
-                // Mock data for web development
                 console.log('[Paywall] Mocking packages for web environment');
                 setPackages([
-                    {
-                        identifier: '$rc_monthly',
-                        packageType: 'MONTHLY',
-                        product: {
-                            identifier: 'monthly',
-                            description: 'Monthly subscription',
-                            title: 'Monthly',
-                            price: 9.99,
-                            priceString: '$9.99',
-                            currencyCode: 'USD',
-                            productCategory: 'SUBSCRIPTION'
-                        }
-                    },
-                    {
-                        identifier: '$rc_annual',
-                        packageType: 'ANNUAL',
-                        product: {
-                            identifier: 'yearly',
-                            description: 'Yearly subscription',
-                            title: 'Yearly',
-                            price: 99.99,
-                            priceString: '$99.99',
-                            currencyCode: 'USD',
-                            productCategory: 'SUBSCRIPTION'
-                        }
-                    },
-                    {
-                        identifier: '$rc_lifetime',
-                        packageType: 'LIFETIME',
-                        product: {
-                            identifier: 'lifetime',
-                            description: 'Lifetime access',
-                            title: 'Lifetime',
-                            price: 199.99,
-                            priceString: '$199.99',
-                            currencyCode: 'USD',
-                            productCategory: 'NON_SUBSCRIPTION'
-                        }
-                    }
+                    { identifier: '$rc_monthly', packageType: 'MONTHLY', product: { identifier: 'monthly', description: 'Monthly subscription', title: 'Monthly', price: 9.99, priceString: '$9.99', currencyCode: 'USD', productCategory: 'SUBSCRIPTION' } },
+                    { identifier: '$rc_annual', packageType: 'ANNUAL', product: { identifier: 'yearly', description: 'Yearly subscription', title: 'Yearly', price: 99.99, priceString: '$99.99', currencyCode: 'USD', productCategory: 'SUBSCRIPTION' } },
+                    { identifier: '$rc_lifetime', packageType: 'LIFETIME', product: { identifier: 'lifetime', description: 'Lifetime access', title: 'Lifetime', price: 199.99, priceString: '$199.99', currencyCode: 'USD', productCategory: 'NON_SUBSCRIPTION' } },
                 ]);
             } catch (err: any) {
-                console.error('Error fetching offerings:', err);
                 setError(`Failed to load subscription options: ${err.message || 'Unknown error'}`);
             } finally {
                 setIsLoading(false);
             }
         };
-
         fetchOfferings();
     }, []);
 
@@ -87,12 +48,10 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
         try {
             setIsPurchasing(true);
             setError(null);
-
             console.log('[Paywall] Web environment: mocking successful purchase');
             await new Promise(resolve => setTimeout(resolve, 1500));
             await onPurchaseSuccess();
         } catch (err: any) {
-            // Check if it's a user cancellation (error code can vary, but standard behavior is to just ignore it)
             if (err.userCancelled) {
                 console.log('User cancelled purchase');
             } else {
@@ -106,7 +65,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
 
     if (isLoading) {
         return (
-            <div className="flex-column align-center justify-center gap-md animate-fade-in" style={{ height: '100%', padding: '2rem' }}>
+            <div className="flex flex-col items-center justify-center gap-4 animate-[fadeIn_0.4s_ease-out] h-full p-8">
                 <Loader2 className="animate-spin" size={48} color="var(--accent-color)" />
                 <h2 style={{ color: 'var(--text-primary)' }}>Loading Options...</h2>
             </div>
@@ -114,88 +73,61 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
     }
 
     return (
-        <div className="flex-column align-center justify-center animate-fade-in" style={{ 
-            height: '100%', 
-            padding: '2rem 1rem', 
-            maxWidth: '600px', 
-            margin: '0 auto',
-            textAlign: 'center'
-        }}>
-            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                Unlock German B2
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2rem' }}>
+        <div className="flex flex-col items-center justify-center animate-[fadeIn_0.4s_ease-out] text-center h-full px-4 py-8" style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <h1 className="text-4xl mb-2" style={{ color: 'var(--text-primary)' }}>Unlock German B2</h1>
+            <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
                 Get full access to all lessons, interactive AI exercises, and complete vocabulary tracking.
             </p>
 
-            <div className="flex-column gap-sm" style={{ width: '100%', maxWidth: '400px', marginBottom: '2rem', textAlign: 'left' }}>
+            <div className="flex flex-col gap-2 w-full max-w-md mb-8 text-left">
                 {[
                     'Complete B2 Vocabulary Course',
                     'Interactive Reading & Listening',
                     'Progress Tracking & Analytics',
-                    'Unlimited AI Generation'
+                    'Unlimited AI Generation',
                 ].map((feature, i) => (
-                    <div key={i} className="flex-row align-center gap-md">
+                    <div key={i} className="flex flex-row items-center gap-4">
                         <CheckCircle2 size={20} color="var(--success-color)" />
-                        <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{feature}</span>
+                        <span style={{ color: 'var(--text-primary)' }}>{feature}</span>
                     </div>
                 ))}
             </div>
 
             {error && (
-                <div className="flex-row align-center gap-sm" style={{ 
-                    backgroundColor: 'rgba(218, 54, 51, 0.1)', 
-                    color: 'var(--danger-color)', 
-                    padding: '1rem', 
-                    borderRadius: 'var(--border-radius-md)',
-                    marginBottom: '2rem',
-                    width: '100%'
-                }}>
+                <div className="flex flex-row items-center gap-2 rounded-xl p-4 mb-8 w-full" style={{ backgroundColor: 'rgba(218, 54, 51, 0.1)', color: 'var(--danger-color)' }}>
                     <AlertCircle size={20} />
-                    <span style={{ fontSize: '0.9rem', textAlign: 'left' }}>{error}</span>
+                    <span className="text-sm text-left">{error}</span>
                 </div>
             )}
 
-            <div className="flex-column gap-md" style={{ width: '100%' }}>
+            <div className="flex flex-col gap-4 w-full">
                 {packages.map((pkg) => (
-                    <button 
+                    <button
                         key={pkg.identifier}
                         disabled={isPurchasing}
                         onClick={() => handlePurchase(pkg)}
-                        className="btn glass-panel"
-                        style={{ 
-                            display: 'flex', 
-                            flexDirection: 'row', 
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '1.5rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            border: '1px solid var(--border-color)',
-                            backgroundColor: 'var(--bg-accent-subtle)',
-                            width: '100%',
-                            opacity: isPurchasing ? 0.7 : 1
-                        }}
+                        className="flex flex-row justify-between items-center w-full rounded-3xl p-6 border cursor-pointer transition-all hover:scale-[1.01] disabled:opacity-70"
+                        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
                     >
-                        <div className="flex-column align-start gap-xs">
-                            <span style={{ fontWeight: 600, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                        <div className="flex flex-col items-start gap-1">
+                            <span className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
                                 {pkg.product.title.replace(/\(.*\)/, '').trim()}
                             </span>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                                 {pkg.packageType === 'LIFETIME' ? 'One-time payment' : `Billed ${pkg.packageType.toLowerCase()}`}
                             </span>
                         </div>
-                        <div className="flex-column align-end">
-                            <span style={{ fontWeight: 700, fontSize: '1.4rem', color: 'var(--accent-color)' }}>
+                        <div>
+                            <span className="text-2xl font-bold" style={{ color: 'var(--accent-color)' }}>
                                 {pkg.product.priceString}
                             </span>
                         </div>
                     </button>
                 ))}
             </div>
-            
+
             {isPurchasing && (
-                <div className="flex-row align-center gap-sm" style={{ marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
+                <div className="flex flex-row items-center gap-2 mt-6" style={{ color: 'var(--text-secondary)' }}>
                     <Loader2 className="animate-spin" size={16} />
                     <span>Processing purchase...</span>
                 </div>

@@ -16,11 +16,6 @@ interface OnboardingProps {
 // ─── Placeholder: sync to Supabase profiles ──────────────────────────────────
 
 async function handleOnboardingComplete(data: OnboardingData) {
-  // TODO: Sync to Supabase `profiles` table once the user is authenticated.
-  // Example:
-  // const { error } = await supabase
-  //   .from('profiles')
-  //   .upsert({ id: user.id, motivation: data.motivation, level: data.level, commitment: data.commitment });
   console.log('[Onboarding] Collected profile data:', data);
 }
 
@@ -57,30 +52,23 @@ const aiLoadingTexts = [
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
-  // Steps 1-3 count; steps 4-5 are non-interactive
   const pct = Math.min((step / 3) * 100, 100);
   return (
-    <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: 'rgba(132,169,140,0.2)' }}>
+    <div className="w-full h-1.5 rounded-full bg-[rgba(132,169,140,0.2)]">
       <div
-        className="h-1.5 rounded-full transition-all duration-500 ease-out"
-        style={{ width: `${pct}%`, backgroundColor: PEAR }}
+        className="h-1.5 rounded-full transition-all duration-500 ease-out bg-[var(--accent-color)]"
+        style={{ width: `${pct}%` }}
       />
     </div>
   );
 }
-
-
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<OnboardingData>({ motivation: null, level: null, commitment: null });
-
-  // Step 4 – AI Loading
   const [loadingTextIdx, setLoadingTextIdx] = useState(0);
-
-  // Step 5 – Auth
   const [emailInput, setEmailInput] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [authLoading, setAuthLoading] = useState<'google' | 'apple' | 'email' | null>(null);
@@ -89,7 +77,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const loadingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-advance from Step 4 after 6 seconds
   useEffect(() => {
     if (step !== 4) return;
     setLoadingTextIdx(0);
@@ -118,12 +105,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleNext = () => {
     if (step < 3) { setStep(s => s + 1); return; }
-    if (step === 3) { setStep(4); return; } // trigger loading
+    if (step === 3) { setStep(4); return; }
   };
 
   const handleBack = () => { if (step > 1 && step < 4) setStep(s => s - 1); };
-
-  // ── Auth handlers ────────────────────────────────────────────────────────
 
   const authAction = async (provider: 'google' | 'apple' | 'email') => {
     try {
@@ -151,33 +136,27 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
-      style={{ backgroundColor: 'var(--bg-color)' }}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-[var(--bg-color)]">
       <div className="w-full max-w-md flex flex-col gap-6">
 
-        {/* Progress bar – only for steps 1-3 */}
         {step <= 3 && (
           <div className="flex flex-col gap-2">
             <ProgressBar step={step} />
-            <p className="text-xs text-right" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs text-right text-[var(--text-secondary)]">
               Hapi {step} nga 3
             </p>
           </div>
         )}
 
-        {/* ── Step 1: Motivation ─────────────────────────────────────────── */}
+        {/* Step 1: Motivation */}
         {step === 1 && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease-out]">
             <div>
-              <h1 className="text-2xl font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
                 Pse dëshiron të mësosh Gjermanisht?
               </h1>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm mt-1 text-[var(--text-secondary)]">
                 Zgjidhni motivimin tuaj kryesor.
               </p>
             </div>
@@ -189,15 +168,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <button
                     key={opt.id}
                     onClick={() => setData(d => ({ ...d, motivation: opt.id }))}
-                    className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200 active:scale-95 min-h-[120px] cursor-pointer"
-                    style={{
-                      borderColor: selected ? PEAR : 'var(--border-color)',
-                      backgroundColor: selected ? `${PEAR}18` : 'var(--card-bg, var(--bg-color-secondary))',
-                      boxShadow: selected ? `0 0 0 3px ${PEAR_GLOW}` : undefined,
-                    }}
+                    className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200 active:scale-95 min-h-[120px] cursor-pointer ${
+                      selected 
+                        ? 'border-[var(--accent-color)] bg-[rgba(132,169,140,0.1)] shadow-[0_0_0_3px_rgba(132,169,140,0.35)]' 
+                        : 'border-[var(--border-color)] bg-[var(--bg-color-secondary)]'
+                    }`}
                   >
                     <span className="text-3xl">{opt.emoji}</span>
-                    <span className="text-sm font-semibold text-center leading-tight" style={{ color: 'var(--text-primary)' }}>
+                    <span className="text-sm font-semibold text-center leading-tight text-[var(--text-primary)]">
                       {opt.label}
                     </span>
                   </button>
@@ -209,14 +187,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* ── Step 2: Level ──────────────────────────────────────────────── */}
+        {/* Step 2: Level */}
         {step === 2 && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease-out]">
             <div>
-              <h1 className="text-2xl font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
                 Sa është njohuria jote aktuale?
               </h1>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm mt-1 text-[var(--text-secondary)]">
                 Zgjidhni nivelin që ju përshkruan.
               </p>
             </div>
@@ -228,25 +206,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <button
                     key={opt.id}
                     onClick={() => setData(d => ({ ...d, level: opt.id }))}
-                    className="flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] cursor-pointer"
-                    style={{
-                      borderColor: selected ? PEAR : 'var(--border-color)',
-                      backgroundColor: selected ? `${PEAR}18` : 'var(--card-bg, var(--bg-color-secondary))',
-                      boxShadow: selected ? `0 0 0 3px ${PEAR_GLOW}` : undefined,
-                    }}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+                      selected 
+                        ? 'border-[var(--accent-color)] bg-[rgba(132,169,140,0.1)] shadow-[0_0_0_3px_rgba(132,169,140,0.35)]' 
+                        : 'border-[var(--border-color)] bg-[var(--bg-color-secondary)]'
+                    }`}
                   >
-                    {/* Radio dot */}
-                    <div
-                      className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors duration-200"
-                      style={{ borderColor: selected ? PEAR : 'var(--border-color)' }}
-                    >
-                      {selected && (
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PEAR }} />
-                      )}
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${selected ? 'border-[var(--accent-color)]' : 'border-[var(--border-color)]'}`}>
+                      {selected && <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-color)]" />}
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{opt.desc}</span>
+                      <span className="font-semibold text-base text-[var(--text-primary)]">{opt.label}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{opt.desc}</span>
                     </div>
                   </button>
                 );
@@ -257,14 +228,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* ── Step 3: Daily Commitment ──────────────────────────────────── */}
+        {/* Step 3: Daily Commitment */}
         {step === 3 && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease-out]">
             <div>
-              <h1 className="text-2xl font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
                 Sa minuta në ditë mund të mësosh?
               </h1>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm mt-1 text-[var(--text-secondary)]">
                 Zgjidhni angazhimin tuaj ditor.
               </p>
             </div>
@@ -276,32 +247,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <button
                     key={opt.id}
                     onClick={() => setData(d => ({ ...d, commitment: opt.id }))}
-                    className="flex items-center justify-between gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] cursor-pointer"
-                    style={{
-                      borderColor: selected ? PEAR : 'var(--border-color)',
-                      backgroundColor: selected ? `${PEAR}18` : 'var(--card-bg, var(--bg-color-secondary))',
-                      boxShadow: selected ? `0 0 0 3px ${PEAR_GLOW}` : undefined,
-                    }}
+                    className={`flex items-center justify-between gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+                      selected 
+                        ? 'border-[var(--accent-color)] bg-[rgba(132,169,140,0.1)] shadow-[0_0_0_3px_rgba(132,169,140,0.35)]' 
+                        : 'border-[var(--border-color)] bg-[var(--bg-color-secondary)]'
+                    }`}
                   >
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
-                        <span
-                          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: selected ? PEAR : 'var(--border-color)',
-                            color: selected ? '#fff' : 'var(--text-secondary)',
-                          }}
-                        >
+                        <span className="text-xl font-bold text-[var(--text-primary)]">{opt.label}</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selected ? 'bg-[var(--accent-color)] text-white' : 'bg-[var(--border-color)] text-[var(--text-secondary)]'}`}>
                           {opt.badge}
                         </span>
                       </div>
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{opt.desc}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{opt.desc}</span>
                     </div>
-                    <div
-                      className="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200"
-                      style={{ borderColor: selected ? PEAR : 'var(--border-color)', backgroundColor: selected ? PEAR : 'transparent' }}
-                    >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${selected ? 'border-[var(--accent-color)] bg-[var(--accent-color)]' : 'border-[var(--border-color)] bg-transparent'}`}>
                       {selected && (
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                           <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -317,42 +278,26 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* ── Step 4: AI Loading ────────────────────────────────────────── */}
+        {/* Step 4: AI Loading */}
         {step === 4 && (
           <div className="flex flex-col items-center justify-center gap-10 py-16 animate-[fadeIn_0.4s_ease-out]">
-            {/* Pulsing orb */}
             <div className="relative flex items-center justify-center">
-              <div
-                className="absolute rounded-full animate-ping opacity-30"
-                style={{ width: 120, height: 120, backgroundColor: PEAR }}
-              />
-              <div
-                className="absolute rounded-full animate-ping opacity-20"
-                style={{ width: 160, height: 160, backgroundColor: PEAR, animationDelay: '0.3s' }}
-              />
-              <div
-                className="relative w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-2xl"
-                style={{ backgroundColor: PEAR, boxShadow: `0 0 40px ${PEAR_GLOW}` }}
-              >
+              <div className="absolute w-30 h-30 rounded-full animate-ping opacity-30 bg-[var(--accent-color)]" />
+              <div className="absolute w-40 h-40 rounded-full animate-ping opacity-20 bg-[var(--accent-color)] [animation-delay:0.3s]" />
+              <div className="relative w-24 h-24 rounded-full flex items-center justify-center text-5xl bg-[var(--accent-color)] shadow-[0_0_40px_rgba(132,169,140,0.35)]">
                 🍐
               </div>
             </div>
 
-            {/* Animated text */}
             <div className="flex flex-col items-center gap-2 text-center min-h-[60px]">
-              <p
-                key={loadingTextIdx}
-                className="text-lg font-semibold animate-[fadeIn_0.4s_ease-out]"
-                style={{ color: 'var(--text-primary)' }}
-              >
+              <p key={loadingTextIdx} className="text-lg font-semibold animate-[fadeIn_0.4s_ease-out] text-[var(--text-primary)]">
                 {aiLoadingTexts[loadingTextIdx]}
               </p>
               <div className="flex gap-1.5 mt-2">
                 {aiLoadingTexts.map((_, i) => (
                   <div
                     key={i}
-                    className="w-2 h-2 rounded-full transition-all duration-300"
-                    style={{ backgroundColor: i === loadingTextIdx ? PEAR : 'var(--border-color)', transform: i === loadingTextIdx ? 'scale(1.4)' : 'scale(1)' }}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === loadingTextIdx ? 'bg-[var(--accent-color)] scale-140' : 'bg-[var(--border-color)] scale-100'}`}
                   />
                 ))}
               </div>
@@ -360,48 +305,38 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* ── Step 5: CTA / Sign Up ────────────────────────────────────── */}
+        {/* Step 5: CTA / Sign Up */}
         {step === 5 && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease-out]">
-            {/* Header */}
             <div className="flex flex-col items-center text-center gap-3 pt-4">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-xl"
-                style={{ backgroundColor: PEAR, boxShadow: `0 8px 32px ${PEAR_GLOW}` }}
-              >
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-[var(--accent-color)] shadow-[0_8px_32px_rgba(132,169,140,0.35)]">
                 🍐
               </div>
-              <h1 className="text-2xl font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
                 Plani yt personal është gati!
               </h1>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
                 Krijo llogarinë falas për të ruajtur progresin dhe për të filluar mësimin.
               </p>
             </div>
 
-            {/* Error */}
             {authError && (
-              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border text-sm"
-                style={{ backgroundColor: 'rgba(218,54,51,0.1)', borderColor: 'rgba(218,54,51,0.3)', color: 'var(--danger-color)' }}>
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[rgba(218,54,51,0.3)] bg-[rgba(218,54,51,0.1)] text-[var(--danger-color)] text-sm">
                 <span>⚠️</span>
                 <span>{authError}</span>
               </div>
             )}
 
-            {/* Email sent confirmation */}
             {emailSent ? (
-              <div className="flex flex-col items-center gap-3 px-4 py-6 rounded-2xl border text-center"
-                style={{ backgroundColor: `${PEAR}15`, borderColor: PEAR }}>
+              <div className="flex flex-col items-center gap-3 px-4 py-6 rounded-2xl border border-[var(--accent-color)] bg-[rgba(132,169,140,0.08)] text-center">
                 <span className="text-3xl">📬</span>
-                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>Kontrolloni emailin tuaj!</p>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <p className="font-semibold text-[var(--text-primary)]">Kontrolloni emailin tuaj!</p>
+                <p className="text-sm text-[var(--text-secondary)]">
                   Ju dërguam një lidhje hyrjeje në <strong>{emailInput}</strong>. Klikoni atë për t'u identifikuar.
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-
-                {/* Google */}
                 <AuthButton
                   onClick={() => authAction('google')}
                   loading={authLoading === 'google'}
@@ -415,10 +350,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     </svg>
                   }
                   label="Vazhdo me Google"
-                  style={{ backgroundColor: 'var(--bg-color-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  className="bg-[var(--bg-color-secondary)] border border-[var(--border-color)] text-[var(--text-primary)]"
                 />
 
-                {/* Apple */}
                 <AuthButton
                   onClick={() => authAction('apple')}
                   loading={authLoading === 'apple'}
@@ -429,17 +363,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     </svg>
                   }
                   label="Vazhdo me Apple"
-                  style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-color)', border: 'none' }}
+                  className="bg-[var(--text-primary)] text-[var(--bg-color)] border-none"
                 />
 
-                {/* Divider */}
                 <div className="flex items-center gap-3 my-1">
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-color)' }} />
-                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>OSE</span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-color)' }} />
+                  <div className="flex-1 h-px bg-[var(--border-color)]" />
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">OSE</span>
+                  <div className="flex-1 h-px bg-[var(--border-color)]" />
                 </div>
 
-                {/* Email input + button */}
                 <div className="flex flex-col gap-2">
                   <input
                     type="email"
@@ -447,12 +379,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     onChange={e => setEmailInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && authAction('email')}
                     placeholder="adresa@email.com"
-                    className="w-full px-4 py-3.5 rounded-xl border text-base outline-none transition-all duration-200 focus:ring-2"
-                    style={{
-                      backgroundColor: 'var(--bg-color)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)',
-                    }}
+                    className="w-full px-4 py-3.5 rounded-xl border text-base outline-none transition-all duration-200 focus:ring-2 bg-[var(--bg-color)] border-[var(--border-color)] text-[var(--text-primary)]"
                   />
                   <AuthButton
                     onClick={() => authAction('email')}
@@ -460,18 +387,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     disabled={!!authLoading || !emailInput.trim()}
                     icon={<span>✉️</span>}
                     label="Regjistrohu me Email"
-                    style={{ backgroundColor: PEAR, color: '#fff', border: 'none', boxShadow: `0 4px 16px ${PEAR_GLOW}` }}
+                    className="bg-[var(--accent-color)] text-white border-none shadow-[0_4px_16px_rgba(132,169,140,0.35)]"
                   />
                 </div>
               </div>
             )}
 
-            {/* Terms */}
-            <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs text-center text-[var(--text-secondary)]">
               Duke vazhduar, ju pranoni{' '}
-              <span className="underline cursor-pointer" style={{ color: PEAR }}>Kushtet e Shërbimit</span>
+              <span className="underline cursor-pointer text-[var(--accent-color)]">Kushtet e Shërbimit</span>
               {' '}dhe{' '}
-              <span className="underline cursor-pointer" style={{ color: PEAR }}>Politikën e Privatësisë</span>.
+              <span className="underline cursor-pointer text-[var(--accent-color)]">Politikën e Privatësisë</span>.
             </p>
           </div>
         )}
@@ -485,14 +411,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 function NavButtons({
   step, canAdvance, onNext, onBack,
 }: { step: number; canAdvance: boolean; onNext: () => void; onBack: () => void }) {
-  const PEAR = '#84a98c';
   return (
     <div className="flex gap-3 mt-2">
       {step > 1 && (
         <button
           onClick={onBack}
-          className="flex-1 py-3.5 rounded-xl font-semibold border transition-all duration-200 active:scale-95 cursor-pointer"
-          style={{ backgroundColor: 'var(--bg-color-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+          className="flex-1 py-3.5 rounded-xl font-semibold border transition-all duration-200 active:scale-95 cursor-pointer bg-[var(--bg-color-secondary)] border-[var(--border-color)] text-[var(--text-primary)]"
         >
           Kthehu
         </button>
@@ -500,12 +424,11 @@ function NavButtons({
       <button
         onClick={onNext}
         disabled={!canAdvance}
-        className="flex-[2] py-3.5 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-        style={{
-          backgroundColor: canAdvance ? PEAR : 'var(--border-color)',
-          color: canAdvance ? '#fff' : 'var(--text-secondary)',
-          boxShadow: canAdvance ? `0 4px 16px rgba(132,169,140,0.35)` : undefined,
-        }}
+        className={`flex-[2] py-3.5 rounded-xl font-semibold transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+          canAdvance 
+            ? 'bg-[var(--accent-color)] text-white shadow-[0_4px_16px_rgba(132,169,140,0.35)]' 
+            : 'bg-[var(--border-color)] text-[var(--text-secondary)]'
+        }`}
       >
         Vazhdo
       </button>
@@ -514,21 +437,20 @@ function NavButtons({
 }
 
 function AuthButton({
-  onClick, loading, disabled, icon, label, style,
+  onClick, loading, disabled, icon, label, className = '',
 }: {
   onClick: () => void;
   loading: boolean;
   disabled: boolean;
   icon: React.ReactNode;
   label: string;
-  style?: React.CSSProperties;
+  className?: string;
 }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      style={style}
+      className={`w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
     >
       {loading ? (
         <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">

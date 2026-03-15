@@ -13,6 +13,9 @@ interface ExerciseContainerProps {
     onExit: () => void;
 }
 
+const glassPanel = 'bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-8 shadow-lg';
+const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-[var(--border-color)] cursor-pointer transition-all duration-200 bg-[var(--bg-color-secondary)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]';
+
 export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
     const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();
     const { role } = useAuth();
@@ -21,7 +24,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
 
     if (isLoading) {
         return (
-            <div className="flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
+            <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
                 <p>Loading lesson...</p>
             </div>
         );
@@ -29,9 +32,9 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
 
     if (!lesson) {
         return (
-            <div className="flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
+            <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
                 <h2>Lesson not found</h2>
-                <button className="btn btn-secondary" onClick={onExit}>Go Back</button>
+                <button className={btnSecondary} onClick={onExit}>Go Back</button>
             </div>
         );
     }
@@ -42,61 +45,79 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     const hasMCQs = lesson.words.some(w => !!w.mcq);
     const canDoQuiz = role === 'admin' || (!!lesson.isSupabaseSynced && hasMCQs);
 
-    // Handle saving word learning status
     const handleWordResult = (wordId: string, learned: boolean) => {
         updateWordStatus(lesson.id, wordId, learned);
     };
 
     if (!exerciseMode) {
         return (
-            <div className="animate-fade-in flex-column gap-lg">
-                <div className="flex-row items-center gap-md" style={{ marginBottom: '1rem' }}>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={onExit}>
+            <div className="flex flex-col gap-8 animate-[fadeIn_0.4s_ease-out]">
+                <div className="flex flex-row items-center gap-4 mb-4">
+                    <button className={`${btnSecondary} !p-2`} onClick={onExit}>
                         <ArrowLeft size={20} />
                     </button>
-                    <h2 style={{ margin: 0 }}>{lesson.name}</h2>
+                    <h2 className="m-0">{lesson.name}</h2>
                 </div>
 
                 {isFullyLearned && (
-                    <div className="glass-panel text-center animate-fade-in flex-column align-center justify-center gap-sm" style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'rgba(46, 160, 67, 0.05)' }}>
-                        <h3 style={{ color: 'var(--success-color)', margin: 0 }}>🎉 All words learned!</h3>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>You can practice all words again, or reset your progress.</p>
-                        <button className="btn btn-secondary" style={{ marginTop: '0.5rem' }} onClick={() => resetLessonProgress(lesson.id)}>
+                    <div
+                        className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2 animate-[fadeIn_0.4s_ease-out]`}
+                        style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'rgba(46, 160, 67, 0.05)' }}
+                    >
+                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>🎉 All words learned!</h3>
+                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>You can practice all words again, or reset your progress.</p>
+                        <button className={`${btnSecondary} mt-2`} onClick={() => resetLessonProgress(lesson.id)}>
                             Reset Progress
                         </button>
                     </div>
                 )}
 
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <p className="text-center" style={{ color: 'var(--text-secondary)' }}>
                     {isFullyLearned ? 'Practicing all words.' : `${unlearnedWords.length} words remaining to learn.`} Choose an exercise mode:
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('flashcards')}>
+                    <button
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
+                        onClick={() => setExerciseMode('flashcards')}
+                    >
                         <Layers size={32} color="var(--accent-color)" />
                         <h3>Flashcards</h3>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Swipe right if you know it, left if you don't.</span>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Swipe right if you know it, left if you don't.</span>
                     </button>
 
                     {canDoQuiz && (
-                        <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('multiple-choice')}>
+                        <button
+                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                            style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
+                            onClick={() => setExerciseMode('multiple-choice')}
+                        >
                             <MessageSquare size={32} color="var(--success-color)" />
                             <h3>Multiple Choice</h3>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>AI generated sentences. Guess the missing word.</span>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>AI generated sentences. Guess the missing word.</span>
                         </button>
                     )}
 
-                    <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', height: '100%' }} onClick={() => setExerciseMode('writing')}>
+                    <button
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
+                        onClick={() => setExerciseMode('writing')}
+                    >
                         <PenTool size={32} color="var(--warning-color)" />
                         <h3>Writing</h3>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Type the German translation accurately.</span>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Type the German translation accurately.</span>
                     </button>
 
                     {canDoQuiz && (
-                        <button className="glass-panel flex-column align-center justify-center gap-sm btn" style={{ padding: '2rem 1rem', border: '1px solid var(--border-color)', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))', height: '100%' }} onClick={() => setExerciseMode('mixed')}>
+                        <button
+                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                            style={{ padding: '2rem 1rem', height: '100%', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))' }}
+                            onClick={() => setExerciseMode('mixed')}
+                        >
                             <Shuffle size={32} color="var(--text-primary)" />
                             <h3>Mixed Mode</h3>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>A mixture of all exercises for best retention.</span>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>A mixture of all exercises for best retention.</span>
                         </button>
                     )}
                 </div>
@@ -105,18 +126,18 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     }
 
     return (
-        <div className="animate-fade-in flex-column" style={{ height: '100%', display: 'flex' }}>
-            <div className="flex-row align-center gap-sm mobile-flex-wrap" style={{ marginBottom: '0.5rem' }}>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => setExerciseMode(null)}>
+        <div className="flex flex-col animate-[fadeIn_0.4s_ease-out]" style={{ height: '100%', display: 'flex' }}>
+            <div className="flex flex-row items-center gap-2 flex-wrap mb-2">
+                <button className={`${btnSecondary} !p-[0.4rem]`} onClick={() => setExerciseMode(null)}>
                     <ArrowLeft size={20} />
                 </button>
-                <h3 style={{ margin: 0, flex: 1, fontSize: '1.25rem' }}>
+                <h3 className="m-0 flex-1 text-xl">
                     {exerciseMode === 'flashcards' && 'Flashcards'}
                     {exerciseMode === 'multiple-choice' && 'Multiple Choice'}
                     {exerciseMode === 'writing' && 'Writing Practice'}
                     {exerciseMode === 'mixed' && 'Mixed Practice'}
                 </h3>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                     {wordsToPractice.length} words left
                 </span>
             </div>

@@ -61,20 +61,15 @@ export function Mixed({ words, onResult, onComplete }: MixedProps) {
     if (!currentWord) return null;
 
     // We wrap the single word in an array to pass to the underlying component.
-    // We effectively treat the underlying component as a 1-word queue, and we manage 
-    // the progression and queue push-backs at this higher level.
     const singleWordArr = [currentWord];
 
-    // The child component will call onComplete when it hits the end of its 1-element queue
     const handleChildComplete = () => {
         // Do nothing, we handle the progression in handleResult immediately when onResult is called.
-        // However, some components might expect to call onComplete and we can just pass a no-op
-        // because handleResult effectively mounts the next word anyway.
     };
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '-2rem', right: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+        <div className="flex-1 flex flex-col relative">
+            <div className="absolute -top-8 right-0 text-sm italic text-[var(--text-secondary)]">
                 Mixed Mode: {queue.length - currentIndex} left
             </div>
 

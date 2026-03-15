@@ -52,13 +52,10 @@ function App() {
 
   if (!isDbReady || authLoading) {
     return (
-      <div className="flex-column align-center justify-center gap-md" style={{ height: '100vh', backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)' }}>
-        <div className="loader" style={{ width: '40px', height: '40px', border: '4px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-        <h2>Initializing...</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Please wait a moment.</p>
-        <style>{`
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        `}</style>
+      <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[var(--bg-color)] text-[var(--text-primary)]">
+        <div className="w-10 h-10 border-4 border-[var(--border-color)] border-t-[var(--accent-color)] rounded-full animate-spin"></div>
+        <h2 className="m-0 text-xl font-semibold">Initializing...</h2>
+        <p className="m-0 text-[var(--text-secondary)]">Please wait a moment.</p>
       </div>
     );
   }

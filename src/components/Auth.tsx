@@ -20,93 +20,36 @@ export function Auth() {
     };
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            backgroundColor: 'var(--bg-color)',
-            padding: '2rem'
-        }}>
-            <div style={{
-                backgroundColor: 'var(--card-bg)',
-                padding: '3rem 2rem',
-                borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                width: '100%',
-                maxWidth: '400px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '2rem',
-                border: '1px solid var(--border-color)'
-            }}>
+        <div className="flex flex-col justify-center items-center min-h-screen bg-[var(--bg-color)] p-8">
+            <div className="bg-[var(--bg-color-secondary)] p-8 sm:p-12 rounded-2xl shadow-xl w-full max-w-[400px] flex flex-col items-center gap-8 border border-[var(--border-color)]">
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{
-                        backgroundColor: 'var(--accent-color)',
-                        padding: '1rem',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        boxShadow: '0 4px 16px rgba(100, 108, 255, 0.4)'
-                    }}>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="bg-[var(--accent-color)] p-4 rounded-full flex items-center justify-center text-white shadow-[0_4px_16px_rgba(46,160,67,0.4)]">
                         <BookOpen size={40} />
                     </div>
-                    <h1 style={{
-                        margin: 0,
-                        fontSize: '2rem',
-                        fontWeight: 700,
-                        background: 'linear-gradient(135deg, var(--accent-color), #8a2be2)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                    }}>
+                    <h1 className="m-0 text-3xl font-bold bg-gradient-to-br from-[var(--accent-color)] to-[#8a2be2] bg-clip-text text-transparent">
                         Dardha
                     </h1>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', textAlign: 'center' }}>
+                    <p className="m-0 text-[var(--text-secondary)] text-center">
                         Learn German vocabulary seamlessly.
                     </p>
                 </div>
 
                 {error && (
-                    <div style={{
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        color: 'var(--danger-color)',
-                        padding: '0.75rem 1rem',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        fontSize: '0.875rem',
-                        width: '100%',
-                        border: '1px solid rgba(239, 68, 68, 0.2)'
-                    }}>
+                    <div className="bg-[rgba(218,54,51,0.1)] text-[var(--danger-color)] p-3 rounded-lg flex items-center gap-2 text-sm w-full border border-[rgba(218,54,51,0.2)]">
                         <AlertCircle size={16} />
-                        <span style={{ flex: 1 }}>{error}</span>
+                        <span className="flex-1">{error}</span>
                     </div>
                 )}
 
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="w-full flex flex-col gap-4">
                     <button
-                        className="btn btn-primary"
+                        className="w-full h-12 flex justify-center items-center gap-2 rounded-xl font-semibold bg-[var(--accent-color)] text-white border-0 cursor-pointer transition-all duration-200 hover:bg-[var(--accent-hover)] disabled:opacity-70 disabled:cursor-not-allowed"
                         onClick={handleGoogleLogin}
                         disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '0.875rem',
-                            fontSize: '1rem',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            height: '48px'
-                        }}
                     >
                         {loading ? (
-                            <div className="loader" style={{ width: '20px', height: '20px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                             <>
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -121,10 +64,6 @@ export function Auth() {
                     </button>
                 </div>
             </div>
-
-            <style>{`
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}</style>
         </div>
     );
 }

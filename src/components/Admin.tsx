@@ -7,6 +7,12 @@ import { Plus, Trash2, Folder, FileText, List, Image as ImageIcon, Loader2, Edit
 import { extractWordsFromImage, generateBatchMCQ } from '../utils/ai';
 import { supabase } from '../lib/supabase';
 
+const glassPanel = 'bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-6 shadow-lg';
+const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-[var(--accent-color)] text-white border-0 cursor-pointer transition-all duration-200 hover:bg-[var(--accent-hover)] disabled:opacity-50';
+const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border border-[var(--border-color)] cursor-pointer transition-all duration-200 bg-[var(--bg-color-secondary)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]';
+const btnSubtle = 'inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs border-0 cursor-pointer transition-all duration-200 bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-color-secondary)] hover:text-[var(--text-primary)]';
+const inputField = 'w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-color)] transition-all';
+
 export function Admin() {
     const { role } = useAuth();
     const { settings, updateLevel } = useSettings();
@@ -60,7 +66,6 @@ export function Admin() {
         setIsLoading(true);
         try {
             const data = await adminContentService.getLevels();
-            // Sort levels alphabetically
             const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
             setLevels(sortedData);
         } catch (err: any) {
@@ -148,7 +153,6 @@ export function Admin() {
 
         try {
             while (!stopGenerationRef.current) {
-                // Find up to 10 words missing MCQs
                 const { data: pendingWords, error } = await supabase
                     .from('lesson_words')
                     .select('id, german, albanian')
@@ -187,7 +191,6 @@ export function Admin() {
                             })
                             .eq('id', mcq.wordId);
                     }
-                    // Refetch data so the UI updates with the new 'Generated' tags
                     await loadWordsForPart(activePart);
                 }
             }
@@ -409,8 +412,6 @@ export function Admin() {
                     setScanProgress(0);
 
                     if (words && words.length > 0) {
-                        // Immediately save the raw words to the lesson parts
-                        // They won't have MCQs yet, but the background worker can generate them later
                         const validWords = words.filter(w => w.german.trim() && w.albanian.trim());
 
                         const newWords = validWords.map(w => ({
@@ -444,94 +445,93 @@ export function Admin() {
 
     if (role !== 'admin') {
         return (
-            <div className="flex-column align-center justify-center gap-md" style={{ minHeight: '50vh' }}>
-                <h2>Access Denied</h2>
-                <p>You do not have permission to view the Admin Dashboard.</p>
+            <div className="flex flex-col items-center justify-center gap-4 py-20">
+                <h2 className="text-2xl font-bold">Access Denied</h2>
+                <p className="text-[var(--text-secondary)]">You do not have permission to view the Admin Dashboard.</p>
             </div>
         );
     }
 
     return (
-        <div className="animate-fade-in flex-column gap-lg" style={{ paddingBottom: '2rem' }}>
+        <div className="animate-[fadeIn_0.4s_ease-out] flex flex-col gap-8 pb-8">
             <div>
-                <h1 style={{ margin: 0 }}>Content Administration</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Manage course structure and learning materials synchronized via Supabase.</p>
+                <h1 className="m-0 text-3xl font-bold">Content Administration</h1>
+                <p className="text-[var(--text-secondary)]">Manage course structure and learning materials synchronized via Supabase.</p>
             </div>
 
-            {error && <div style={{ color: 'var(--danger-color)', padding: '0.5rem', backgroundColor: 'rgba(218, 54, 51, 0.1)', borderRadius: 'var(--border-radius-sm)' }}>{error}</div>}
+            {error && <div className="text-[var(--danger-color)] p-2 bg-[rgba(218,54,51,0.1)] rounded-lg text-sm">{error}</div>}
 
             {/* Breadcrumb Navigation */}
             {(activeLevel || activeMethod || activeLesson || activePart) && (
-                <div className="flex-row gap-sm align-center glass-panel" style={{ padding: '0.75rem 1rem' }}>
-                    <button className="btn btn-subtle" style={{ padding: '0.25rem' }} onClick={() => { setActiveLevel(null); setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
-                        <Folder size={18} /> Levels
+                <div className={`${glassPanel} flex flex-row gap-2 items-center !p-3 flex-wrap`}>
+                    <button className={btnSubtle} onClick={() => { setActiveLevel(null); setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
+                        <Folder size={16} /> Levels
                     </button>
                     {activeLevel && (
                         <>
-                            <span>/</span>
-                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activeMethod ? 600 : 'normal', color: !activeMethod ? 'var(--accent-color)' : 'inherit' }} onClick={() => { setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
-                                <FileText size={18} /> {activeLevel.name}
+                            <span className="text-[var(--text-secondary)]">/</span>
+                            <button className={`${btnSubtle} ${!activeMethod ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => { setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
+                                <FileText size={16} /> {activeLevel.name}
                             </button>
                         </>
                     )}
                     {activeMethod && (
                         <>
-                            <span>/</span>
-                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activeLesson ? 600 : 'normal', color: !activeLesson ? 'var(--accent-color)' : 'inherit' }} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
-                                <Folder size={18} /> {activeMethod.name}
+                            <span className="text-[var(--text-secondary)]">/</span>
+                            <button className={`${btnSubtle} ${!activeLesson ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
+                                <Folder size={16} /> {activeMethod.name}
                             </button>
                         </>
                     )}
                     {activeLesson && (
                         <>
-                            <span>/</span>
-                            <button className="btn btn-subtle" style={{ padding: '0.25rem', fontWeight: !activePart ? 600 : 'normal', color: !activePart ? 'var(--accent-color)' : 'inherit' }} onClick={() => setActivePart(null)}>
-                                <List size={18} /> {activeLesson.name}
+                            <span className="text-[var(--text-secondary)]">/</span>
+                            <button className={`${btnSubtle} ${!activePart ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => setActivePart(null)}>
+                                <List size={16} /> {activeLesson.name}
                             </button>
                         </>
                     )}
                     {activePart && (
                         <>
-                            <span>/</span>
-                            <span style={{ fontWeight: 600, color: 'var(--accent-color)' }}>{activePart.name}</span>
+                            <span className="text-[var(--text-secondary)]">/</span>
+                            <span className="text-xs font-bold text-[var(--accent-color)] px-3 py-1.5">{activePart.name}</span>
                         </>
                     )}
                 </div>
             )}
 
             {isLoading && !isUploading && (
-                <div style={{ textAlign: 'center', padding: '2rem' }}><Loader2 className="animate-spin" size={32} color="var(--accent-color)" /></div>
+                <div className="text-center py-8"><Loader2 className="animate-spin" size={32} color="var(--accent-color)" /></div>
             )}
 
             {/* VIEW: LEVELS */}
             {!activeLevel && !isLoading && (
-                <div className="flex-column gap-md animate-fade-in">
-                    <div className="glass-panel flex-row gap-sm align-center">
+                <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
+                    <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center`}>
                         <input
                             type="text"
-                            className="input-field"
+                            className={inputField}
                             placeholder="New Level Name (e.g., A1)"
                             value={newLevelName}
                             onChange={(e) => setNewLevelName(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCreateLevel()}
                         />
-                        <button className="btn btn-primary" onClick={handleCreateLevel} disabled={!newLevelName.trim()}>
+                        <button className={`${btnPrimary} w-full sm:w-auto shrink-0`} onClick={handleCreateLevel} disabled={!newLevelName.trim()}>
                             <Plus size={18} /> Add Target Level
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {levels.map(level => (
-                            <div key={level.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadMethodsForLevel(level)}>
-                                <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
+                            <div key={level.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadMethodsForLevel(level)}>
+                                <div className="flex flex-row gap-3 items-center flex-1">
                                     <Folder size={24} color="var(--accent-color)" />
                                     {editingId === level.id ? (
-                                        <div className="flex-row gap-sm" style={{ flex: 1 }} onClick={e => e.stopPropagation()}>
+                                        <div className="flex flex-row gap-2 flex-1" onClick={e => e.stopPropagation()}>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className="input-field"
-                                                style={{ padding: '0.4rem', flex: 1 }}
+                                                className={`${inputField} !p-1.5 !text-sm`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -539,100 +539,98 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className="btn btn-primary" style={{ padding: '0.4rem' }} onClick={e => handleSaveLevel(level.id, e)}>
+                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveLevel(level.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
                                     ) : (
-                                        <h3 style={{ margin: 0 }}>{level.name}</h3>
+                                        <h3 className="m-0 text-lg">{level.name}</h3>
                                     )}
                                 </div>
                                 {editingId !== level.id && (
-                                    <div className="flex-row gap-xs" onClick={e => e.stopPropagation()}>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleStartEdit(level.id, level.name, '', e)}>
-                                            <Edit2 size={18} color="var(--text-secondary)" />
+                                    <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(level.id, level.name, '', e)}>
+                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
                                         </button>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleDeleteLevel(level.id, e)}>
-                                            <Trash2 size={18} color="var(--danger-color)" />
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteLevel(level.id, e)}>
+                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {levels.length === 0 && <p style={{ color: 'var(--text-secondary)', padding: '1rem' }}>No learning levels created yet.</p>}
+                        {levels.length === 0 && <p className="text-[var(--text-secondary)] p-4">No learning levels created yet.</p>}
                     </div>
                 </div>
             )}
 
             {/* VIEW: METHODS (Inside a Level) */}
             {activeLevel && !activeMethod && !isLoading && (
-                <div className="flex-column gap-md animate-fade-in">
-                    <div className="glass-panel flex-row gap-sm align-center">
+                <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
+                    <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center`}>
                         <input
                             type="text"
-                            className="input-field"
+                            className={inputField}
                             placeholder="New Method Name (e.g., Schritte)"
                             value={newMethodName}
                             onChange={(e) => setNewMethodName(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCreateMethod()}
                         />
-                        <button className="btn btn-primary" onClick={handleCreateMethod} disabled={!newMethodName.trim()}>
+                        <button className={`${btnPrimary} w-full sm:w-auto shrink-0`} onClick={handleCreateMethod} disabled={!newMethodName.trim()}>
                             <Plus size={18} /> Add Method
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {methods.map(method => (
-                            <div key={method.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadLessonsForMethod(method)}>
-                                <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
+                            <div key={method.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadLessonsForMethod(method)}>
+                                <div className="flex flex-row gap-3 items-center flex-1">
                                     <Folder size={24} color="var(--success-color)" />
-                                    {/* Inline editing for method is currently skipped to keep code short, could be added later */}
-                                    <h3 style={{ margin: 0 }}>{method.name}</h3>
+                                    <h3 className="m-0 text-lg">{method.name}</h3>
                                 </div>
-                                <div className="flex-row gap-xs" onClick={e => e.stopPropagation()}>
-                                    <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleDeleteMethod(method.id, e)}>
-                                        <Trash2 size={18} color="var(--danger-color)" />
+                                <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
+                                    <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteMethod(method.id, e)}>
+                                        <Trash2 size={18} className="text-[var(--danger-color)]" />
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {methods.length === 0 && <p style={{ color: 'var(--text-secondary)', padding: '1rem' }}>No learning methods created yet.</p>}
+                        {methods.length === 0 && <p className="text-[var(--text-secondary)] p-4">No learning methods created yet.</p>}
                     </div>
                 </div>
             )}
 
             {/* VIEW: LESSONS (Inside a Method) */}
             {activeMethod && !activeLesson && !isLoading && (
-                <div className="flex-column gap-md animate-fade-in">
-                    <div className="glass-panel flex-row gap-sm align-center">
+                <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
+                    <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center`}>
                         <input
                             type="text"
-                            className="input-field"
+                            className={inputField}
                             placeholder="New Lesson Title (e.g., Lektion 1)"
                             value={newLessonName}
                             onChange={(e) => setNewLessonName(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCreateLesson()}
                         />
-                        <button className="btn btn-primary" onClick={handleCreateLesson} disabled={!newLessonName.trim()}>
+                        <button className={`${btnPrimary} w-full sm:w-auto shrink-0`} onClick={handleCreateLesson} disabled={!newLessonName.trim()}>
                             <Plus size={18} /> Add Lesson
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {lessons.map(lesson => (
-                            <div key={lesson.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadPartsForLesson(lesson)}>
-                                <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
+                            <div key={lesson.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadPartsForLesson(lesson)}>
+                                <div className="flex flex-row gap-3 items-center flex-1">
                                     <FileText size={20} color="var(--success-color)" />
                                     {editingId === lesson.id ? (
-                                        <div className="flex-row gap-sm" style={{ flex: 1 }} onClick={e => e.stopPropagation()}>
+                                        <div className="flex flex-row gap-2 flex-1" onClick={e => e.stopPropagation()}>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className="input-field"
-                                                style={{ padding: '0.4rem', flex: 1 }}
+                                                className={`${inputField} !p-1.5 !text-sm`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -640,63 +638,62 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className="btn btn-primary" style={{ padding: '0.4rem' }} onClick={e => handleSaveLesson(lesson.id, e)}>
+                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveLesson(lesson.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
                                     ) : (
-                                        <h3 style={{ margin: 0 }}>{lesson.name}</h3>
+                                        <h3 className="m-0 text-lg">{lesson.name}</h3>
                                     )}
                                 </div>
                                 {editingId !== lesson.id && (
-                                    <div className="flex-row gap-xs" onClick={e => e.stopPropagation()}>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleStartEdit(lesson.id, lesson.name, '', e)}>
-                                            <Edit2 size={18} color="var(--text-secondary)" />
+                                    <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(lesson.id, lesson.name, '', e)}>
+                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
                                         </button>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleDeleteLesson(lesson.id, e)}>
-                                            <Trash2 size={18} color="var(--danger-color)" />
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteLesson(lesson.id, e)}>
+                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {lessons.length === 0 && <p style={{ color: 'var(--text-secondary)', padding: '1rem' }}>No lessons in this level yet.</p>}
+                        {lessons.length === 0 && <p className="text-[var(--text-secondary)] p-4">No lessons in this level yet.</p>}
                     </div>
                 </div>
             )}
 
             {/* VIEW: PARTS (Inside a Lesson) */}
             {activeLesson && !activePart && !isLoading && (
-                <div className="flex-column gap-md animate-fade-in">
-                    <div className="glass-panel flex-row gap-sm align-center">
+                <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
+                    <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center`}>
                         <input
                             type="text"
-                            className="input-field"
+                            className={inputField}
                             placeholder="New Part Name (e.g., Part 1)"
                             value={newPartName}
                             onChange={(e) => setNewPartName(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCreatePart()}
                         />
-                        <button className="btn btn-primary" onClick={handleCreatePart} disabled={!newPartName.trim()}>
+                        <button className={`${btnPrimary} w-full sm:w-auto shrink-0`} onClick={handleCreatePart} disabled={!newPartName.trim()}>
                             <Plus size={18} /> Add Part
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {parts.map(part => (
-                            <div key={part.id} className="glass-panel flex-row justify-between align-center" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => loadWordsForPart(part)}>
-                                <div className="flex-row gap-sm align-center" style={{ flex: 1 }}>
-                                    <List size={20} color="var(--primary-color)" />
+                            <div key={part.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadWordsForPart(part)}>
+                                <div className="flex flex-row gap-3 items-center flex-1">
+                                    <List size={20} className="text-[var(--accent-color)]" />
                                     {editingId === part.id ? (
-                                        <div className="flex-row gap-sm" style={{ flex: 1 }} onClick={e => e.stopPropagation()}>
+                                        <div className="flex flex-row gap-2 flex-1" onClick={e => e.stopPropagation()}>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className="input-field"
-                                                style={{ padding: '0.4rem', flex: 1 }}
+                                                className={`${inputField} !p-1.5 !text-sm`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -704,48 +701,47 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className="btn btn-primary" style={{ padding: '0.4rem' }} onClick={e => handleSavePart(part.id, e)}>
+                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSavePart(part.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
                                     ) : (
-                                        <h3 style={{ margin: 0 }}>{part.name}</h3>
+                                        <h3 className="m-0 text-lg">{part.name}</h3>
                                     )}
                                 </div>
                                 {editingId !== part.id && (
-                                    <div className="flex-row gap-xs" onClick={e => e.stopPropagation()}>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleStartEdit(part.id, part.name, '', e)}>
-                                            <Edit2 size={18} color="var(--text-secondary)" />
+                                    <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(part.id, part.name, '', e)}>
+                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
                                         </button>
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleDeletePart(part.id, e)}>
-                                            <Trash2 size={18} color="var(--danger-color)" />
+                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeletePart(part.id, e)}>
+                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {parts.length === 0 && <p style={{ color: 'var(--text-secondary)', padding: '1rem' }}>No parts in this lesson yet.</p>}
+                        {parts.length === 0 && <p className="text-[var(--text-secondary)] p-4">No parts in this lesson yet.</p>}
                     </div>
                 </div>
             )}
 
             {/* VIEW: WORDS (Inside a Part) */}
             {activePart && !isLoading && (
-                <div className="flex-column gap-md animate-fade-in">
+                <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease-out]">
 
                     {/* MCQ Generation UI */}
-                    <div className="glass-panel flex-column gap-sm">
-                        <div className="flex-row justify-between align-center mobile-col gap-sm">
-                            <div className="flex-column">
-                                <h3 style={{ margin: 0 }}>Target Level</h3>
-                                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Set the AI difficulty for generated sentences.</p>
+                    <div className={`${glassPanel} flex flex-col gap-4`}>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex flex-col">
+                                <h3 className="m-0 text-lg font-bold text-[var(--text-primary)]">Target Level</h3>
+                                <p className="m-0 mt-1 text-sm text-[var(--text-secondary)]">Set the AI difficulty for generated sentences.</p>
                             </div>
                             <select
-                                className="input-field select-field"
-                                style={{ width: 'auto', minWidth: '150px' }}
+                                className={`${inputField} !w-auto min-w-[150px] !py-2`}
                                 value={settings.learningLevel}
                                 onChange={(e) => updateLevel(e.target.value as LearningLevel)}
                             >
@@ -759,34 +755,34 @@ export function Admin() {
                         </div>
 
                         {words.some(w => !w.mcq_sentence) && (
-                            <div className="flex-row gap-sm align-center" style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                            <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-[var(--border-color)]">
                                 {!isGeneratingMCQs ? (
-                                    <button className="btn btn-primary" onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
+                                    <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
                                         <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
                                     </button>
                                 ) : (
-                                    <button className="btn btn-secondary" style={{ color: 'var(--danger-color)' }} onClick={handleStopGeneration}>
+                                    <button className={`${btnSecondary} w-full sm:w-auto text-[var(--danger-color)] border-[var(--danger-color)]`} onClick={handleStopGeneration}>
                                         <Square size={18} /> Stop Generation
                                     </button>
                                 )}
-                                {mcqProgressText && <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{mcqProgressText}</span>}
-                                {!settings.aiApiKey && <span style={{ fontSize: '0.875rem', color: 'var(--danger-color)' }}>API Key missing in Settings.</span>}
+                                {mcqProgressText && <span className="text-sm text-[var(--text-secondary)]">{mcqProgressText}</span>}
+                                {!settings.aiApiKey && <span className="text-sm text-[var(--danger-color)]">API Key missing in Settings.</span>}
                             </div>
                         )}
                     </div>
 
-                    <div className="flex-row justify-between align-center mobile-col gap-sm">
-                        <h3 style={{ margin: 0 }}>Vocabulary & Content</h3>
-                        <div className="flex-row gap-sm">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h3 className="m-0 text-xl font-bold">Vocabulary & Content</h3>
+                        <div className="flex flex-row gap-3 w-full sm:w-auto">
                             <input
                                 type="file"
                                 accept="image/*"
-                                style={{ display: 'none' }}
+                                className="hidden"
                                 ref={fileInputRef}
                                 onChange={handleImageUpload}
                             />
                             <button
-                                className="btn btn-primary"
+                                className={`${btnPrimary} flex-1 sm:flex-none`}
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isUploading}
                             >
@@ -797,40 +793,39 @@ export function Admin() {
                     </div>
 
                     {isUploading && (
-                        <div className="glass-panel flex-column gap-sm">
-                            <div className="flex-row justify-between align-center">
-                                <span style={{ fontSize: '0.875rem' }}>Extracting vocabulary...</span>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{Math.round(scanProgress)}%</span>
+                        <div className={`${glassPanel} flex flex-col gap-3 py-6`}>
+                            <div className="flex flex-row justify-between items-center">
+                                <span className="text-sm">Extracting vocabulary...</span>
+                                <span className="text-sm text-[var(--text-secondary)]">{Math.round(scanProgress)}%</span>
                             </div>
-                            <div style={{ width: '100%', backgroundColor: 'var(--bg-color)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${scanProgress}%`, backgroundColor: 'var(--accent-color)', transition: 'width 0.5s ease-out' }} />
+                            <div className="w-full bg-[var(--bg-color)] h-2 rounded-full overflow-hidden">
+                                <div className="h-full bg-[var(--accent-color)] transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }} />
                             </div>
                         </div>
                     )}
 
-                    <div className="glass-panel flex-column gap-sm" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div className={`${glassPanel} overflow-hidden !p-0`}>
                         {words.length > 0 ? (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead style={{ backgroundColor: 'var(--bg-color-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse text-left">
+                                    <thead className="bg-[var(--bg-color-secondary)] border-b border-[var(--border-color)]">
                                         <tr>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>German</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Albanian</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>MCQ Status</th>
-                                            <th style={{ padding: '0.75rem 1rem', width: '60px' }}></th>
+                                            <th className="px-4 py-3 font-semibold text-sm">German</th>
+                                            <th className="px-4 py-3 font-semibold text-sm">Albanian</th>
+                                            <th className="px-4 py-3 font-semibold text-sm">MCQ Status</th>
+                                            <th className="px-4 py-3 w-16"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {words.map((word) => (
-                                            <tr key={word.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <tr key={word.id} className="border-b border-[var(--border-color)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                                                 {editingId === word.id ? (
                                                     <>
-                                                        <td style={{ padding: '0.75rem 1rem' }}>
+                                                        <td className="px-4 py-3">
                                                             <input
                                                                 autoFocus
                                                                 type="text"
-                                                                className="input-field"
-                                                                style={{ padding: '0.4rem', width: '100%' }}
+                                                                className={`${inputField} !p-2 !text-sm`}
                                                                 value={editValue1}
                                                                 onChange={e => setEditValue1(e.target.value)}
                                                                 onKeyDown={e => {
@@ -839,11 +834,10 @@ export function Admin() {
                                                                 }}
                                                             />
                                                         </td>
-                                                        <td style={{ padding: '0.75rem 1rem' }}>
+                                                        <td className="px-4 py-3">
                                                             <input
                                                                 type="text"
-                                                                className="input-field"
-                                                                style={{ padding: '0.4rem', width: '100%' }}
+                                                                className={`${inputField} !p-2 !text-sm`}
                                                                 value={editValue2}
                                                                 onChange={e => setEditValue2(e.target.value)}
                                                                 onKeyDown={e => {
@@ -855,34 +849,34 @@ export function Admin() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <td style={{ padding: '0.75rem 1rem' }}>{word.german}</td>
-                                                        <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{word.albanian}</td>
+                                                        <td className="px-4 py-3 text-sm">{word.german}</td>
+                                                        <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{word.albanian}</td>
                                                     </>
                                                 )}
-                                                <td style={{ padding: '0.75rem 1rem' }}>
+                                                <td className="px-4 py-3">
                                                     {word.mcq_sentence ? (
-                                                        <span style={{ color: 'var(--success-color)', fontSize: '0.875rem', fontWeight: 500 }}>Generated</span>
+                                                        <span className="text-[var(--success-color)] text-xs font-semibold px-2 py-1 rounded-full bg-[rgba(46,160,67,0.1)]">Generated</span>
                                                     ) : (
-                                                        <span style={{ color: 'var(--warning-color)', fontSize: '0.875rem', fontWeight: 500 }}>Pending</span>
+                                                        <span className="text-[var(--warning-color)] text-xs font-semibold px-2 py-1 rounded-full bg-[rgba(216,155,0,0.1)]">Pending</span>
                                                     )}
                                                 </td>
-                                                <td style={{ padding: '0.75rem 1rem' }}>
+                                                <td className="px-4 py-3">
                                                     {editingId === word.id ? (
-                                                        <div className="flex-row gap-xs">
-                                                            <button className="btn btn-primary" style={{ padding: '0.4rem' }} onClick={e => handleSaveWord(word.id, e)}>
+                                                        <div className="flex flex-row gap-2">
+                                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveWord(word.id, e)}>
                                                                 <Check size={16} />
                                                             </button>
-                                                            <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={e => handleCancelEdit(e)}>
+                                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
                                                                 <X size={16} />
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex-row gap-xs">
-                                                            <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={(e) => handleStartEdit(word.id, word.german, word.albanian, e)}>
-                                                                <Edit2 size={16} color="var(--text-secondary)" />
+                                                        <div className="flex flex-row gap-1">
+                                                            <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(word.id, word.german, word.albanian, e)}>
+                                                                <Edit2 size={16} className="text-[var(--text-secondary)]" />
                                                             </button>
-                                                            <button className="btn btn-secondary" style={{ padding: '0.4rem', border: 'none' }} onClick={() => handleDeleteWord(word.id)}>
-                                                                <Trash2 size={16} color="var(--danger-color)" />
+                                                            <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={() => handleDeleteWord(word.id)}>
+                                                                <Trash2 size={16} className="text-[var(--danger-color)]" />
                                                             </button>
                                                         </div>
                                                     )}
@@ -893,9 +887,9 @@ export function Admin() {
                                 </table>
                             </div>
                         ) : (
-                            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                                <List size={32} color="var(--text-secondary)" style={{ margin: '0 auto 1rem' }} />
-                                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>No vocabulary words added yet. Use the scan tool or add manually.</p>
+                            <div className="p-12 text-center flex flex-col items-center gap-4">
+                                <List size={48} className="text-[var(--text-secondary)] opacity-50" />
+                                <p className="m-0 text-[var(--text-secondary)] max-w-[300px]">No vocabulary words added yet. Use the scan tool or add manually.</p>
                             </div>
                         )}
                     </div>
