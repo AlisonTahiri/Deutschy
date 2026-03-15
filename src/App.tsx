@@ -11,6 +11,7 @@ import { SocialLoginService } from './services/auth/SocialLoginService';
 import { Admin } from './components/Admin';
 import { useSubscription } from './hooks/useSubscription';
 import { Paywall } from './components/Paywall';
+import { Onboarding } from './components/Onboarding';
 
 export type ViewState = 'home' | 'settings' | 'exercise' | 'admin';
 
@@ -18,6 +19,9 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(() =>
+    localStorage.getItem('dardha_onboarding_done') === 'true'
+  );
   const { session, role, isLoading: authLoading } = useAuth();
 
   // Initialize revenuecat and sync subscription
@@ -60,6 +64,16 @@ function App() {
   }
 
   if (!session) {
+    if (!onboardingDone) {
+      return (
+        <Onboarding
+          onComplete={() => {
+            localStorage.setItem('dardha_onboarding_done', 'true');
+            setOnboardingDone(true);
+          }}
+        />
+      );
+    }
     return <Auth />;
   }
 
