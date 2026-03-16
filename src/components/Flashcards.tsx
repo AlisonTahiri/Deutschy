@@ -101,7 +101,7 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
                         onClick={() => setShowTranslation(!showTranslation)}
                         style={{ position: 'absolute', width: '100%', height: '100%', cursor: 'grab' }}
                         whileDrag={{ cursor: 'grabbing', scale: 1.05 }}
-                        className="bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-8 shadow-lg flex flex-col items-center justify-center"
+                        className="bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg flex flex-col items-center justify-center"
                     >
                         <div className="absolute top-4 right-4" style={{ color: 'var(--text-primary)' }} title="Tap to flip">
                             <RotateCcw size={20} />

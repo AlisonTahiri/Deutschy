@@ -13,8 +13,8 @@ interface ExerciseContainerProps {
     onExit: () => void;
 }
 
-const glassPanel = 'bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-8 shadow-lg';
-const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-[var(--border-color)] cursor-pointer transition-all duration-200 bg-[var(--bg-color-secondary)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]';
+const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg transition-all duration-300';
+const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
 export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
     const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();

@@ -9,9 +9,9 @@ interface MultipleChoiceProps {
     onComplete: () => void;
 }
 
-const glassPanel = 'bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-8 shadow-lg';
-const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed';
-const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm border border-[var(--border-color)] cursor-pointer transition-all duration-200 bg-[var(--bg-color-secondary)] text-[var(--text-primary)] hover:border-[var(--text-secondary)] text-left';
+const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg';
+const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-(--accent-color) hover:bg-(--accent-hover) disabled:opacity-50 disabled:cursor-not-allowed';
+const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50 text-left';
 
 export function MultipleChoice({ words, onResult, onComplete }: MultipleChoiceProps) {
     const { settings } = useSettings();
