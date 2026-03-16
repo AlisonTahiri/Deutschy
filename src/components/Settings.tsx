@@ -1,12 +1,19 @@
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { useState } from 'react';
-
-const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed';
-const inputField = 'w-full px-4 py-3 rounded-xl border text-base outline-none transition-all duration-200 focus:ring-2 focus:ring-[var(--accent-color)]';
+import {
+    Block,
+    BlockTitle,
+    List,
+    ListItem,
+    Toggle,
+    Radio,
+    ListInput,
+    Button,
+} from 'konsta/react';
 
 export function Settings() {
-    const { settings, isLoading, updateApiKey, updateTheme } = useSettings();
+    const { settings, isLoading, updateApiKey, updateTheme, updateKonstaTheme, updateColorTheme } = useSettings();
     const { role } = useAuth();
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -28,74 +35,118 @@ export function Settings() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 animate-[fadeIn_0.4s_ease-out]" style={{ minHeight: '50vh' }}>
-                <h2>Loading Settings...</h2>
-            </div>
+            <Block className="text-center">
+                <p>Loading Settings...</p>
+            </Block>
         );
     }
 
+    const colorOptions = [
+        { label: 'Green (Default)', value: '#2ea043' },
+        { label: 'Blue', value: '#2196f3' },
+        { label: 'Purple', value: '#9c27b0' },
+        { label: 'Red', value: '#f44336' },
+        { label: 'Orange', value: '#ff9800' },
+    ];
+
     return (
-        <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out] px-2">
-            <h1>Settings</h1>
-
-            <div
-                className="flex flex-col gap-4 border rounded-3xl p-8 max-w-[600px] w-full"
-                style={{ borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}
-            >
-                <div>
-                    <h3>Appearance</h3>
-                    <p>Choose your preferred color theme. Light mode is easy on the eyes during the day.</p>
-                    <div className="flex flex-col gap-2">
-                        <label htmlFor="theme" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>Theme</label>
+        <>
+            <BlockTitle>Appearance</BlockTitle>
+            <List strong inset>
+                <ListItem
+                    title="Dark Mode"
+                    after={
+                        <Toggle
+                            component="label"
+                            checked={settings.theme === 'dark'}
+                            onChange={() => updateTheme(settings.theme === 'dark' ? 'light' : 'dark')}
+                        />
+                    }
+                />
+                <ListItem
+                    title="Platform Theme"
+                    after={
                         <select
-                            id="theme"
-                            className={`${inputField} appearance-none`}
-                            style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                            value={settings.theme}
-                            onChange={(e) => updateTheme(e.target.value as 'dark' | 'light')}
+                            className="bg-transparent border-none text-(--k-color-primary) font-semibold outline-none cursor-pointer"
+                            value={settings.konstaTheme}
+                            onChange={(e) => updateKonstaTheme(e.target.value as 'ios' | 'material')}
                         >
-                            <option value="dark">Dark Theme (Default)</option>
-                            <option value="light">Light Theme</option>
+                            <option value="ios">iOS Theme</option>
+                            <option value="material">Material Theme</option>
                         </select>
-                    </div>
-                </div>
+                    }
+                />
+            </List>
 
-                {role === 'admin' && (
-                    <div className="mt-4">
-                        <h3>AI Configuration</h3>
-                        <p>Provide your Google Gemini or OpenAI API key to generate context sentences for exercises.</p>
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="apiKey" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>API Key</label>
-                            <input
-                                id="apiKey"
-                                type="password"
-                                className={inputField}
-                                style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                                value={settings.aiApiKey}
-                                onChange={(e) => updateApiKey(e.target.value)}
-                                placeholder="sk-..."
-                            />
-                        </div>
-                    </div>
-                )}
+            <BlockTitle>Color Theme</BlockTitle>
+            <List strong inset>
+                {colorOptions.map((opt) => (
+                    <ListItem
+                        key={opt.value}
+                        label
+                        component="label"
+                        title={opt.label}
+                        onChange={() => updateColorTheme(opt.value)}
+                        media={
+                            <div className="flex items-center gap-2">
+                                <Radio
+                                    component="div"
+                                    name="color-theme"
+                                    value={opt.value}
+                                    checked={settings.colorTheme === opt.value}
+                                    onChange={() => updateColorTheme(opt.value)}
+                                />
+                                <div
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        backgroundColor: opt.value,
+                                        border: '1px solid var(--border-color)',
+                                    }}
+                                />
+                            </div>
+                        }
+                    />
+                ))}
+            </List>
 
-                {role === 'member' && (
-                    <div className="mt-4 p-4 rounded-xl border" style={{ background: 'rgba(218, 54, 51, 0.1)', borderColor: 'var(--danger-color)' }}>
-                        <h3 style={{ color: 'var(--danger-color)' }}>Developer Testing</h3>
-                        <p className="text-sm">Trigger a Test Store purchase. You must have offerings configured in the RevenueCat Dashboard first.</p>
-                        <button
-                            className={`${btnPrimary} w-full mt-2`}
+            {role === 'admin' && (
+                <>
+                    <BlockTitle>AI Configuration</BlockTitle>
+                    <List strong inset>
+                        <ListInput
+                            label="API Key"
+                            type="password"
+                            placeholder="sk-..."
+                            value={settings.aiApiKey}
+                            onChange={(e) => updateApiKey(e.target.value)}
+                            info="Provide your Google Gemini or OpenAI API key to generate context sentences."
+                        />
+                    </List>
+                </>
+            )}
+
+            {role === 'member' && (
+                <>
+                    <BlockTitle>Developer Testing</BlockTitle>
+                    <Block strong inset>
+                        <p className="mb-4 text-sm text-(--text-secondary)">
+                            Trigger a Test Store purchase mock.
+                        </p>
+                        <Button
+                            large
                             onClick={testPurchase}
                             disabled={isPurchasing}
                         >
                             {isPurchasing ? 'Processing...' : 'Test Purchase Flow'}
-                        </button>
+                        </Button>
                         {purchaseError && (
-                            <p className="text-sm mt-2" style={{ color: 'var(--danger-color)' }}>{purchaseError}</p>
+                            <p className="mt-2 text-sm text-(--danger-color)">{purchaseError}</p>
                         )}
-                    </div>
-                )}
-            </div>
-        </div>
+                    </Block>
+                </>
+            )}
+        </>
     );
 }

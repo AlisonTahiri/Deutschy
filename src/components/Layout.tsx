@@ -3,6 +3,15 @@ import { BookOpen, Settings as SettingsIcon, Home, ShieldCheck } from 'lucide-re
 import { useState, useEffect } from 'react';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
+import {
+    Page,
+    Navbar,
+    Tabbar,
+    TabbarLink,
+    List,
+    MenuListItem,
+    Icon,
+} from 'konsta/react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -10,15 +19,10 @@ interface LayoutProps {
     onNavigate: (view: 'home' | 'settings' | 'admin') => void;
 }
 
-const navBtnBase = 'flex items-center gap-2 w-full px-3 py-2.5 rounded-xl font-semibold text-sm border-0 cursor-pointer transition-all duration-200';
-const navBtnActive = 'bg-[var(--accent-color)] text-white shadow-[var(--shadow-glow)]';
-const navBtnInactive = 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-color-secondary)]';
-
 export function Layout({ children, currentView, onNavigate }: LayoutProps) {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const { settings } = useSettings();
     const { role } = useAuth();
-    const isLight = settings.theme === 'light';
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -26,91 +30,99 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const isHome = currentView === 'home' || currentView === 'exercise';
+    const isAdmin = currentView === 'admin';
+    const isSettings = currentView === 'settings';
+
+    // Page title logic
+    const getTitle = () => {
+        if (isHome) return 'Dardha';
+        if (isAdmin) return 'Admin Panel';
+        if (isSettings) return 'Settings';
+        return 'Dardha';
+    };
+
     if (isMobile) {
         return (
-            <div className="flex bg-red-500 flex-col min-h-screen pb-[70px]" style={{ backgroundColor: 'var(--bg-color)' }}>
-                <main className="flex-1 overflow-y-auto">
-                    <div className="max-w-[1200px] mx-auto px-4 py-8 w-full">
-                        {children}
-                    </div>
-                </main>
+            <Page>
+                <Navbar
+                    title={getTitle()}
+                    centerTitle={settings.konstaTheme === 'ios'}
+                />
 
-                <nav
-                    className="fixed bottom-0 left-0 right-0 flex justify-around items-center border-t z-50 py-2"
-                    style={{
-                        backgroundColor: 'var(--bg-color)',
-                        borderColor: 'var(--border-color)',
-                        paddingBottom: 'env(safe-area-inset-bottom, 0.5rem)',
-                    }}
-                >
-                    <button
-                        className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer flex-1 py-2"
-                        style={{ color: currentView === 'home' || currentView === 'exercise' ? 'var(--accent-color)' : (isLight ? 'var(--text-primary)' : 'var(--text-secondary)') }}
+                <div className="pb-20"> {/* Padding for Tabbar */}
+                    {children}
+                </div>
+
+                <Tabbar labels={true} icons={true} className="fixed bottom-0 left-0">
+                    <TabbarLink
+                        active={isHome}
                         onClick={() => onNavigate('home')}
-                    >
-                        <Home size={24} />
-                        <span className="text-xs font-medium">Home</span>
-                    </button>
+                        label="Home"
+                        icon={<Icon ios={<Home size={24} />} material={<Home size={24} />} />}
+                    />
                     {role === 'admin' && (
-                        <button
-                            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer flex-1 py-2"
-                            style={{ color: currentView === 'admin' ? 'var(--accent-color)' : (isLight ? 'var(--text-primary)' : 'var(--text-secondary)') }}
+                        <TabbarLink
+                            active={isAdmin}
                             onClick={() => onNavigate('admin')}
-                        >
-                            <ShieldCheck size={24} />
-                            <span className="text-xs font-medium">Admin</span>
-                        </button>
+                            label="Admin"
+                            icon={<Icon ios={<ShieldCheck size={24} />} material={<ShieldCheck size={24} />} />}
+                        />
                     )}
-                    <button
-                        className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer flex-1 py-2"
-                        style={{ color: currentView === 'settings' ? 'var(--accent-color)' : (isLight ? 'var(--text-primary)' : 'var(--text-secondary)') }}
+                    <TabbarLink
+                        active={isSettings}
                         onClick={() => onNavigate('settings')}
-                    >
-                        <SettingsIcon size={24} />
-                        <span className="text-xs font-medium">Settings</span>
-                    </button>
-                </nav>
-            </div>
+                        label="Settings"
+                        icon={<Icon ios={<SettingsIcon size={24} />} material={<SettingsIcon size={24} />} />}
+                    />
+                </Tabbar>
+            </Page>
         );
     }
 
     return (
-        <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-color)' }}>
+        <div className="flex min-h-screen bg-[var(--bg-color)]">
             <aside
-                className="w-[240px] flex flex-col gap-4 sticky top-0 h-screen px-4 py-8 border-r"
-                style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)' }}
+                className="w-[240px] flex flex-col gap-4 sticky top-0 h-screen border-r border-[var(--border-color)] bg-[var(--bg-color-secondary)]"
             >
-                <div className="flex items-center gap-2 mb-4 px-2">
-                    <BookOpen color={isLight ? 'var(--text-primary)' : 'var(--accent-color)'} size={28} />
-                    <h2 className="text-xl font-semibold m-0" style={{ color: 'var(--text-primary)' }}>Dardha</h2>
+                <div className="flex items-center gap-2 p-6 mb-2">
+                    <BookOpen className="text-[var(--k-color-primary)]" size={28} />
+                    <h2 className="text-xl font-bold m-0 text-[var(--text-primary)]">Dardha</h2>
                 </div>
 
-                <nav className="flex flex-col gap-1">
-                    <button
-                        className={`${navBtnBase} ${currentView === 'home' || currentView === 'exercise' ? navBtnActive : navBtnInactive}`}
+                <List className="mt-0" dividers={false}>
+                    <MenuListItem
+                        active={isHome}
+                        title="Home"
                         onClick={() => onNavigate('home')}
-                    >
-                        <Home size={18} /> Home
-                    </button>
+                        media={<Home size={18} />}
+                        className={isHome ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                    />
                     {role === 'admin' && (
-                        <button
-                            className={`${navBtnBase} ${currentView === 'admin' ? navBtnActive : navBtnInactive}`}
+                        <MenuListItem
+                            active={isAdmin}
+                            title="Admin"
                             onClick={() => onNavigate('admin')}
-                        >
-                            <ShieldCheck size={18} /> Admin
-                        </button>
+                            media={<ShieldCheck size={18} />}
+                            className={isAdmin ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                        />
                     )}
-                    <button
-                        className={`${navBtnBase} ${currentView === 'settings' ? navBtnActive : navBtnInactive}`}
+                    <MenuListItem
+                        active={isSettings}
+                        title="Settings"
                         onClick={() => onNavigate('settings')}
-                    >
-                        <SettingsIcon size={18} /> Settings
-                    </button>
-                </nav>
+                        media={<SettingsIcon size={18} />}
+                        className={isSettings ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                    />
+                </List>
             </aside>
 
             <main className="flex-1 overflow-y-auto">
-                <div className="max-w-[1200px] mx-auto px-4 py-8 w-full">
+                <Navbar
+                    title={getTitle()}
+                    centerTitle={settings.konstaTheme === 'ios'}
+                />
+                <div className="max-w-[1200px] mx-auto p-8 w-full">
                     {children}
                 </div>
             </main>

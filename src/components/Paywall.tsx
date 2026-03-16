@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+    Page,
+    Navbar,
+    Block,
+    BlockTitle,
+    Button,
+    Preloader,
+} from 'konsta/react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export interface MockPackage {
     identifier: string;
@@ -29,7 +37,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
         const fetchOfferings = async () => {
             try {
                 setIsLoading(true);
-                console.log('[Paywall] Mocking packages for web environment');
+                // Mocking packages for web environment
                 setPackages([
                     { identifier: '$rc_monthly', packageType: 'MONTHLY', product: { identifier: 'monthly', description: 'Monthly subscription', title: 'Monthly', price: 9.99, priceString: '$9.99', currencyCode: 'USD', productCategory: 'SUBSCRIPTION' } },
                     { identifier: '$rc_annual', packageType: 'ANNUAL', product: { identifier: 'yearly', description: 'Yearly subscription', title: 'Yearly', price: 99.99, priceString: '$99.99', currencyCode: 'USD', productCategory: 'SUBSCRIPTION' } },
@@ -65,73 +73,88 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 animate-[fadeIn_0.4s_ease-out] h-full p-8">
-                <Loader2 className="animate-spin" size={48} color="var(--accent-color)" />
-                <h2 style={{ color: 'var(--text-primary)' }}>Loading Options...</h2>
-            </div>
+            <Page>
+                <div className="flex flex-col items-center justify-center min-h-screen">
+                    <Preloader className="w-12 h-12" />
+                    <p className="mt-4 text-(--text-secondary)">Loading Options...</p>
+                </div>
+            </Page>
         );
     }
 
     return (
-        <div className="flex flex-col items-center justify-center animate-[fadeIn_0.4s_ease-out] text-center h-full px-4 py-8" style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <h1 className="text-4xl mb-2" style={{ color: 'var(--text-primary)' }}>Unlock German B2</h1>
-            <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
-                Get full access to all lessons, interactive AI exercises, and complete vocabulary tracking.
-            </p>
+        <Page className="bg-(--bg-color)">
+            <Navbar title="Abonimi" />
 
-            <div className="flex flex-col gap-2 w-full max-w-md mb-8 text-left">
-                {[
-                    'Complete B2 Vocabulary Course',
-                    'Interactive Reading & Listening',
-                    'Progress Tracking & Analytics',
-                    'Unlimited AI Generation',
-                ].map((feature, i) => (
-                    <div key={i} className="flex flex-row items-center gap-4">
-                        <CheckCircle2 size={20} color="var(--success-color)" />
-                        <span style={{ color: 'var(--text-primary)' }}>{feature}</span>
+            <div className="max-w-xl mx-auto pb-12">
+                <Block className="text-center pt-8">
+                    <BlockTitle large className="text-4xl m-0 text-(--text-primary)">Unlock German B2</BlockTitle>
+                    <p className="text-lg mt-4 text-(--text-secondary)">
+                        Get full access to all lessons, interactive AI exercises, and complete vocabulary tracking.
+                    </p>
+                </Block>
+
+                <Block strong inset className="m-4 bg-(--bg-card) border border-(--border-color) rounded-2xl shadow-sm">
+                    <div className="flex flex-col gap-4 py-2">
+                        {[
+                            'Complete B2 Vocabulary Course',
+                            'Interactive Reading & Listening',
+                            'Progress Tracking & Analytics',
+                            'Unlimited AI Generation',
+                        ].map((feature, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <CheckCircle2 size={20} className="text-(--success-color) shrink-0" />
+                                <span className="text-(--text-primary) font-medium">{feature}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </Block>
 
-            {error && (
-                <div className="flex flex-row items-center gap-2 rounded-xl p-4 mb-8 w-full" style={{ backgroundColor: 'rgba(218, 54, 51, 0.1)', color: 'var(--danger-color)' }}>
-                    <AlertCircle size={20} />
-                    <span className="text-sm text-left">{error}</span>
+                {error && (
+                    <Block strong inset className="bg-red-50 text-red-600 border border-red-200 m-4 p-4 flex items-center gap-2 rounded-xl text-sm">
+                        <AlertCircle size={20} />
+                        <span className="flex-1">{error}</span>
+                    </Block>
+                )}
+
+                <BlockTitle>Zgjidhni një plan</BlockTitle>
+                <div className="px-4 flex flex-col gap-4">
+                    {packages.map((pkg) => (
+                        <Button
+                            key={pkg.identifier}
+                            disabled={isPurchasing}
+                            onClick={() => handlePurchase(pkg)}
+                            className="h-auto p-0 m-0 overflow-hidden shadow-sm border border-(--border-color) rounded-2xl bg-(--bg-card)"
+                            clear
+                        >
+                            <div className="flex items-center justify-between w-full p-6 text-left">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xl font-bold text-(--text-primary)">
+                                        {pkg.product.title.replace(/\(.*\)/, '').trim()}
+                                    </span>
+                                    <span className="text-sm text-(--text-secondary)">
+                                        {pkg.packageType === 'LIFETIME' ? 'Pagesë njëherë' : `Faturuar në muaj`}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-bold text-(--accent-color)">
+                                        {pkg.product.priceString}
+                                    </span>
+                                </div>
+                            </div>
+                        </Button>
+                    ))}
                 </div>
-            )}
 
-            <div className="flex flex-col gap-4 w-full">
-                {packages.map((pkg) => (
-                    <button
-                        key={pkg.identifier}
-                        disabled={isPurchasing}
-                        onClick={() => handlePurchase(pkg)}
-                        className="flex flex-row justify-between items-center w-full rounded-3xl p-6 border cursor-pointer transition-all hover:scale-[1.01] disabled:opacity-70"
-                        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
-                    >
-                        <div className="flex flex-col items-start gap-1">
-                            <span className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                {pkg.product.title.replace(/\(.*\)/, '').trim()}
-                            </span>
-                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                {pkg.packageType === 'LIFETIME' ? 'One-time payment' : `Billed ${pkg.packageType.toLowerCase()}`}
-                            </span>
+                {isPurchasing && (
+                    <Block className="text-center">
+                        <div className="flex items-center justify-center gap-3 text-(--text-secondary)">
+                            <Preloader className="w-5 h-5" />
+                            <span>Duke procesuar blerjen...</span>
                         </div>
-                        <div>
-                            <span className="text-2xl font-bold" style={{ color: 'var(--accent-color)' }}>
-                                {pkg.product.priceString}
-                            </span>
-                        </div>
-                    </button>
-                ))}
+                    </Block>
+                )}
             </div>
-
-            {isPurchasing && (
-                <div className="flex flex-row items-center gap-2 mt-6" style={{ color: 'var(--text-secondary)' }}>
-                    <Loader2 className="animate-spin" size={16} />
-                    <span>Processing purchase...</span>
-                </div>
-            )}
-        </div>
+        </Page>
     );
 }

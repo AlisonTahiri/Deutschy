@@ -3,7 +3,9 @@ export type LearningLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export interface Settings {
   aiApiKey: string;
   learningLevel: LearningLevel;
-  theme: 'dark' | 'light'; // For future use
+  theme: 'dark' | 'light';
+  konstaTheme: 'ios' | 'material';
+  colorTheme: string; // Hex color or brand name
 }
 
 export interface WordPair {
