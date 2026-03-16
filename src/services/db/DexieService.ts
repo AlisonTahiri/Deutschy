@@ -34,7 +34,9 @@ export class DexieService implements IDatabaseService {
                     id: 1,
                     aiApiKey: '',
                     learningLevel: 'A1',
-                    theme: 'dark'
+                    theme: 'dark',
+                    konstaTheme: 'ios',
+                    colorTheme: '#2ea043'
                 });
             }
             this._initialized = true;
@@ -55,7 +57,9 @@ export class DexieService implements IDatabaseService {
             return {
                 aiApiKey: '',
                 learningLevel: 'A1',
-                theme: 'dark'
+                theme: 'dark',
+                konstaTheme: 'ios',
+                colorTheme: '#2ea043'
             };
         }
         const { id, ...rest } = settings;
