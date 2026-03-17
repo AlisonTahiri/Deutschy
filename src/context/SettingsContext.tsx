@@ -59,6 +59,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         // Apply color theme (brand color)
         document.documentElement.style.setProperty('--k-color-primary', settings.colorTheme);
         document.documentElement.style.setProperty('--accent-color', settings.colorTheme);
+
+        // Update PWA theme-color meta tag
+        let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (!metaThemeColor) {
+            metaThemeColor = document.createElement('meta');
+            metaThemeColor.setAttribute('name', 'theme-color');
+            document.head.appendChild(metaThemeColor);
+        }
+        
+        // If the colorTheme is darker/lighter, we might want to adjust, 
+        // but the user specifically asked for current colorTheme influence.
+        // We'll use the colorTheme but also respect the overall background if needed.
+        // For now, let's use the colorTheme as the user suggested it should change with it.
+        metaThemeColor.setAttribute('content', settings.colorTheme);
     }, [settings, isLoading]);
 
     const updateApiKey = (key: string) => setSettings(s => ({ ...s, aiApiKey: key }));
