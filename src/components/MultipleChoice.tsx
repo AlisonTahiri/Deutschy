@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { WordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight } from 'lucide-react';
@@ -32,6 +32,12 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
 
     const currentWord = queue[currentIndex];
     const questionData = currentWord?.mcq ? currentWord.mcq : null;
+
+    // Shuffle options whenever the current word changes
+    const shuffledOptions = useMemo(() => {
+        if (!questionData?.options) return [];
+        return [...questionData.options].sort(() => Math.random() - 0.5);
+    }, [currentWord?.id, questionData?.options]);
 
     const handleSubmit = () => { if (!selectedOption || isSubmitted) return; setIsSubmitted(true); };
 
@@ -101,7 +107,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                         </h2>
 
                         <div className="flex flex-col gap-2">
-                            {questionData.options.map((option, idx) => {
+                            {shuffledOptions.map((option, idx) => {
                                 let extraStyle: React.CSSProperties = {};
                                 if (isSubmitted) {
                                     const isCorrectAnswer = option === questionData.correctAnswer;

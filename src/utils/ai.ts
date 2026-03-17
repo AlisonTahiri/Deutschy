@@ -25,7 +25,7 @@ Instructions for EACH word:
 1. Create a natural German sentence suitable for a ${targetLevel} student using the target German word.
 2. Provide the full Albanian translation of this sentence.
 3. Replace the target German word in the German sentence with "_____".
-4. Provide 4 options for the missing word. One MUST be the correct word, and 3 must be plausible but incorrect alternatives (in German).
+4. Provide 4 options for the missing word. One MUST be the correct word, and 3 must be plausible but incorrect alternatives (in German). VARY the position of the correct answer across different words; do not always put it first.
 
 Return ONLY a valid JSON ARRAY of objects, with no markdown formatting or extra text. Each object must follow this structure exactly:
 [
