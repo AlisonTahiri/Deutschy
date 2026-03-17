@@ -183,5 +183,17 @@ export const adminContentService = {
     async deleteWord(id: string): Promise<void> {
         const { error } = await supabase.from('lesson_words').delete().eq('id', id);
         if (error) throw error;
+    },
+
+    async getWordsForLesson(lessonId: string): Promise<DbLessonWord[]> {
+        const { data, error } = await supabase
+            .from('lesson_words')
+            .select(`
+                *,
+                lesson_parts!inner(lesson_id)
+            `)
+            .eq('lesson_parts.lesson_id', lessonId);
+        if (error) throw error;
+        return data || [];
     }
 };

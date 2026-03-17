@@ -33,6 +33,7 @@ export function Admin() {
     // UI State
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     // Editing State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,7 +44,6 @@ export function Admin() {
     const [newLevelName, setNewLevelName] = useState('');
     const [newMethodName, setNewMethodName] = useState('');
     const [newLessonName, setNewLessonName] = useState('');
-    const [newPartName, setNewPartName] = useState('');
 
     // AI Scanning State
     const [isUploading, setIsUploading] = useState(false);
@@ -277,16 +277,7 @@ export function Admin() {
         }
     };
 
-    const handleCreatePart = async () => {
-        if (!newPartName.trim() || !activeLesson) return;
-        try {
-            await adminContentService.createPart(activeLesson.id, newPartName.trim());
-            setNewPartName('');
-            loadPartsForLesson(activeLesson);
-        } catch (err: any) {
-            setError('Failed to create part: ' + err.message);
-        }
-    };
+
 
     const handleDeletePart = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -374,7 +365,7 @@ export function Admin() {
 
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!activePart) return;
+        if (!activeLesson) return;
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -387,6 +378,7 @@ export function Admin() {
         setIsUploading(true);
         setScanProgress(0);
         setError('');
+        setSuccess('');
 
         progressIntervalRef.current = window.setInterval(() => {
             setScanProgress(prev => {
@@ -402,42 +394,117 @@ export function Admin() {
             const mimeType = file.type;
 
             try {
-                const words = await extractWordsFromImage(settings.aiApiKey, base64String, mimeType);
+                const extractedWords = await extractWordsFromImage(settings.aiApiKey, base64String, mimeType);
 
                 if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
                 setScanProgress(100);
 
-                setTimeout(async () => {
+                if (!extractedWords || extractedWords.length === 0) {
+                    throw new Error('Could not extract any words from the image.');
+                }
+
+                // 1. Get existing words in the lesson to check for duplicates
+                const existingLessonWords = await adminContentService.getWordsForLesson(activeLesson.id);
+                const existingGermanWords = new Set(existingLessonWords.map(w => w.german.trim().toLowerCase()));
+
+                // 2. Filter out duplicates (case-insensitive)
+                const uniqueNewWords = extractedWords.filter(w => {
+                    const normalized = w.german.trim().toLowerCase();
+                    if (!normalized || !w.albanian.trim()) return false;
+                    return !existingGermanWords.has(normalized);
+                });
+
+                const duplicateCount = extractedWords.length - uniqueNewWords.length;
+
+                if (uniqueNewWords.length === 0) {
                     setIsUploading(false);
                     setScanProgress(0);
-
-                    if (words && words.length > 0) {
-                        const validWords = words.filter(w => w.german.trim() && w.albanian.trim());
-
-                        const newWords = validWords.map(w => ({
-                            part_id: activePart.id,
-                            german: w.german,
-                            albanian: w.albanian,
-                            mcq_sentence: null,
-                            mcq_sentence_translation: null,
-                            mcq_options: null,
-                            mcq_correct_answer: null
-                        }));
-
-                        if (newWords.length > 0) {
-                            await adminContentService.createWords(newWords as any);
-                            loadWordsForPart(activePart);
-                        }
-                    } else {
-                        setError('Could not extract any words from the image.');
-                    }
+                    setError(duplicateCount > 0 ? `All ${extractedWords.length} words were duplicates and skipped.` : 'No valid words found.');
                     if (fileInputRef.current) fileInputRef.current.value = '';
-                }, 500);
+                    return;
+                }
+
+                // 3. Distribution Logic
+                const MAX_WORDS_PER_PART = 35;
+                
+                // Get all parts for the lesson
+                const currentLessonParts = await adminContentService.getPartsForLesson(activeLesson.id);
+                const sortedParts = [...currentLessonParts].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                
+                let targetPart: DbLessonPart;
+                
+                if (activePart) {
+                    targetPart = activePart;
+                } else if (sortedParts.length > 0) {
+                    // Start from the last part if at lesson level
+                    targetPart = sortedParts[sortedParts.length - 1];
+                } else {
+                    // Create first part if none exist
+                    targetPart = await adminContentService.createPart(activeLesson.id, 'Part 1');
+                    sortedParts.push(targetPart);
+                }
+
+                let wordsToUpload = [...uniqueNewWords];
+                let partsAffected: string[] = [targetPart.name];
+                let wordsAddedCount = 0;
+
+                // Fill target part first
+                const currentPartWords = await adminContentService.getWordsForPart(targetPart.id);
+                const currentPartCount = currentPartWords.length;
+                const currentPartRemainingSpace = Math.max(0, MAX_WORDS_PER_PART - currentPartCount);
+
+                const firstBatch = wordsToUpload.splice(0, currentPartRemainingSpace);
+                if (firstBatch.length > 0) {
+                    await adminContentService.createWords(firstBatch.map(w => ({
+                        part_id: targetPart.id,
+                        german: w.german,
+                        albanian: w.albanian,
+                        mcq_sentence: null,
+                        mcq_sentence_translation: null,
+                        mcq_options: null,
+                        mcq_correct_answer: null
+                    })) as any);
+                    wordsAddedCount += firstBatch.length;
+                }
+
+                // If still have words, create new parts
+                while (wordsToUpload.length > 0) {
+                    const nextBatch = wordsToUpload.splice(0, MAX_WORDS_PER_PART);
+                    const nextPartName = `Part ${sortedParts.length + 1}`;
+                    const newPart = await adminContentService.createPart(activeLesson.id, nextPartName);
+                    sortedParts.push(newPart);
+                    partsAffected.push(newPart.name);
+
+                    await adminContentService.createWords(nextBatch.map(w => ({
+                        part_id: newPart.id,
+                        german: w.german,
+                        albanian: w.albanian,
+                        mcq_sentence: null,
+                        mcq_sentence_translation: null,
+                        mcq_options: null,
+                        mcq_correct_answer: null
+                    })) as any);
+                    wordsAddedCount += nextBatch.length;
+                }
+
+                setSuccess(`Successfully added ${wordsAddedCount} words across ${partsAffected.length} parts. ${duplicateCount > 0 ? `${duplicateCount} duplicates were skipped.` : ''}`);
+                
+                // Refresh data
+                await loadPartsForLesson(activeLesson);
+                if (activePart) {
+                    await loadWordsForPart(activePart);
+                }
+
+                setIsUploading(false);
+                setScanProgress(0);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+
             } catch (err: any) {
                 if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
                 setIsUploading(false);
                 setScanProgress(0);
                 setError('Failed to process image: ' + err.message);
+                if (fileInputRef.current) fileInputRef.current.value = '';
             }
         };
         reader.readAsDataURL(file);
@@ -459,7 +526,8 @@ export function Admin() {
                 <p className="text-(--text-secondary)">Manage course structure and learning materials synchronized via Supabase.</p>
             </div>
 
-            {error && <div className="text-(--danger-color) p-2 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-lg text-sm">{error}</div>}
+            {error && <div className="text-(--danger-color) p-3 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{error}</div>}
+            {success && <div className="text-(--success-color) p-3 bg-(--success-color)/10 border border-(--success-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{success}</div>}
 
             {/* Breadcrumb Navigation */}
             {(activeLevel || activeMethod || activeLesson || activePart) && (
@@ -666,22 +734,43 @@ export function Admin() {
                 </div>
             )}
 
-            {/* VIEW: PARTS (Inside a Lesson) */}
             {activeLesson && !activePart && !isLoading && (
                 <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
-                    <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center`}>
-                        <input
-                            type="text"
-                            className={inputField}
-                            placeholder="New Part Name (e.g., Part 1)"
-                            value={newPartName}
-                            onChange={(e) => setNewPartName(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCreatePart()}
-                        />
-                        <button className={`${btnPrimary} w-full sm:w-auto shrink-0`} onClick={handleCreatePart} disabled={!newPartName.trim()}>
-                            <Plus size={18} /> Add Part
-                        </button>
+                    <div className={`${glassPanel} flex flex-col sm:flex-row justify-between items-center gap-4`}>
+                        <div className="flex flex-col">
+                            <h3 className="m-0 text-lg font-bold">Vocabulary Scanning</h3>
+                            <p className="m-0 text-sm text-(--text-secondary)">Upload image to automatically generate and distribute words into parts.</p>
+                        </div>
+                        <div className="flex flex-row gap-3 w-full sm:w-auto">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                            />
+                            <button
+                                className={`${btnPrimary} flex-1 sm:flex-none py-3! px-6!`}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                                {isUploading ? 'Scanning...' : 'Scan Image with AI'}
+                            </button>
+                        </div>
                     </div>
+
+                    {isUploading && (
+                        <div className={`${glassPanel} flex flex-col gap-3 py-6`}>
+                            <div className="flex flex-row justify-between items-center">
+                                <span className="text-sm">Extracting vocabulary...</span>
+                                <span className="text-sm text-(--text-secondary)">{Math.round(scanProgress)}%</span>
+                            </div>
+                            <div className="w-full bg-(--bg-color) h-2 rounded-full overflow-hidden">
+                                <div className="h-full bg-(--accent-color) transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }} />
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {parts.map(part => (
@@ -773,36 +862,7 @@ export function Admin() {
 
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 className="m-0 text-xl font-bold">Vocabulary & Content</h3>
-                        <div className="flex flex-row gap-3 w-full sm:w-auto">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                ref={fileInputRef}
-                                onChange={handleImageUpload}
-                            />
-                            <button
-                                className={`${btnPrimary} flex-1 sm:flex-none`}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                                {isUploading ? 'Scanning...' : 'Scan Image with AI'}
-                            </button>
-                        </div>
                     </div>
-
-                    {isUploading && (
-                        <div className={`${glassPanel} flex flex-col gap-3 py-6`}>
-                            <div className="flex flex-row justify-between items-center">
-                                <span className="text-sm">Extracting vocabulary...</span>
-                                <span className="text-sm text-(--text-secondary)">{Math.round(scanProgress)}%</span>
-                            </div>
-                            <div className="w-full bg-(--bg-color) h-2 rounded-full overflow-hidden">
-                                <div className="h-full bg-(--accent-color) transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }} />
-                            </div>
-                        </div>
-                    )}
 
                     <div className={`${glassPanel} overflow-hidden p-0!`}>
                         {words.length > 0 ? (
