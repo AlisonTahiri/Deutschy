@@ -4,7 +4,8 @@ import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
 import { Writing } from './Writing';
 import { Mixed } from './Mixed';
-import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle } from 'lucide-react';
+import { MatchingGame } from './MatchingGame';
+import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide-react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 
@@ -109,6 +110,16 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                         <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Type the German translation accurately.</span>
                     </button>
 
+                    <button
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
+                        onClick={() => setExerciseMode('matching-game')}
+                    >
+                        <Grid size={32} color="var(--accent-color)" />
+                        <h3>Matching Game</h3>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Connect German words with Albanian translations.</span>
+                    </button>
+
                     {canDoQuiz && (
                         <button
                             className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
@@ -136,6 +147,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                     {exerciseMode === 'multiple-choice' && 'Multiple Choice'}
                     {exerciseMode === 'writing' && 'Writing Practice'}
                     {exerciseMode === 'mixed' && 'Mixed Practice'}
+                    {exerciseMode === 'matching-game' && 'Matching Game'}
                 </h3>
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                     {wordsToPractice.length} words left
@@ -154,6 +166,9 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                 )}
                 {exerciseMode === 'mixed' && (
                     <Mixed words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                )}
+                {exerciseMode === 'matching-game' && (
+                    <MatchingGame words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
                 )}
             </div>
         </div>

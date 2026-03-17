@@ -88,4 +88,4 @@ export interface DbLessonWord {
   created_at: string;
 }
 
-export type ExerciseType = 'flashcards' | 'multiple-choice' | 'writing' | 'mixed';
+export type ExerciseType = 'flashcards' | 'multiple-choice' | 'writing' | 'mixed' | 'matching-game';
