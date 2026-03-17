@@ -40,6 +40,14 @@ function App() {
     initApp();
   }, []);
 
+  // Auto-complete onboarding if session exists
+  useEffect(() => {
+    if (session && !onboardingDone) {
+      localStorage.setItem('dardha_onboarding_done', 'true');
+      setOnboardingDone(true);
+    }
+  }, [session, onboardingDone]);
+
   const handleStartExercise = (lessonId: string) => {
     setActiveLessonId(lessonId);
     setCurrentView('exercise');
