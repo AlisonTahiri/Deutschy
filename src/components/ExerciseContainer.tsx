@@ -53,7 +53,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
         return (
             <div className="flex flex-col gap-8 animate-[fadeIn_0.4s_ease-out]">
                 <div className="flex flex-row items-center gap-4 mb-4">
-                    <button className={`${btnSecondary} !p-2`} onClick={onExit}>
+                    <button className={`${btnSecondary} p-2!`} onClick={onExit}>
                         <ArrowLeft size={20} />
                     </button>
                     <h2 className="m-0">{lesson.name}</h2>
@@ -62,7 +62,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
                 {isFullyLearned && (
                     <div
                         className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2 animate-[fadeIn_0.4s_ease-out]`}
-                        style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'rgba(46, 160, 67, 0.05)' }}
+                        style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
                     >
                         <h3 className="m-0" style={{ color: 'var(--success-color)' }}>🎉 All words learned!</h3>
                         <p className="m-0" style={{ color: 'var(--text-secondary)' }}>You can practice all words again, or reset your progress.</p>
@@ -128,7 +128,7 @@ export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) 
     return (
         <div className="flex flex-col animate-[fadeIn_0.4s_ease-out]" style={{ height: '100%', display: 'flex' }}>
             <div className="flex flex-row items-center gap-2 flex-wrap mb-2">
-                <button className={`${btnSecondary} !p-[0.4rem]`} onClick={() => setExerciseMode(null)}>
+                <button className={`${btnSecondary} p-[0.4rem]!`} onClick={() => setExerciseMode(null)}>
                     <ArrowLeft size={20} />
                 </button>
                 <h3 className="m-0 flex-1 text-xl">

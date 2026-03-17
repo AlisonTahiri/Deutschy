@@ -106,8 +106,8 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                                 if (isSubmitted) {
                                     const isCorrectAnswer = option === questionData.correctAnswer;
                                     const isSelected = option === selectedOption;
-                                    if (isCorrectAnswer) extraStyle = { backgroundColor: 'rgba(46, 160, 67, 0.2)', borderColor: 'var(--success-color)' };
-                                    else if (isSelected && !isCorrectAnswer) extraStyle = { backgroundColor: 'rgba(218, 54, 51, 0.2)', borderColor: 'var(--danger-color)' };
+                                    if (isCorrectAnswer) extraStyle = { backgroundColor: 'var(--success-color)', color: '#FFF', borderColor: 'var(--success-hover)' };
+                                    else if (isSelected && !isCorrectAnswer) extraStyle = { backgroundColor: 'var(--danger-color)', color: '#FFF', borderColor: 'var(--danger-hover)' };
                                     else extraStyle = { opacity: 0.5 };
                                 } else if (option === selectedOption) {
                                     extraStyle = { backgroundColor: 'var(--accent-color)', color: '#FFF', borderColor: 'var(--accent-color)' };

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, LearningLevel } from '../types';
 import { dbService } from '../services/db/provider';
+import { adjustColor } from '../utils/colors';
+
 
 interface SettingsContextType {
     settings: Settings;
@@ -47,8 +49,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
         dbService.saveSettings(settings).catch(e => console.error("Failed to save settings", e));
 
+        const isLight = settings.theme === 'light';
+
         // Apply theme mode to document
-        if (settings.theme === 'light') {
+        if (isLight) {
             document.documentElement.classList.add('light');
             document.documentElement.classList.remove('dark');
         } else {
@@ -57,8 +61,31 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Apply color theme (brand color)
-        document.documentElement.style.setProperty('--k-color-primary', settings.colorTheme);
-        document.documentElement.style.setProperty('--accent-color', settings.colorTheme);
+        const primaryColor = settings.colorTheme;
+        const hoverColor = adjustColor(primaryColor, -15);
+        
+        document.documentElement.style.setProperty('--accent-color', primaryColor);
+        document.documentElement.style.setProperty('--accent-hover', hoverColor);
+        document.documentElement.style.setProperty('--success-color', primaryColor); // Usually success is tied to brand in many places here
+        document.documentElement.style.setProperty('--success-hover', hoverColor);
+        
+        // Glow and subtle effects
+        document.documentElement.style.setProperty('--shadow-glow', `0 0 20px ${primaryColor}33`); // 33 is ~20% opacity in hex
+        document.documentElement.style.setProperty('--bg-accent-subtle', `${primaryColor}0d`); // 0d is ~5% opacity
+
+        // Konsta UI variables
+        document.documentElement.style.setProperty('--k-color-primary', primaryColor);
+        document.documentElement.style.setProperty('--k-color-primary-light', adjustColor(primaryColor, 15));
+        document.documentElement.style.setProperty('--k-color-primary-dark', adjustColor(primaryColor, -15));
+
+        // Dynamic Card backgrounds based on accent color
+        if (isLight) {
+            document.documentElement.style.setProperty('--bg-card', `color-mix(in srgb, ${primaryColor} 3%, #FFFFFF)`);
+            document.documentElement.style.setProperty('--border-card', `color-mix(in srgb, ${primaryColor} 10%, #E0E4E8)`);
+        } else {
+            document.documentElement.style.setProperty('--bg-card', `color-mix(in srgb, ${primaryColor} 4%, #161b22)`);
+            document.documentElement.style.setProperty('--border-card', `color-mix(in srgb, ${primaryColor} 15%, #30363d)`);
+        }
 
         // Update PWA theme-color meta tag
         let metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -67,12 +94,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             metaThemeColor.setAttribute('name', 'theme-color');
             document.head.appendChild(metaThemeColor);
         }
-        
-        // If the colorTheme is darker/lighter, we might want to adjust, 
-        // but the user specifically asked for current colorTheme influence.
-        // We'll use the colorTheme but also respect the overall background if needed.
-        // For now, let's use the colorTheme as the user suggested it should change with it.
-        metaThemeColor.setAttribute('content', settings.colorTheme);
+        metaThemeColor.setAttribute('content', primaryColor);
     }, [settings, isLoading]);
 
     const updateApiKey = (key: string) => setSettings(s => ({ ...s, aiApiKey: key }));

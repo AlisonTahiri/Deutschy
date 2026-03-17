@@ -7,11 +7,11 @@ import { Plus, Trash2, Folder, FileText, List, Image as ImageIcon, Loader2, Edit
 import { extractWordsFromImage, generateBatchMCQ } from '../utils/ai';
 import { supabase } from '../lib/supabase';
 
-const glassPanel = 'bg-[rgba(22,27,34,0.6)] backdrop-blur-xl border border-[var(--border-color)] rounded-3xl p-6 shadow-lg';
-const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-[var(--accent-color)] text-white border-0 cursor-pointer transition-all duration-200 hover:bg-[var(--accent-hover)] disabled:opacity-50';
-const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border border-[var(--border-color)] cursor-pointer transition-all duration-200 bg-[var(--bg-color-secondary)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]';
-const btnSubtle = 'inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs border-0 cursor-pointer transition-all duration-200 bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-color-secondary)] hover:text-[var(--text-primary)]';
-const inputField = 'w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-color)] transition-all';
+const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
+const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-(--accent-color) text-white border-0 cursor-pointer transition-all duration-200 hover:bg-(--accent-hover) disabled:opacity-50';
+const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/30';
+const btnSubtle = 'inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs border-0 cursor-pointer transition-all duration-200 bg-transparent text-(--text-secondary) hover:bg-(--bg-accent-subtle) hover:text-(--text-primary)';
+const inputField = 'w-full px-4 py-3 rounded-xl border border-(--border-color) bg-(--bg-color) text-(--text-primary) outline-none focus:ring-2 focus:ring-(--accent-color) transition-all';
 
 export function Admin() {
     const { role } = useAuth();
@@ -447,7 +447,7 @@ export function Admin() {
         return (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
                 <h2 className="text-2xl font-bold">Access Denied</h2>
-                <p className="text-[var(--text-secondary)]">You do not have permission to view the Admin Dashboard.</p>
+                <p className="text-(--text-secondary)">You do not have permission to view the Admin Dashboard.</p>
             </div>
         );
     }
@@ -456,45 +456,45 @@ export function Admin() {
         <div className="animate-[fadeIn_0.4s_ease-out] flex flex-col gap-8 pb-8">
             <div>
                 <h1 className="m-0 text-3xl font-bold">Content Administration</h1>
-                <p className="text-[var(--text-secondary)]">Manage course structure and learning materials synchronized via Supabase.</p>
+                <p className="text-(--text-secondary)">Manage course structure and learning materials synchronized via Supabase.</p>
             </div>
 
-            {error && <div className="text-[var(--danger-color)] p-2 bg-[rgba(218,54,51,0.1)] rounded-lg text-sm">{error}</div>}
+            {error && <div className="text-(--danger-color) p-2 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-lg text-sm">{error}</div>}
 
             {/* Breadcrumb Navigation */}
             {(activeLevel || activeMethod || activeLesson || activePart) && (
-                <div className={`${glassPanel} flex flex-row gap-2 items-center !p-3 flex-wrap`}>
+                <div className={`${glassPanel} flex flex-row gap-2 items-center p-3! flex-wrap`}>
                     <button className={btnSubtle} onClick={() => { setActiveLevel(null); setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
                         <Folder size={16} /> Levels
                     </button>
                     {activeLevel && (
                         <>
-                            <span className="text-[var(--text-secondary)]">/</span>
-                            <button className={`${btnSubtle} ${!activeMethod ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => { setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
+                            <span className="text-(--text-secondary)">/</span>
+                            <button className={`${btnSubtle} ${!activeMethod ? 'font-bold! text-(--accent-color)!' : ''}`} onClick={() => { setActiveMethod(null); setActiveLesson(null); setActivePart(null); }}>
                                 <FileText size={16} /> {activeLevel.name}
                             </button>
                         </>
                     )}
                     {activeMethod && (
                         <>
-                            <span className="text-[var(--text-secondary)]">/</span>
-                            <button className={`${btnSubtle} ${!activeLesson ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
+                            <span className="text-(--text-secondary)">/</span>
+                            <button className={`${btnSubtle} ${!activeLesson ? 'font-bold! text-(--accent-color)!' : ''}`} onClick={() => { setActiveLesson(null); setActivePart(null); }}>
                                 <Folder size={16} /> {activeMethod.name}
                             </button>
                         </>
                     )}
                     {activeLesson && (
                         <>
-                            <span className="text-[var(--text-secondary)]">/</span>
-                            <button className={`${btnSubtle} ${!activePart ? '!font-bold !text-[var(--accent-color)]' : ''}`} onClick={() => setActivePart(null)}>
+                            <span className="text-(--text-secondary)">/</span>
+                            <button className={`${btnSubtle} ${!activePart ? 'font-bold! text-(--accent-color)!' : ''}`} onClick={() => setActivePart(null)}>
                                 <List size={16} /> {activeLesson.name}
                             </button>
                         </>
                     )}
                     {activePart && (
                         <>
-                            <span className="text-[var(--text-secondary)]">/</span>
-                            <span className="text-xs font-bold text-[var(--accent-color)] px-3 py-1.5">{activePart.name}</span>
+                            <span className="text-(--text-secondary)">/</span>
+                            <span className="text-xs font-bold text-(--accent-color) px-3 py-1.5">{activePart.name}</span>
                         </>
                     )}
                 </div>
@@ -523,7 +523,7 @@ export function Admin() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {levels.map(level => (
-                            <div key={level.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadMethodsForLevel(level)}>
+                            <div key={level.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer p-6! hover:scale-[1.01] transition-transform`} onClick={() => loadMethodsForLevel(level)}>
                                 <div className="flex flex-row gap-3 items-center flex-1">
                                     <Folder size={24} color="var(--accent-color)" />
                                     {editingId === level.id ? (
@@ -531,7 +531,7 @@ export function Admin() {
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className={`${inputField} !p-1.5 !text-sm`}
+                                                className={`${inputField} p-1.5! text-sm!`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -539,10 +539,10 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveLevel(level.id, e)}>
+                                            <button className={`${btnPrimary} p-1.5!`} onClick={e => handleSaveLevel(level.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} p-1.5!`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
@@ -552,17 +552,17 @@ export function Admin() {
                                 </div>
                                 {editingId !== level.id && (
                                     <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(level.id, level.name, '', e)}>
-                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleStartEdit(level.id, level.name, '', e)}>
+                                            <Edit2 size={18} className="text-(--text-secondary)" />
                                         </button>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteLevel(level.id, e)}>
-                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleDeleteLevel(level.id, e)}>
+                                            <Trash2 size={18} className="text-(--danger-color)" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {levels.length === 0 && <p className="text-[var(--text-secondary)] p-4">No learning levels created yet.</p>}
+                        {levels.length === 0 && <p className="text-(--text-secondary) p-4">No learning levels created yet.</p>}
                     </div>
                 </div>
             )}
@@ -586,19 +586,19 @@ export function Admin() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {methods.map(method => (
-                            <div key={method.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadLessonsForMethod(method)}>
+                            <div key={method.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer p-6! hover:scale-[1.01] transition-transform`} onClick={() => loadLessonsForMethod(method)}>
                                 <div className="flex flex-row gap-3 items-center flex-1">
                                     <Folder size={24} color="var(--success-color)" />
                                     <h3 className="m-0 text-lg">{method.name}</h3>
                                 </div>
                                 <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
-                                    <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteMethod(method.id, e)}>
-                                        <Trash2 size={18} className="text-[var(--danger-color)]" />
+                                    <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleDeleteMethod(method.id, e)}>
+                                        <Trash2 size={18} className="text-(--danger-color)" />
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {methods.length === 0 && <p className="text-[var(--text-secondary)] p-4">No learning methods created yet.</p>}
+                        {methods.length === 0 && <p className="text-(--text-secondary) p-4">No learning methods created yet.</p>}
                     </div>
                 </div>
             )}
@@ -622,7 +622,7 @@ export function Admin() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {lessons.map(lesson => (
-                            <div key={lesson.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadPartsForLesson(lesson)}>
+                            <div key={lesson.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer p-6! hover:scale-[1.01] transition-transform`} onClick={() => loadPartsForLesson(lesson)}>
                                 <div className="flex flex-row gap-3 items-center flex-1">
                                     <FileText size={20} color="var(--success-color)" />
                                     {editingId === lesson.id ? (
@@ -630,7 +630,7 @@ export function Admin() {
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className={`${inputField} !p-1.5 !text-sm`}
+                                                className={`${inputField} p-1.5! text-sm!`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -638,10 +638,10 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveLesson(lesson.id, e)}>
+                                            <button className={`${btnPrimary} p-1.5!`} onClick={e => handleSaveLesson(lesson.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} p-1.5!`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
@@ -651,17 +651,17 @@ export function Admin() {
                                 </div>
                                 {editingId !== lesson.id && (
                                     <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(lesson.id, lesson.name, '', e)}>
-                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleStartEdit(lesson.id, lesson.name, '', e)}>
+                                            <Edit2 size={18} className="text-(--text-secondary)" />
                                         </button>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeleteLesson(lesson.id, e)}>
-                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleDeleteLesson(lesson.id, e)}>
+                                            <Trash2 size={18} className="text-(--danger-color)" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {lessons.length === 0 && <p className="text-[var(--text-secondary)] p-4">No lessons in this level yet.</p>}
+                        {lessons.length === 0 && <p className="text-(--text-secondary) p-4">No lessons in this level yet.</p>}
                     </div>
                 </div>
             )}
@@ -685,15 +685,15 @@ export function Admin() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {parts.map(part => (
-                            <div key={part.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer !p-6 hover:scale-[1.01] transition-transform`} onClick={() => loadWordsForPart(part)}>
+                            <div key={part.id} className={`${glassPanel} flex flex-row justify-between items-center cursor-pointer p-6! hover:scale-[1.01] transition-transform`} onClick={() => loadWordsForPart(part)}>
                                 <div className="flex flex-row gap-3 items-center flex-1">
-                                    <List size={20} className="text-[var(--accent-color)]" />
+                                    <List size={20} className="text-(--accent-color)" />
                                     {editingId === part.id ? (
                                         <div className="flex flex-row gap-2 flex-1" onClick={e => e.stopPropagation()}>
                                             <input
                                                 autoFocus
                                                 type="text"
-                                                className={`${inputField} !p-1.5 !text-sm`}
+                                                className={`${inputField} p-1.5! text-sm!`}
                                                 value={editValue1}
                                                 onChange={e => setEditValue1(e.target.value)}
                                                 onKeyDown={e => {
@@ -701,10 +701,10 @@ export function Admin() {
                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                 }}
                                             />
-                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSavePart(part.id, e)}>
+                                            <button className={`${btnPrimary} p-1.5!`} onClick={e => handleSavePart(part.id, e)}>
                                                 <Check size={16} />
                                             </button>
-                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
+                                            <button className={`${btnSecondary} p-1.5!`} onClick={e => handleCancelEdit(e)}>
                                                 <X size={16} />
                                             </button>
                                         </div>
@@ -714,17 +714,17 @@ export function Admin() {
                                 </div>
                                 {editingId !== part.id && (
                                     <div className="flex flex-row gap-1" onClick={e => e.stopPropagation()}>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(part.id, part.name, '', e)}>
-                                            <Edit2 size={18} className="text-[var(--text-secondary)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleStartEdit(part.id, part.name, '', e)}>
+                                            <Edit2 size={18} className="text-(--text-secondary)" />
                                         </button>
-                                        <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleDeletePart(part.id, e)}>
-                                            <Trash2 size={18} className="text-[var(--danger-color)]" />
+                                        <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleDeletePart(part.id, e)}>
+                                            <Trash2 size={18} className="text-(--danger-color)" />
                                         </button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        {parts.length === 0 && <p className="text-[var(--text-secondary)] p-4">No parts in this lesson yet.</p>}
+                        {parts.length === 0 && <p className="text-(--text-secondary) p-4">No parts in this lesson yet.</p>}
                     </div>
                 </div>
             )}
@@ -737,11 +737,11 @@ export function Admin() {
                     <div className={`${glassPanel} flex flex-col gap-4`}>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex flex-col">
-                                <h3 className="m-0 text-lg font-bold text-[var(--text-primary)]">Target Level</h3>
-                                <p className="m-0 mt-1 text-sm text-[var(--text-secondary)]">Set the AI difficulty for generated sentences.</p>
+                                <h3 className="m-0 text-lg font-bold text-(--text-primary)">Target Level</h3>
+                                <p className="m-0 mt-1 text-sm text-(--text-secondary)">Set the AI difficulty for generated sentences.</p>
                             </div>
                             <select
-                                className={`${inputField} !w-auto min-w-[150px] !py-2`}
+                                className={`${inputField} w-auto! min-w-[150px] py-2!`}
                                 value={settings.learningLevel}
                                 onChange={(e) => updateLevel(e.target.value as LearningLevel)}
                             >
@@ -755,18 +755,18 @@ export function Admin() {
                         </div>
 
                         {words.some(w => !w.mcq_sentence) && (
-                            <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-[var(--border-color)]">
+                            <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-(--border-color)">
                                 {!isGeneratingMCQs ? (
                                     <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
                                         <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
                                     </button>
                                 ) : (
-                                    <button className={`${btnSecondary} w-full sm:w-auto text-[var(--danger-color)] border-[var(--danger-color)]`} onClick={handleStopGeneration}>
+                                    <button className={`${btnSecondary} w-full sm:w-auto text-(--danger-color) border-(--danger-color)`} onClick={handleStopGeneration}>
                                         <Square size={18} /> Stop Generation
                                     </button>
                                 )}
-                                {mcqProgressText && <span className="text-sm text-[var(--text-secondary)]">{mcqProgressText}</span>}
-                                {!settings.aiApiKey && <span className="text-sm text-[var(--danger-color)]">API Key missing in Settings.</span>}
+                                {mcqProgressText && <span className="text-sm text-(--text-secondary)">{mcqProgressText}</span>}
+                                {!settings.aiApiKey && <span className="text-sm text-(--danger-color)">API Key missing in Settings.</span>}
                             </div>
                         )}
                     </div>
@@ -796,19 +796,19 @@ export function Admin() {
                         <div className={`${glassPanel} flex flex-col gap-3 py-6`}>
                             <div className="flex flex-row justify-between items-center">
                                 <span className="text-sm">Extracting vocabulary...</span>
-                                <span className="text-sm text-[var(--text-secondary)]">{Math.round(scanProgress)}%</span>
+                                <span className="text-sm text-(--text-secondary)">{Math.round(scanProgress)}%</span>
                             </div>
-                            <div className="w-full bg-[var(--bg-color)] h-2 rounded-full overflow-hidden">
-                                <div className="h-full bg-[var(--accent-color)] transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }} />
+                            <div className="w-full bg-(--bg-color) h-2 rounded-full overflow-hidden">
+                                <div className="h-full bg-(--accent-color) transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }} />
                             </div>
                         </div>
                     )}
 
-                    <div className={`${glassPanel} overflow-hidden !p-0`}>
+                    <div className={`${glassPanel} overflow-hidden p-0!`}>
                         {words.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-left">
-                                    <thead className="bg-[var(--bg-color-secondary)] border-b border-[var(--border-color)]">
+                                    <thead className="bg-(--bg-color-secondary) border-b border-(--border-color)">
                                         <tr>
                                             <th className="px-4 py-3 font-semibold text-sm">German</th>
                                             <th className="px-4 py-3 font-semibold text-sm">Albanian</th>
@@ -818,14 +818,14 @@ export function Admin() {
                                     </thead>
                                     <tbody>
                                         {words.map((word) => (
-                                            <tr key={word.id} className="border-b border-[var(--border-color)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                                            <tr key={word.id} className="border-b border-(--border-color) hover:bg-(--bg-accent-subtle) transition-colors">
                                                 {editingId === word.id ? (
                                                     <>
                                                         <td className="px-4 py-3">
                                                             <input
                                                                 autoFocus
                                                                 type="text"
-                                                                className={`${inputField} !p-2 !text-sm`}
+                                                                className={`${inputField} p-2! text-sm!`}
                                                                 value={editValue1}
                                                                 onChange={e => setEditValue1(e.target.value)}
                                                                 onKeyDown={e => {
@@ -837,7 +837,7 @@ export function Admin() {
                                                         <td className="px-4 py-3">
                                                             <input
                                                                 type="text"
-                                                                className={`${inputField} !p-2 !text-sm`}
+                                                                className={`${inputField} p-2! text-sm!`}
                                                                 value={editValue2}
                                                                 onChange={e => setEditValue2(e.target.value)}
                                                                 onKeyDown={e => {
@@ -850,33 +850,33 @@ export function Admin() {
                                                 ) : (
                                                     <>
                                                         <td className="px-4 py-3 text-sm">{word.german}</td>
-                                                        <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{word.albanian}</td>
+                                                        <td className="px-4 py-3 text-sm text-(--text-secondary)">{word.albanian}</td>
                                                     </>
                                                 )}
                                                 <td className="px-4 py-3">
                                                     {word.mcq_sentence ? (
-                                                        <span className="text-[var(--success-color)] text-xs font-semibold px-2 py-1 rounded-full bg-[rgba(46,160,67,0.1)]">Generated</span>
+                                                        <span className="text-(--success-color) text-xs font-semibold px-2 py-1 rounded-full bg-(--success-color)/10">Generated</span>
                                                     ) : (
-                                                        <span className="text-[var(--warning-color)] text-xs font-semibold px-2 py-1 rounded-full bg-[rgba(216,155,0,0.1)]">Pending</span>
+                                                        <span className="text-(--warning-color) text-xs font-semibold px-2 py-1 rounded-full bg-(--warning-color)/10">Pending</span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     {editingId === word.id ? (
                                                         <div className="flex flex-row gap-2">
-                                                            <button className={`${btnPrimary} !p-1.5`} onClick={e => handleSaveWord(word.id, e)}>
-                                                                <Check size={16} />
+                                                            <button className={`${btnPrimary} p-1.5!`} onClick={e => handleSaveWord(word.id, e)}>
+                                                                 <Check size={16} />
                                                             </button>
-                                                            <button className={`${btnSecondary} !p-1.5`} onClick={e => handleCancelEdit(e)}>
-                                                                <X size={16} />
+                                                            <button className={`${btnSecondary} p-1.5!`} onClick={e => handleCancelEdit(e)}>
+                                                                 <X size={16} />
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <div className="flex flex-row gap-1">
-                                                            <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={(e) => handleStartEdit(word.id, word.german, word.albanian, e)}>
-                                                                <Edit2 size={16} className="text-[var(--text-secondary)]" />
+                                                            <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={(e) => handleStartEdit(word.id, word.german, word.albanian, e)}>
+                                                                <Edit2 size={16} className="text-(--text-secondary)" />
                                                             </button>
-                                                            <button className={`${btnSecondary} !p-1.5 !border-none !bg-transparent`} onClick={() => handleDeleteWord(word.id)}>
-                                                                <Trash2 size={16} className="text-[var(--danger-color)]" />
+                                                            <button className={`${btnSecondary} p-1.5! border-none! bg-transparent!`} onClick={() => handleDeleteWord(word.id)}>
+                                                                <Trash2 size={16} className="text-(--danger-color)" />
                                                             </button>
                                                         </div>
                                                     )}
@@ -888,8 +888,8 @@ export function Admin() {
                             </div>
                         ) : (
                             <div className="p-12 text-center flex flex-col items-center gap-4">
-                                <List size={48} className="text-[var(--text-secondary)] opacity-50" />
-                                <p className="m-0 text-[var(--text-secondary)] max-w-[300px]">No vocabulary words added yet. Use the scan tool or add manually.</p>
+                                <List size={48} className="text-(--text-secondary) opacity-50" />
+                                <p className="m-0 text-(--text-secondary) max-w-[300px]">No vocabulary words added yet. Use the scan tool or add manually.</p>
                             </div>
                         )}
                     </div>

@@ -52,7 +52,7 @@ export function Auth() {
                     </div>
 
                     {error && (
-                        <Block strong inset className="bg-red-50 text-red-600 border border-red-200 m-0 mb-6 p-3 flex items-center gap-2 rounded-xl text-sm">
+                        <Block strong inset className="bg-(--danger-color)/10 text-(--danger-color) border border-(--danger-color)/20 m-0 mb-6 p-3 flex items-center gap-2 rounded-xl text-sm">
                             <AlertCircle size={18} />
                             <span>{error}</span>
                         </Block>
