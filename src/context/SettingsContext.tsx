@@ -87,14 +87,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             document.documentElement.style.setProperty('--border-card', `color-mix(in srgb, ${primaryColor} 15%, #30363d)`);
         }
 
-        // Update PWA theme-color meta tag
+        // Update PWA theme-color meta tag - match background color
         let metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (!metaThemeColor) {
             metaThemeColor = document.createElement('meta');
             metaThemeColor.setAttribute('name', 'theme-color');
             document.head.appendChild(metaThemeColor);
         }
-        metaThemeColor.setAttribute('content', primaryColor);
+        const backgroundColor = isLight ? '#F5F7FA' : '#0d1117';
+        metaThemeColor.setAttribute('content', backgroundColor);
     }, [settings, isLoading]);
 
     const updateApiKey = (key: string) => setSettings(s => ({ ...s, aiApiKey: key }));

@@ -116,7 +116,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
                                 return (
                                     <button
                                         key={idx}
-                                        className={`${btnSecondary} justify-start min-h-[3rem] w-full`}
+                                        className={`${btnSecondary} justify-start min-h-12 w-full`}
                                         style={{ ...extraStyle }}
                                         onClick={() => !isSubmitted && setSelectedOption(option)}
                                         disabled={isSubmitted}
