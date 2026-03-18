@@ -15,6 +15,8 @@ interface CardSlot {
     text: string;
     type: 'german' | 'albanian';
     status: 'idle' | 'selected' | 'correct' | 'wrong';
+    isMatched: boolean;
+    isFadingIn: boolean;
 }
 
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
@@ -70,21 +72,31 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             wordId: w.id,
             text: w.german,
             type: 'german',
-            status: 'idle'
+            status: 'idle',
+            isMatched: false,
+            isFadingIn: true
         })).sort(() => Math.random() - 0.5);
-
+    
         const rightArr: CardSlot[] = slideWords.map((w): CardSlot => ({
             id: `sq-${w.id}-${Date.now()}-${Math.random()}`,
             wordId: w.id,
             text: w.albanian,
             type: 'albanian',
-            status: 'idle'
+            status: 'idle',
+            isMatched: false,
+            isFadingIn: true
         })).sort(() => Math.random() - 0.5);
-
+    
         setLeftColumn(leftArr);
         setRightColumn(rightArr);
         setSelectedLeftId(null);
         setSelectedRightId(null);
+
+        // Remove fadeIn flag after animation
+        setTimeout(() => {
+            setLeftColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
+            setRightColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
+        }, 500);
     };
 
     const initializedRef = useRef(false);
@@ -137,7 +149,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             }
             setSelectedLeftId(cardId);
             setLeftColumn(prev => prev.map(c => {
-                if (c.status === 'correct') return c;
+                if (c.isMatched) return c;
                 return c.id === cardId ? { ...c, status: 'selected' } : { ...c, status: 'idle' };
             }));
         } else {
@@ -151,7 +163,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             }
             setSelectedRightId(cardId);
             setRightColumn(prev => prev.map(c => {
-                if (c.status === 'correct') return c;
+                if (c.isMatched) return c;
                 return c.id === cardId ? { ...c, status: 'selected' } : { ...c, status: 'idle' };
             }));
         }
@@ -166,8 +178,8 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
 
             if (leftCard.wordId === rightCard.wordId) {
                 // Correct Match
-                setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'correct' } : c));
-                setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'correct' } : c));
+                setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'correct', isMatched: true } : c));
+                setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'correct', isMatched: true } : c));
                 setScore(s => s + 10);
                 onResult(leftCard.wordId, true);
 
@@ -244,46 +256,44 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         const isSelected = card.status === 'selected';
         const isCorrect = card.status === 'correct';
         const isWrong = card.status === 'wrong';
+        const isMatched = card.isMatched;
 
         let borderColor = 'var(--border-card)';
         let bgColor = 'var(--bg-card)';
         let shadow = 'none';
+        let animation = card.isFadingIn ? 'fade-in-new 0.5s ease-out' : '';
+        let opacity = 1;
 
         if (isSelected) {
             borderColor = 'var(--accent-color)';
             shadow = '0 0 10px rgba(46, 160, 67, 0.2)';
         }
         if (isCorrect) {
-            borderColor = 'var(--success-color)';
-            bgColor = 'var(--success-color-subtle, color-mix(in srgb, var(--success-color) 15%, transparent))';
+            borderColor = 'var(--border-card)';
+            bgColor = 'var(--bg-accent-subtle)';
+            animation = 'match-bounce 0.6s ease-out';
+            opacity = 0.5;
         }
         if (isWrong) {
             borderColor = 'var(--danger-color)';
             bgColor = 'color-mix(in srgb, var(--danger-color) 10%, var(--bg-card))';
+            animation = 'shake 0.4s ease-in-out';
         }
 
         return (
-            <motion.button
-                layout
-                initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                animate={{ 
-                    opacity: 1, 
-                    scale: isCorrect ? [1, 1.1, 1] : (isSelected ? 1.05 : 1),
-                    y: 0,
-                    x: isWrong ? [-4, 4, -4, 4, 0] : 0,
-                    borderColor: borderColor,
-                    backgroundColor: bgColor
-                }}
-                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            <button
                 key={card.id}
-                onClick={() => handleCardClick(card.id, card.type)}
-                disabled={isGameOver || isProcessingMatch || isCorrect}
-                className={`relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full ${isCorrect ? 'opacity-90 cursor-default' : ''}`}
+                onClick={() => !isMatched && handleCardClick(card.id, card.type)}
+                disabled={isMatched || isGameOver || isProcessingMatch}
+                className="relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full"
                 style={{
                     borderColor,
                     backgroundColor: bgColor,
                     boxShadow: shadow,
+                    animation: animation,
+                    opacity: opacity,
+                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                    pointerEvents: isMatched ? 'none' : 'auto',
                     wordBreak: 'break-word',
                     hyphens: 'auto',
                     minHeight: '44px',
@@ -294,7 +304,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
                     {card.text}
                 </span>
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-[0.02] transition-opacity pointer-events-none" />
-            </motion.button>
+            </button>
         );
     };
 
@@ -320,23 +330,49 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             </div>
 
             {/* Two Column Layout */}
-            <div className="flex gap-4 pb-8">
-                {/* German Column */}
-                <div className="flex-1 flex flex-col gap-2 relative">
-                    <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>German</div>
-                    <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="wait">
+                <motion.div 
+                    key={currentSlideIndex}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex gap-4 pb-8"
+                >
+                    {/* German Column */}
+                    <div className="flex-1 flex flex-col gap-2 relative">
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>German</div>
                         {leftColumn.map(card => renderCard(card))}
-                    </AnimatePresence>
-                </div>
+                    </div>
 
-                {/* Albanian Column */}
-                <div className="flex-1 flex flex-col gap-2 relative">
-                    <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>Albanian</div>
-                    <AnimatePresence mode="popLayout">
+                    {/* Albanian Column */}
+                    <div className="flex-1 flex flex-col gap-2 relative">
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>Albanian</div>
                         {rightColumn.map(card => renderCard(card))}
-                    </AnimatePresence>
-                </div>
-            </div>
+                    </div>
+                </motion.div>
+            </AnimatePresence>
+
+            <style>{`
+                @keyframes match-bounce {
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 10%, var(--bg-card)); opacity: 1; }
+                    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 20%, var(--bg-card)); opacity: 1; }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); border-color: var(--border-card); background-color: var(--bg-accent-subtle); opacity: 0.5; }
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-4px); }
+                    75% { transform: translateX(4px); }
+                }
+                @keyframes fade-out {
+                    0% { opacity: 1; transform: scale(1); }
+                    100% { opacity: 0; transform: scale(0.95); }
+                }
+                @keyframes fade-in-new {
+                    0% { opacity: 0; transform: translateY(10px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 }
