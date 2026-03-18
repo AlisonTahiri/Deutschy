@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { WordPair } from '../types';
 import { Timer, Trophy, RefreshCcw } from 'lucide-react';
 
@@ -30,7 +30,6 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
     const [score, setScore] = useState(0);
     const [time, setTime] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
-    const [matchCount, setMatchCount] = useState(0);
 
     // Initialize game
     const initGame = useCallback(() => {
@@ -38,7 +37,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         const initialWords = shuffledWords.slice(0, 6);
         const remainingWords = shuffledWords.slice(6);
         
-        const leftArr: CardSlot[] = initialWords.map(w => ({
+        const leftArr: CardSlot[] = initialWords.map((w): CardSlot => ({
             id: `de-${w.id}`,
             wordId: w.id,
             text: w.german,
@@ -48,7 +47,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             isFadingIn: true
         })).sort(() => Math.random() - 0.5);
 
-        const rightArr: CardSlot[] = initialWords.map(w => ({
+        const rightArr: CardSlot[] = initialWords.map((w): CardSlot => ({
             id: `sq-${w.id}`,
             wordId: w.id,
             text: w.albanian,
@@ -66,7 +65,6 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         setScore(0);
         setTime(0);
         setIsGameOver(false);
-        setMatchCount(0);
 
         // Remove fadeIn flag after animation
         setTimeout(() => {
@@ -75,9 +73,13 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         }, 500);
     }, [words]);
 
+    const initializedRef = useRef(false);
     useEffect(() => {
-        initGame();
-    }, [initGame]);
+        if (!initializedRef.current && words && words.length > 0) {
+            initGame();
+            initializedRef.current = true;
+        }
+    }, [initGame, words]);
 
     // Timer
     useEffect(() => {
@@ -90,50 +92,35 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
 
     // Word Replacement Logic
     useEffect(() => {
-        if (matchCount === 3 && pool.length > 0) {
+        const remainingLeft = leftColumn.filter(c => !c.isMatched).length;
+        if (leftColumn.length > 0 && remainingLeft === 0 && pool.length > 0) {
             const timer = setTimeout(() => {
                 const newPool = [...pool];
-                const wordsToAdd = newPool.splice(0, 3);
+                const wordsToAdd = newPool.splice(0, 6);
                 
-                const nextLeft = [...leftColumn];
-                const nextRight = [...rightColumn];
+                const nextLeft: CardSlot[] = wordsToAdd.map((w): CardSlot => ({
+                    id: `de-${w.id}-${Date.now()}`,
+                    wordId: w.id,
+                    text: w.german,
+                    type: 'german',
+                    isMatched: false,
+                    status: 'idle',
+                    isFadingIn: true
+                })).sort(() => Math.random() - 0.5);
 
-                // Find matched slots in left
-                const leftMatchedIndices = nextLeft.reduce((acc, c, idx) => c.isMatched ? [...acc, idx] : acc, [] as number[]);
-                // Find matched slots in right
-                const rightMatchedIndices = nextRight.reduce((acc, c, idx) => c.isMatched ? [...acc, idx] : acc, [] as number[]);
-
-                // Replace 3 random words if we have at least 3 matches
-                wordsToAdd.forEach((newWord, i) => {
-                    const lIdx = leftMatchedIndices[i];
-                    const rIdx = rightMatchedIndices[i];
-
-                    if (lIdx !== undefined && rIdx !== undefined) {
-                        nextLeft[lIdx] = {
-                            id: `de-${newWord.id}-${Date.now()}`,
-                            wordId: newWord.id,
-                            text: newWord.german,
-                            type: 'german',
-                            isMatched: false,
-                            status: 'idle',
-                            isFadingIn: true
-                        };
-                        nextRight[rIdx] = {
-                            id: `sq-${newWord.id}-${Date.now()}`,
-                            wordId: newWord.id,
-                            text: newWord.albanian,
-                            type: 'albanian',
-                            isMatched: false,
-                            status: 'idle',
-                            isFadingIn: true
-                        };
-                    }
-                });
+                const nextRight: CardSlot[] = wordsToAdd.map((w): CardSlot => ({
+                    id: `sq-${w.id}-${Date.now()}`,
+                    wordId: w.id,
+                    text: w.albanian,
+                    type: 'albanian',
+                    isMatched: false,
+                    status: 'idle',
+                    isFadingIn: true
+                })).sort(() => Math.random() - 0.5);
 
                 setLeftColumn(nextLeft);
                 setRightColumn(nextRight);
                 setPool(newPool);
-                setMatchCount(0);
 
                 setTimeout(() => {
                     setLeftColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
@@ -142,7 +129,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             }, 800);
             return () => clearTimeout(timer);
         }
-    }, [matchCount, pool, leftColumn, rightColumn]);
+    }, [leftColumn, pool]);
 
     const handleCardClick = (cardId: string, type: 'german' | 'albanian') => {
         if (type === 'german') {
@@ -179,7 +166,6 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
                     onResult(leftCard.wordId, true);
                     setSelectedLeftId(null);
                     setSelectedRightId(null);
-                    setMatchCount(prev => prev + 1);
 
                     // Game over check
                     const remainingLeft = leftColumn.filter(c => !c.isMatched && c.id !== selectedLeftId).length;
@@ -276,8 +262,8 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             animation = 'shake 0.4s ease-in-out';
         }
         if (isMatched && card.status !== 'correct') {
-            opacity = 0;
-            animation = 'fade-out 0.5s forwards';
+            opacity = 0.5;
+            bgColor = 'var(--bg-accent-subtle)';
         }
 
         return (
