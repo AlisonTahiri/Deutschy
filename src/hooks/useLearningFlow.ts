@@ -9,32 +9,35 @@ export function useLearningFlow(words: ActiveWordPair[]) {
            return { currentStage: 1 as LearningStage, isFullyMastered: false, allowedActivities: ['flashcards'] as ExerciseType[] };
         }
 
-        // Phase 1: Discovery (Flashcards) - all words score >= 1
-        const hasPassedPhase1 = words.every(w => w.confidenceScore >= 1);
-        
-        // Phase 2: Recognition (Matching & MCQ) - all words score >= 3
-        const hasPassedPhase2 = words.every(w => w.confidenceScore >= 3);
+        const totalWords = words.length;
+        const countScore1 = words.filter(w => (w.confidenceScore || 0) >= 1).length;
+        const countScore3 = words.filter(w => (w.confidenceScore || 0) >= 3).length;
+        const countScore5 = words.filter(w => (w.confidenceScore || 0) >= 5).length;
 
-        // Phase 3: Production (Typing) - all words score === 5
-        const hasPassedPhase3 = words.every(w => w.confidenceScore >= 5);
+        // Phase 1: Discovery (Flashcards) - at least 70% of words reached score 1
+        const hasPassedPhase1 = (countScore1 / totalWords) >= 0.7;
+        
+        // Phase 2: Recognition (Matching & MCQ) - at least 70% of words reached score 3
+        const hasPassedPhase2 = (countScore3 / totalWords) >= 0.7;
+
+        // Phase 3: Production (Typing) - at least 70% of words reached score 5
+        const hasPassedPhase3 = (countScore5 / totalWords) >= 0.7;
 
         let currentStage: LearningStage = 1;
-        let allowedActivities: ExerciseType[] = ['flashcards']; // Force flashcards initially
+        let allowedActivities: ExerciseType[] = ['flashcards'];
         let isFullyMastered = false;
 
         if (hasPassedPhase3) {
             currentStage = 4;
-            // When mastered, user can play any game they want
             allowedActivities = ['flashcards', 'multiple-choice', 'matching-game', 'writing', 'mixed'];
             isFullyMastered = true;
         } else if (hasPassedPhase2) {
             currentStage = 3;
-            // Now they MUST do writing (production) to hit score 5. We also allow mixed for variety.
-            allowedActivities = ['writing', 'mixed']; 
+            // Allow all previous activities too for variety as requested ("mos i blloko me lojrat")
+            allowedActivities = ['flashcards', 'multiple-choice', 'matching-game', 'writing', 'mixed'];
         } else if (hasPassedPhase1) {
             currentStage = 2;
-            // They MUST do matching or mcq (recognition) to hit score 3
-            allowedActivities = ['matching-game', 'multiple-choice'];
+            allowedActivities = ['flashcards', 'matching-game', 'multiple-choice'];
         }
 
         return { currentStage, isFullyMastered, allowedActivities };

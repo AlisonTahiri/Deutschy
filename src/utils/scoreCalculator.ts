@@ -16,27 +16,27 @@ export const calculateScoreUpdate = (
 ): number => {
     let newScore = currentScore;
 
-    if (usedHint || !isCorrect) {
-        // Penalty for mistakes or using hints
-        newScore -= 1;
+    if (!isCorrect || usedHint) {
+        // No penalty for mistakes anymore, just return current score
+        return currentScore;
     } else {
         // Reward for correct answers based on difficulty
         switch (activityType) {
             case 'flashcards':
             case 'matching-game':
             case 'multiple-choice':
-                newScore += 1;
+                // Cap at 4 for these modes
+                newScore = Math.min(4, currentScore + 1);
                 break;
             case 'writing':
             case 'mixed':
                 // Typing/production exercises give +2 since they are harder
-                newScore += 2;
+                newScore = Math.min(5, currentScore + 2);
                 break;
             default:
-                newScore += 1;
+                newScore = Math.min(5, currentScore + 1);
         }
     }
 
-    // Ensure score stays within 0-5 bounds
-    return Math.max(0, Math.min(5, newScore));
+    return newScore;
 };
