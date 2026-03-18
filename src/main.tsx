@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { App as KonstaProvider } from 'konsta/react';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
+import { AuthProvider } from './hooks/useAuth';
 import './index.css';
 
 function KonstaAppWrapper() {
@@ -20,7 +21,9 @@ function KonstaAppWrapper() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <SettingsProvider>
-      <KonstaAppWrapper />
+      <AuthProvider>
+        <KonstaAppWrapper />
+      </AuthProvider>
     </SettingsProvider>
   </StrictMode>,
 );

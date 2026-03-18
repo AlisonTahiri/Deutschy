@@ -1,9 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { dbService } from '../services/db/provider';
 
-export function useAuth() {
+interface AuthContextType {
+    session: Session | null;
+    user: User | null;
+    role: 'admin' | 'member' | null;
+    isLoading: boolean;
+    signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+    session: null,
+    user: null,
+    role: null,
+    isLoading: true,
+    signOut: async () => {},
+});
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [role, setRole] = useState<'admin' | 'member' | null>(null);
@@ -28,7 +44,6 @@ export function useAuth() {
     useEffect(() => {
         let mounted = true;
 
-        // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (mounted) {
                 setSession(session);
@@ -44,18 +59,19 @@ export function useAuth() {
             }
         });
 
-        // Listen for auth changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, newSession) => {
             if (mounted) {
-                setSession(session);
-                setUser(session?.user ?? null);
-                if (session?.user) {
-                    setIsLoading(true);
-                    fetchProfile(session.user.id, mounted).finally(() => {
-                        if (mounted) setIsLoading(false);
-                    });
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                if (newSession?.user) {
+                    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                        setIsLoading(true);
+                        fetchProfile(newSession.user.id, mounted).finally(() => {
+                            if (mounted) setIsLoading(false);
+                        });
+                    }
                 } else {
                     setRole(null);
                     setIsLoading(false);
@@ -77,5 +93,13 @@ export function useAuth() {
         await supabase.auth.signOut();
     };
 
-    return { session, user, role, isLoading, signOut };
+    return (
+        <AuthContext.Provider value={{ session, user, role, isLoading, signOut }}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export function useAuth() {
+    return useContext(AuthContext);
 }

@@ -24,7 +24,7 @@ export function useSubscription() {
 
     useEffect(() => {
         checkSubscription();
-    }, [session, role]);
+    }, [session?.user?.id, role]);
 
     return {
         isChecking,
