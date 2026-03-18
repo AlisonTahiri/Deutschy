@@ -252,18 +252,15 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             shadow = '0 0 10px rgba(46, 160, 67, 0.2)';
         }
         if (isCorrect) {
-            borderColor = 'var(--success-color)';
-            bgColor = 'color-mix(in srgb, var(--success-color) 10%, var(--bg-card))';
-            animation = 'pulse-success 1.5s infinite';
+            borderColor = 'var(--border-card)';
+            bgColor = 'var(--bg-accent-subtle)';
+            animation = 'match-bounce 0.6s ease-out';
+            opacity = 0.5;
         }
         if (isWrong) {
             borderColor = 'var(--danger-color)';
             bgColor = 'color-mix(in srgb, var(--danger-color) 10%, var(--bg-card))';
             animation = 'shake 0.4s ease-in-out';
-        }
-        if (isMatched && card.status !== 'correct') {
-            opacity = 0.5;
-            bgColor = 'var(--bg-accent-subtle)';
         }
 
         return (
@@ -331,10 +328,10 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             </div>
 
             <style>{`
-                @keyframes pulse-success {
-                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4); }
-                    50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); }
-                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+                @keyframes match-bounce {
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 10%, var(--bg-card)); opacity: 1; }
+                    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 20%, var(--bg-card)); opacity: 1; }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); border-color: var(--border-card); background-color: var(--bg-accent-subtle); opacity: 0.5; }
                 }
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
