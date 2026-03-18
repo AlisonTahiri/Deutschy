@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
-import { SyncStatusIndicator } from './SyncStatusIndicator';
+
 import {
     Page,
     Navbar,
@@ -50,7 +50,6 @@ export function Layout({ children }: LayoutProps) {
                 <Navbar
                     title={getTitle()}
                     centerTitle={settings.konstaTheme === 'ios'}
-                    right={<SyncStatusIndicator />}
                 />
 
                 <div className="pb-20"> {/* Padding for Tabbar */}
@@ -124,7 +123,6 @@ export function Layout({ children }: LayoutProps) {
                 <Navbar
                     title={getTitle()}
                     centerTitle={settings.konstaTheme === 'ios'}
-                    right={<SyncStatusIndicator />}
                 />
                 <div className="max-w-[1200px] mx-auto p-8 w-full">
                     {children}

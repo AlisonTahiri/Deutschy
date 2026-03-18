@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
 import type { ExerciseType } from '../types';
@@ -7,9 +7,12 @@ import { MultipleChoice } from './MultipleChoice';
 import { Writing } from './Writing';
 import { Mixed } from './Mixed';
 import { MatchingGame } from './MatchingGame';
-import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide-react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
+import { useLearningFlow } from '../hooks/useLearningFlow';
+import { useProgressManager } from '../hooks/useProgressManager';
+import { dbService } from '../services/db/provider';
+import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide-react';
 
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg transition-all duration-300';
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
@@ -17,12 +20,28 @@ const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 ro
 export function ExerciseContainer() {
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
-    const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();
+    const { lessons, isLoading, resetLessonProgress } = useVocabulary();
     const { role } = useAuth();
+    const { updateWordScore } = useProgressManager();
     useLastActivity(); // Tracks activity automatically inside the hook logic
 
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
+    
+    const wordsToPractice = lesson ? lesson.words : [];
+    const { currentStage, isFullyMastered, allowedActivities } = useLearningFlow(wordsToPractice);
+
+    // Save Session State
+    useEffect(() => {
+        if (lessonId) {
+            dbService.saveSessionState({
+                id: 'current',
+                current_lesson_part_id: lessonId,
+                current_stage: currentStage,
+                last_word_index: 0 // Default until specialized tracking is added
+            }).catch(console.error);
+        }
+    }, [lessonId, currentStage]);
 
     const onExit = () => navigate('/');
 
@@ -43,19 +62,17 @@ export function ExerciseContainer() {
         );
     }
 
-    const unlearnedWords = lesson.words.filter(w => w.status !== 'learned');
-    const isFullyLearned = unlearnedWords.length === 0 && lesson.words.length > 0;
-    const wordsToPractice = isFullyLearned ? lesson.words : unlearnedWords;
     const hasMCQs = lesson.words.some(w => !!w.mcq);
     const canDoQuiz = role === 'admin' || (!!lesson.isSupabaseSynced && hasMCQs);
 
-    const handleWordResult = (wordId: string, learned: boolean) => {
-        updateWordStatus(lesson.id, wordId, learned);
+    const handleWordResult = async (wordId: string, learned: boolean) => {
+        if (!exerciseMode) return;
+        await updateWordScore(wordId, learned, exerciseMode, false);
     };
 
     if (!exerciseMode) {
         return (
-            <div className="flex flex-col gap-8 animate-[fadeIn_0.4s_ease-out]">
+            <div className="flex flex-col gap-8 px-4 py-6 w-full max-w-4xl mx-auto">
                 <div className="flex flex-row items-center gap-4 mb-4">
                     <button className={`${btnSecondary} p-2!`} onClick={onExit}>
                         <ArrowLeft size={20} />
@@ -63,13 +80,13 @@ export function ExerciseContainer() {
                     <h2 className="m-0">{lesson.name}</h2>
                 </div>
 
-                {isFullyLearned && (
+                {isFullyMastered && (
                     <div
-                        className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2 animate-[fadeIn_0.4s_ease-out]`}
+                        className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2`}
                         style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
                     >
-                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>🎉 All words learned!</h3>
-                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>You can practice all words again, or reset your progress.</p>
+                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>🎉 All words mastered!</h3>
+                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>You can practice any activity again, or reset your progress.</p>
                         <button className={`${btnSecondary} mt-2`} onClick={() => resetLessonProgress(lesson.id)}>
                             Reset Progress
                         </button>
@@ -77,61 +94,61 @@ export function ExerciseContainer() {
                 )}
 
                 <p className="text-center" style={{ color: 'var(--text-secondary)' }}>
-                    {isFullyLearned ? 'Practicing all words.' : `${unlearnedWords.length} words remaining to learn.`} Choose an exercise mode:
+                    {isFullyMastered ? 'Practicing all words.' : `Stage ${currentStage}: ${currentStage === 1 ? 'Discovery' : currentStage === 2 ? 'Recognition' : 'Production'}.`} Choose an exercise mode:
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('flashcards') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
                         style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => setExerciseMode('flashcards')}
+                        onClick={() => allowedActivities.includes('flashcards') && setExerciseMode('flashcards')}
                     >
                         <Layers size={32} color="var(--accent-color)" />
                         <h3>Flashcards</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Swipe right if you know it, left if you don't.</span>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Swipe right if you know it. (Unlocks Matching)</span>
+                    </button>
+
+                    <button
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('matching-game') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
+                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
+                        onClick={() => allowedActivities.includes('matching-game') && setExerciseMode('matching-game')}
+                    >
+                        <Grid size={32} color="var(--accent-color)" />
+                        <h3>Matching Game</h3>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Flashcards.</span>
                     </button>
 
                     {canDoQuiz && (
                         <button
-                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('multiple-choice') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
                             style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                            onClick={() => setExerciseMode('multiple-choice')}
+                            onClick={() => allowedActivities.includes('multiple-choice') && setExerciseMode('multiple-choice')}
                         >
                             <MessageSquare size={32} color="var(--success-color)" />
                             <h3>Multiple Choice</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>AI generated sentences. Guess the missing word.</span>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Flashcards.</span>
                         </button>
                     )}
 
                     <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('writing') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
                         style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => setExerciseMode('writing')}
+                        onClick={() => allowedActivities.includes('writing') && setExerciseMode('writing')}
                     >
                         <PenTool size={32} color="var(--warning-color)" />
                         <h3>Writing</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Type the German translation accurately.</span>
-                    </button>
-
-                    <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
-                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => setExerciseMode('matching-game')}
-                    >
-                        <Grid size={32} color="var(--accent-color)" />
-                        <h3>Matching Game</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Connect German words with Albanian translations.</span>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Recognition stage.</span>
                     </button>
 
                     {canDoQuiz && (
                         <button
-                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform`}
+                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('mixed') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
                             style={{ padding: '2rem 1rem', height: '100%', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))' }}
-                            onClick={() => setExerciseMode('mixed')}
+                            onClick={() => allowedActivities.includes('mixed') && setExerciseMode('mixed')}
                         >
                             <Shuffle size={32} color="var(--text-primary)" />
                             <h3>Mixed Mode</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>A mixture of all exercises for best retention.</span>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Best for review once Mastered.</span>
                         </button>
                     )}
                 </div>
@@ -140,8 +157,8 @@ export function ExerciseContainer() {
     }
 
     return (
-        <div className="flex flex-col animate-[fadeIn_0.4s_ease-out]" style={{ height: '100%', display: 'flex' }}>
-            <div className="flex flex-row items-center gap-2 flex-wrap mb-2">
+        <div className="flex flex-col px-4 py-4 w-full max-w-4xl mx-auto" style={{ height: '100%', display: 'flex' }}>
+            <div className="flex flex-row items-center gap-2 flex-wrap mb-4">
                 <button className={`${btnSecondary} p-[0.4rem]!`} onClick={() => setExerciseMode(null)}>
                     <ArrowLeft size={20} />
                 </button>

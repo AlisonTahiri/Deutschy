@@ -110,101 +110,25 @@ export const syncService = {
      * Downloads progress from Supabase and populates Dexie.
      * Upsyncs pending local records first to resolve conflicts.
      */
-    async syncUserProgress(userId: string): Promise<void> {
-        try {
-            // 1. Up-Sync any pending changes in Dexie first
-            await this.pushPendingProgress(userId);
-
-            // 2. Download from Supabase
-            const { data: remoteProgress, error } = await supabase
-                .from('user_word_progress')
-                .select('*')
-                .eq('user_id', userId);
-            
-            if (error) throw error;
-
-            if (remoteProgress && remoteProgress.length > 0) {
-                // Remove the database-specific fields we don't map locally or just map properly
-                const mappedProgress = remoteProgress.map(rp => ({
-                    id: rp.id,
-                    user_id: rp.user_id,
-                    word_id: rp.word_id,
-                    status: rp.status as 'learning' | 'learned',
-                    fail_count: rp.fail_count,
-                    last_updated_at: rp.last_updated_at,
-                    is_synced: true
-                }));
-
-                // Clear previous state and overwrite with source of truth
-                await dbService.clearUserProgress(userId);
-                await dbService.bulkSaveUserProgress(mappedProgress);
-            }
-
-            window.dispatchEvent(new CustomEvent('local-db-updated'));
-
-        } catch (error) {
-            console.error('Failed to sync progress:', error);
-        }
+    async syncUserProgress(_userId: string): Promise<void> {
+        // Disabled per user request - keeping progress purely local for now
+        return;
     },
 
     /**
      * Pushes pending changes from Dexie to Supabase.
      */
-    async pushPendingProgress(userId: string): Promise<void> {
-        try {
-            const pending = await dbService.getPendingSyncs(userId);
-            if (!pending || pending.length === 0) return;
-
-            const upsertData = pending.map(p => ({
-                id: p.id,
-                user_id: p.user_id,
-                word_id: p.word_id,
-                status: p.status,
-                fail_count: p.fail_count,
-                last_updated_at: p.last_updated_at
-            }));
-
-            const { error } = await supabase
-                .from('user_word_progress')
-                .upsert(upsertData, { onConflict: 'user_id,word_id' });
-
-            if (error) throw error;
-
-            // Mark as synced locally
-            const markedSynced = pending.map(p => ({ ...p, is_synced: true }));
-            await dbService.bulkSaveUserProgress(markedSynced);
-
-            window.dispatchEvent(new CustomEvent('sync-status-changed'));
-
-        } catch (error) {
-            console.error('Failed to push pending progress:', error);
-        }
+    async pushPendingProgress(_userId: string): Promise<void> {
+        // Disabled per user request
+        return;
     },
 
     /**
      * Backs up current local progress (learned words count) to Supabase user_progress table
      * This remains for XP calculations.
      */
-    async backupProgress(userId: string): Promise<void> {
-        try {
-            // We should read the new user_word_progress to calculate XP
-            const allProgress = await dbService.getUserProgress(userId);
-            const totalLearned = allProgress.filter(p => p.status === 'learned').length;
-
-            const total_xp = totalLearned * 10;
-
-            await supabase
-                .from('user_progress')
-                .upsert({
-                    user_id: userId,
-                    total_xp: total_xp,
-                    last_activity_date: new Date().toISOString()
-                }, { onConflict: 'user_id' });
-
-            // Trigger the up-sync for vocabulary words
-            await this.pushPendingProgress(userId);
-        } catch (error) {
-            console.error('Failed to backup progress to remote:', error);
-        }
+    async backupProgress(_userId: string): Promise<void> {
+        // Disabled per user request
+        return;
     }
 };

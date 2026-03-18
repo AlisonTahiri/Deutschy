@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ActiveWordPair } from '../types';
 import { Timer, Trophy, RefreshCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MatchingGameProps {
     words: ActiveWordPair[];
@@ -13,9 +14,7 @@ interface CardSlot {
     wordId: string;
     text: string;
     type: 'german' | 'albanian';
-    isMatched: boolean;
     status: 'idle' | 'selected' | 'correct' | 'wrong';
-    isFadingIn: boolean;
 }
 
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
@@ -24,60 +23,76 @@ const btnPrimary = 'inline-flex items-center justify-center gap-2 px-6 py-3 roun
 export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps) {
     const [leftColumn, setLeftColumn] = useState<CardSlot[]>([]);
     const [rightColumn, setRightColumn] = useState<CardSlot[]>([]);
-    const [pool, setPool] = useState<ActiveWordPair[]>([]);
+    const [slides, setSlides] = useState<ActiveWordPair[][]>([]);
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
     const [selectedRightId, setSelectedRightId] = useState<string | null>(null);
     const [score, setScore] = useState(0);
     const [time, setTime] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [isProcessingMatch, setIsProcessingMatch] = useState(false);
+    const [isGameStarted, setIsGameStarted] = useState(false);
 
     // Initialize game
     const initGame = useCallback(() => {
-        const shuffledWords = [...words].sort(() => Math.random() - 0.5);
-        const initialWords = shuffledWords.slice(0, 6);
-        const remainingWords = shuffledWords.slice(6);
-        
-        const leftArr: CardSlot[] = initialWords.map((w): CardSlot => ({
-            id: `de-${w.id}`,
+        if (!words || words.length === 0) return;
+
+        const shuffledAll = [...words].sort(() => Math.random() - 0.5);
+        const chunked: ActiveWordPair[][] = [];
+        for (let i = 0; i < shuffledAll.length; i += 6) {
+            chunked.push(shuffledAll.slice(i, i + 6));
+        }
+
+        // Pad last slide if needed
+        const lastChunk = chunked[chunked.length - 1];
+        if (lastChunk.length < 6 && shuffledAll.length > lastChunk.length) {
+            const needed = 6 - lastChunk.length;
+            const others = shuffledAll.filter(w => !lastChunk.find(lw => lw.id === w.id));
+            const padding = others
+                .sort((a, b) => (a.confidenceScore || 0) - (b.confidenceScore || 0))
+                .slice(0, needed);
+            chunked[chunked.length - 1] = [...lastChunk, ...padding];
+        }
+
+        setSlides(chunked);
+        setCurrentSlideIndex(0);
+        setScore(0);
+        setTime(0);
+        setIsGameOver(false);
+        setIsProcessingMatch(false);
+        setIsGameStarted(true);
+        loadSlide(chunked[0]);
+    }, [words]);
+
+    const loadSlide = (slideWords: ActiveWordPair[]) => {
+        const leftArr: CardSlot[] = slideWords.map((w): CardSlot => ({
+            id: `de-${w.id}-${Date.now()}-${Math.random()}`,
             wordId: w.id,
             text: w.german,
             type: 'german',
-            isMatched: false,
-            status: 'idle',
-            isFadingIn: true
+            status: 'idle'
         })).sort(() => Math.random() - 0.5);
 
-        const rightArr: CardSlot[] = initialWords.map((w): CardSlot => ({
-            id: `sq-${w.id}`,
+        const rightArr: CardSlot[] = slideWords.map((w): CardSlot => ({
+            id: `sq-${w.id}-${Date.now()}-${Math.random()}`,
             wordId: w.id,
             text: w.albanian,
             type: 'albanian',
-            isMatched: false,
-            status: 'idle',
-            isFadingIn: true
+            status: 'idle'
         })).sort(() => Math.random() - 0.5);
 
         setLeftColumn(leftArr);
         setRightColumn(rightArr);
-        setPool(remainingWords);
         setSelectedLeftId(null);
         setSelectedRightId(null);
-        setScore(0);
-        setTime(0);
-        setIsGameOver(false);
-
-        // Remove fadeIn flag after animation
-        setTimeout(() => {
-            setLeftColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
-            setRightColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
-        }, 500);
-    }, [words]);
+    };
 
     const initializedRef = useRef(false);
     useEffect(() => {
         if (!initializedRef.current && words && words.length > 0) {
             initGame();
             initializedRef.current = true;
+            setIsGameStarted(true);
         }
     }, [initGame, words]);
 
@@ -90,103 +105,93 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         return () => clearInterval(interval);
     }, [isGameOver]);
 
-    // Word Replacement Logic
+    // Transition to next slide check
     useEffect(() => {
-        const remainingLeft = leftColumn.filter(c => !c.isMatched).length;
-        if (leftColumn.length > 0 && remainingLeft === 0 && pool.length > 0) {
+        if (isGameStarted && leftColumn.length > 0 && leftColumn.every(c => c.status === 'correct')) {
             const timer = setTimeout(() => {
-                const newPool = [...pool];
-                const wordsToAdd = newPool.splice(0, 6);
-                
-                const nextLeft: CardSlot[] = wordsToAdd.map((w): CardSlot => ({
-                    id: `de-${w.id}-${Date.now()}`,
-                    wordId: w.id,
-                    text: w.german,
-                    type: 'german',
-                    isMatched: false,
-                    status: 'idle',
-                    isFadingIn: true
-                })).sort(() => Math.random() - 0.5);
-
-                const nextRight: CardSlot[] = wordsToAdd.map((w): CardSlot => ({
-                    id: `sq-${w.id}-${Date.now()}`,
-                    wordId: w.id,
-                    text: w.albanian,
-                    type: 'albanian',
-                    isMatched: false,
-                    status: 'idle',
-                    isFadingIn: true
-                })).sort(() => Math.random() - 0.5);
-
-                setLeftColumn(nextLeft);
-                setRightColumn(nextRight);
-                setPool(newPool);
-
-                setTimeout(() => {
-                    setLeftColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
-                    setRightColumn(prev => prev.map(c => ({ ...c, isFadingIn: false })));
-                }, 500);
-            }, 800);
+                const nextIdx = currentSlideIndex + 1;
+                if (nextIdx < slides.length) {
+                    setCurrentSlideIndex(nextIdx);
+                    loadSlide(slides[nextIdx]);
+                } else {
+                    setIsGameOver(true);
+                }
+            }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [leftColumn, pool]);
+    }, [leftColumn, currentSlideIndex, slides, isGameStarted]);
+
+
 
     const handleCardClick = (cardId: string, type: 'german' | 'albanian') => {
+        if (isProcessingMatch) return; // Block clicks during animations
+        
         if (type === 'german') {
+            const card = leftColumn.find(c => c.id === cardId);
+            if (!card || card.status === 'correct') return;
+
             if (selectedLeftId === cardId) {
                 setSelectedLeftId(null);
                 setLeftColumn(prev => prev.map(c => c.id === cardId ? { ...c, status: 'idle' } : c));
                 return;
             }
             setSelectedLeftId(cardId);
-            setLeftColumn(prev => prev.map(c => c.id === cardId ? { ...c, status: 'selected' } : c.isMatched ? c : { ...c, status: 'idle' }));
+            setLeftColumn(prev => prev.map(c => {
+                if (c.status === 'correct') return c;
+                return c.id === cardId ? { ...c, status: 'selected' } : { ...c, status: 'idle' };
+            }));
         } else {
+            const card = rightColumn.find(c => c.id === cardId);
+            if (!card || card.status === 'correct') return;
+
             if (selectedRightId === cardId) {
                 setSelectedRightId(null);
                 setRightColumn(prev => prev.map(c => c.id === cardId ? { ...c, status: 'idle' } : c));
                 return;
             }
             setSelectedRightId(cardId);
-            setRightColumn(prev => prev.map(c => c.id === cardId ? { ...c, status: 'selected' } : c.isMatched ? c : { ...c, status: 'idle' }));
+            setRightColumn(prev => prev.map(c => {
+                if (c.status === 'correct') return c;
+                return c.id === cardId ? { ...c, status: 'selected' } : { ...c, status: 'idle' };
+            }));
         }
     };
 
     // Match handling
     useEffect(() => {
-        if (selectedLeftId && selectedRightId) {
+        if (selectedLeftId && selectedRightId && !isProcessingMatch) {
+            setIsProcessingMatch(true);
             const leftCard = leftColumn.find(c => c.id === selectedLeftId)!;
             const rightCard = rightColumn.find(c => c.id === selectedRightId)!;
 
             if (leftCard.wordId === rightCard.wordId) {
-                // Correct
+                // Correct Match
+                setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'correct' } : c));
+                setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'correct' } : c));
+                setScore(s => s + 10);
+                onResult(leftCard.wordId, true);
+
                 setTimeout(() => {
-                    setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'correct', isMatched: true } : c));
-                    setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'correct', isMatched: true } : c));
-                    setScore(s => s + 10);
-                    onResult(leftCard.wordId, true);
                     setSelectedLeftId(null);
                     setSelectedRightId(null);
+                    setIsProcessingMatch(false);
+                }, 500);
 
-                    // Game over check
-                    const remainingLeft = leftColumn.filter(c => !c.isMatched && c.id !== selectedLeftId).length;
-                    if (pool.length === 0 && remainingLeft === 0) {
-                        setIsGameOver(true);
-                    }
-                }, 400);
             } else {
-                // Wrong
+                // Wrong Match
+                setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'wrong' } : c));
+                setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'wrong' } : c));
+                
                 setTimeout(() => {
-                    setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'wrong' } : c));
-                    setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'wrong' } : c));
-                    
-                    setTimeout(() => {
-                        setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'idle' } : c));
-                        setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'idle' } : c));
-                        setSelectedLeftId(null);
-                        setSelectedRightId(null);
-                        setScore(s => Math.max(0, s - 2));
-                    }, 800);
-                }, 400);
+                    setLeftColumn(prev => prev.map(c => c.id === selectedLeftId ? { ...c, status: 'idle' } : c));
+                    setRightColumn(prev => prev.map(c => c.id === selectedRightId ? { ...c, status: 'idle' } : c));
+                    setSelectedLeftId(null);
+                    setSelectedRightId(null);
+                    setScore(s => Math.max(0, s - 2));
+                    // Optional: register failure for progress manager
+                    onResult(leftCard.wordId, false);
+                    setIsProcessingMatch(false);
+                }, 800);
             }
         }
     }, [selectedLeftId, selectedRightId]);
@@ -239,44 +244,46 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         const isSelected = card.status === 'selected';
         const isCorrect = card.status === 'correct';
         const isWrong = card.status === 'wrong';
-        const isMatched = card.isMatched;
 
         let borderColor = 'var(--border-card)';
         let bgColor = 'var(--bg-card)';
         let shadow = 'none';
-        let animation = card.isFadingIn ? 'fade-in-new 0.5s ease-out' : '';
-        let opacity = 1;
 
         if (isSelected) {
             borderColor = 'var(--accent-color)';
             shadow = '0 0 10px rgba(46, 160, 67, 0.2)';
         }
         if (isCorrect) {
-            borderColor = 'var(--border-card)';
-            bgColor = 'var(--bg-accent-subtle)';
-            animation = 'match-bounce 0.6s ease-out';
-            opacity = 0.5;
+            borderColor = 'var(--success-color)';
+            bgColor = 'var(--success-color-subtle, color-mix(in srgb, var(--success-color) 15%, transparent))';
         }
         if (isWrong) {
             borderColor = 'var(--danger-color)';
             bgColor = 'color-mix(in srgb, var(--danger-color) 10%, var(--bg-card))';
-            animation = 'shake 0.4s ease-in-out';
         }
 
         return (
-            <button
+            <motion.button
+                layout
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ 
+                    opacity: 1, 
+                    scale: isCorrect ? [1, 1.1, 1] : (isSelected ? 1.05 : 1),
+                    y: 0,
+                    x: isWrong ? [-4, 4, -4, 4, 0] : 0,
+                    borderColor: borderColor,
+                    backgroundColor: bgColor
+                }}
+                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 key={card.id}
-                onClick={() => !isMatched && handleCardClick(card.id, card.type)}
-                disabled={isMatched || isGameOver}
-                className="relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full"
+                onClick={() => handleCardClick(card.id, card.type)}
+                disabled={isGameOver || isProcessingMatch || isCorrect}
+                className={`relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full ${isCorrect ? 'opacity-90 cursor-default' : ''}`}
                 style={{
                     borderColor,
                     backgroundColor: bgColor,
                     boxShadow: shadow,
-                    animation: animation,
-                    opacity: opacity,
-                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-                    pointerEvents: isMatched ? 'none' : 'auto',
                     wordBreak: 'break-word',
                     hyphens: 'auto',
                     minHeight: '44px',
@@ -287,7 +294,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
                     {card.text}
                 </span>
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-[0.02] transition-opacity pointer-events-none" />
-            </button>
+            </motion.button>
         );
     };
 
@@ -300,9 +307,9 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
                     <span className="font-bold text-base">{score}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    {pool.length > 0 && (
+                    {slides.length > 0 && (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-(--bg-accent-subtle)" style={{ color: 'var(--accent-color)' }}>
-                            {pool.length} pool
+                            Slide {currentSlideIndex + 1} of {slides.length}
                         </span>
                     )}
                     <div className="flex items-center gap-2">
@@ -315,38 +322,21 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
             {/* Two Column Layout */}
             <div className="flex gap-4 pb-8">
                 {/* German Column */}
-                <div className="flex-1 flex flex-col gap-2">
+                <div className="flex-1 flex flex-col gap-2 relative">
                     <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>German</div>
-                    {leftColumn.map(card => renderCard(card))}
+                    <AnimatePresence mode="popLayout">
+                        {leftColumn.map(card => renderCard(card))}
+                    </AnimatePresence>
                 </div>
 
                 {/* Albanian Column */}
-                <div className="flex-1 flex flex-col gap-2">
+                <div className="flex-1 flex flex-col gap-2 relative">
                     <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>Albanian</div>
-                    {rightColumn.map(card => renderCard(card))}
+                    <AnimatePresence mode="popLayout">
+                        {rightColumn.map(card => renderCard(card))}
+                    </AnimatePresence>
                 </div>
             </div>
-
-            <style>{`
-                @keyframes match-bounce {
-                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 10%, var(--bg-card)); opacity: 1; }
-                    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 20%, var(--bg-card)); opacity: 1; }
-                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); border-color: var(--border-card); background-color: var(--bg-accent-subtle); opacity: 0.5; }
-                }
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-4px); }
-                    75% { transform: translateX(4px); }
-                }
-                @keyframes fade-out {
-                    0% { opacity: 1; transform: scale(1); }
-                    100% { opacity: 0; transform: scale(0.95); }
-                }
-                @keyframes fade-in-new {
-                    0% { opacity: 0; transform: translateY(10px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-            `}</style>
         </div>
     );
 }

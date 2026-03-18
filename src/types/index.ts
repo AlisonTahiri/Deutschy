@@ -23,6 +23,7 @@ export interface WordPair {
 export interface ActiveWordPair extends WordPair {
   status: 'learning' | 'learned';
   failCount: number;
+  confidenceScore: number;
 }
 
 export interface UserWordProgress {
@@ -33,8 +34,17 @@ export interface UserWordProgress {
   fail_count: number;
   last_updated_at: string;
   is_synced: boolean;
+  confidence_score: number; // 0 to 5
+  last_reviewed: string; // ISO timestamp
+  attempts_count: number;
 }
 
+export interface SessionState {
+  id: string; // "current"
+  current_lesson_part_id: string | null;
+  current_stage: number; // 1 | 2 | 3
+  last_word_index: number;
+}
 
 export interface LocalLesson {
   id: string;

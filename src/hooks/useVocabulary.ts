@@ -8,9 +8,9 @@ export function useVocabulary() {
     const [lessons, setLessons] = useState<ActiveLesson[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const loadLessons = async () => {
+    const loadLessons = async (background = false) => {
         try {
-            setIsLoading(true);
+            if (!background) setIsLoading(true);
             if (!dbService.isInitialized()) await dbService.init();
             
             const rawLessons = await dbService.getLessons();
@@ -29,7 +29,8 @@ export function useVocabulary() {
                         return {
                             ...w,
                             status: rec ? rec.status : 'learning',
-                            failCount: rec ? rec.fail_count : 0
+                            failCount: rec ? rec.fail_count : 0,
+                            confidenceScore: rec ? rec.confidence_score : 0
                         };
                     });
                     return { ...lesson, words: activeWords };
@@ -38,7 +39,7 @@ export function useVocabulary() {
                 // If no user, just map defaults
                 activeLessons = rawLessons.map(lesson => ({
                     ...lesson,
-                    words: lesson.words.map(w => ({ ...w, status: 'learning', failCount: 0 }))
+                    words: lesson.words.map(w => ({ ...w, status: 'learning', failCount: 0, confidenceScore: 0 }))
                 }));
             }
 
@@ -54,7 +55,7 @@ export function useVocabulary() {
         loadLessons();
 
         const handleSyncUpdate = () => {
-            loadLessons();
+            loadLessons(true); // background task prevents unmounting
         };
 
         window.addEventListener('local-db-updated', handleSyncUpdate);
@@ -70,7 +71,7 @@ export function useVocabulary() {
             const { words, ...staticLessonData } = lesson;
             const staticLesson: LocalLesson = {
                 ...staticLessonData,
-                words: words.map(({ status, failCount, ...w }) => w)
+                words: words.map(({ status, failCount, confidenceScore, ...w }) => w)
             };
             await dbService.saveLesson(staticLesson);
         } catch (err) {
@@ -88,7 +89,8 @@ export function useVocabulary() {
                 german: w.german,
                 albanian: w.albanian,
                 status: 'learning',
-                failCount: 0
+                failCount: 0,
+                confidenceScore: 0
             }))
         };
         setLessons([...lessons, newLesson]);
@@ -141,7 +143,12 @@ export function useVocabulary() {
             words: lessons[idx].words.map(w => {
                 if (w.id !== wordId) return w;
                 newFailCount = learned ? w.failCount : w.failCount + 1;
-                return { ...w, status: newStatus, failCount: newFailCount };
+                return { 
+                    ...w, 
+                    status: newStatus, 
+                    failCount: newFailCount,
+                    confidenceScore: learned ? 5 : w.confidenceScore // Force 5 if explicitly marked learned
+                };
             })
         };
 
@@ -160,7 +167,10 @@ export function useVocabulary() {
                 status: newStatus,
                 fail_count: newFailCount,
                 last_updated_at: new Date().toISOString(),
-                is_synced: false
+                is_synced: false,
+                confidence_score: learned ? 5 : (existing?.confidence_score || 0),
+                last_reviewed: new Date().toISOString(),
+                attempts_count: (existing?.attempts_count || 0) + 1
             });
         } catch (e) {
             console.error(e);
@@ -195,7 +205,7 @@ export function useVocabulary() {
 
         const updated = {
             ...lessons[idx],
-            words: lessons[idx].words.map(w => ({ ...w, status: 'learning' as const, failCount: 0 }))
+            words: lessons[idx].words.map(w => ({ ...w, status: 'learning' as const, failCount: 0, confidenceScore: 0 }))
         };
         const next = [...lessons];
         next[idx] = updated;
@@ -214,7 +224,10 @@ export function useVocabulary() {
                     status: 'learning' as const,
                     fail_count: 0,
                     last_updated_at: new Date().toISOString(),
-                    is_synced: false
+                    is_synced: false,
+                    confidence_score: 0,
+                    last_reviewed: new Date().toISOString(),
+                    attempts_count: 0
                 };
             });
             await dbService.bulkSaveUserProgress(updates);

@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Settings, LocalLesson, UserWordProgress } from '../../types';
+import type { Settings, LocalLesson, UserWordProgress, SessionState } from '../../types';
 import type { IDatabaseService } from './IDatabaseService';
 
 interface DBSettings extends Settings {
@@ -10,18 +10,20 @@ export class DexieService implements IDatabaseService {
     private db: Dexie & {
         settings: EntityTable<DBSettings, 'id'>,
         lessons: EntityTable<LocalLesson, 'id'>,
-        user_word_progress: EntityTable<UserWordProgress, 'id'>
+        user_word_progress: EntityTable<UserWordProgress, 'id'>,
+        session_state: EntityTable<SessionState, 'id'>
     };
     private _initialized = false;
 
     constructor() {
         this.db = new Dexie('german_app_db') as any;
-        this.db.version(2).stores({
+        this.db.version(3).stores({
             settings: 'id',
             // IndexedDB handles storing full JS objects efficiently.
             // We'll store the entire Lesson object (with its words array) natively.
             lessons: 'id',
-            user_word_progress: 'id, user_id, word_id, is_synced'
+            user_word_progress: 'id, user_id, word_id, is_synced',
+            session_state: 'id'
         });
     }
 
@@ -107,5 +109,14 @@ export class DexieService implements IDatabaseService {
     async clearUserProgress(userId: string): Promise<void> {
         const records = await this.db.user_word_progress.where('user_id').equals(userId).primaryKeys();
         await this.db.user_word_progress.bulkDelete(records);
+    }
+
+    // --- Session State ---
+    async getSessionState(): Promise<SessionState | undefined> {
+        return await this.db.session_state.get('current');
+    }
+
+    async saveSessionState(state: SessionState): Promise<void> {
+        await this.db.session_state.put(state);
     }
 }

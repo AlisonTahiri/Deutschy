@@ -1,4 +1,4 @@
-import type { Settings, LocalLesson, UserWordProgress } from '../../types';
+import type { Settings, LocalLesson, UserWordProgress, SessionState } from '../../types';
 
 export interface IDatabaseService {
     /**
@@ -26,5 +26,9 @@ export interface IDatabaseService {
     bulkSaveUserProgress(progresses: UserWordProgress[]): Promise<void>;
     getPendingSyncs(userId: string): Promise<UserWordProgress[]>;
     clearUserProgress(userId: string): Promise<void>;
+
+    // --- Session State ---
+    getSessionState(): Promise<SessionState | undefined>;
+    saveSessionState(state: SessionState): Promise<void>;
 }
 
