@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Home } from './components/Home';
 import { Settings } from './components/Settings';
@@ -13,11 +14,7 @@ import { useSubscription } from './hooks/useSubscription';
 import { Paywall } from './components/Paywall';
 import { Onboarding } from './components/Onboarding';
 
-export type ViewState = 'home' | 'settings' | 'exercise' | 'admin';
-
 function App() {
-  const [currentView, setCurrentView] = useState<ViewState>('home');
-  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(() =>
     localStorage.getItem('dardha_onboarding_done') === 'true'
@@ -48,16 +45,6 @@ function App() {
     }
   }, [session, onboardingDone]);
 
-  const handleStartExercise = (lessonId: string) => {
-    setActiveLessonId(lessonId);
-    setCurrentView('exercise');
-  };
-
-  const handleNavigate = (view: ViewState) => {
-    setCurrentView(view);
-    setActiveLessonId(null);
-  };
-
   if (!isDbReady || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[var(--bg-color)] text-[var(--text-primary)]">
@@ -83,24 +70,28 @@ function App() {
   }
 
   return (
-    <Layout currentView={currentView} onNavigate={handleNavigate}>
-      <BackgroundMCQGenerator />
-      {currentView === 'home' && (
-        role === 'member' && !activeLevelId && !isChecking ? (
-          <Paywall onPurchaseSuccess={checkSubscription} />
-        ) : (
-          <Home onStartExercise={handleStartExercise} />
-        )
-      )}
-      {currentView === 'settings' && <Settings />}
-      {currentView === 'admin' && <Admin />}
-      {currentView === 'exercise' && activeLessonId && (
-        <ExerciseContainer
-          lessonId={activeLessonId}
-          onExit={() => handleNavigate('home')}
-        />
-      )}
-    </Layout>
+    <BrowserRouter>
+      <Layout>
+        <BackgroundMCQGenerator />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              role === 'member' && !activeLevelId && !isChecking ? (
+                <Paywall onPurchaseSuccess={checkSubscription} />
+              ) : (
+                <Home />
+              )
+            }
+          />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
+          {/* Fallback to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   );
 }
 

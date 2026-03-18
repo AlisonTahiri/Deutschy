@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLastActivity } from '../hooks/useLastActivity';
 import type { ExerciseType } from '../types';
 import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
@@ -9,19 +11,20 @@ import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 
-interface ExerciseContainerProps {
-    lessonId: string;
-    onExit: () => void;
-}
-
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg transition-all duration-300';
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
-export function ExerciseContainer({ lessonId, onExit }: ExerciseContainerProps) {
+export function ExerciseContainer() {
+    const { lessonId } = useParams<{ lessonId: string }>();
+    const navigate = useNavigate();
     const { lessons, isLoading, updateWordStatus, resetLessonProgress } = useVocabulary();
     const { role } = useAuth();
+    useLastActivity(); // Tracks activity automatically inside the hook logic
+
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
+
+    const onExit = () => navigate('/');
 
     if (isLoading) {
         return (

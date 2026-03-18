@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { BookOpen, Settings as SettingsIcon, Home, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -15,14 +16,14 @@ import {
 
 interface LayoutProps {
     children: ReactNode;
-    currentView: 'home' | 'settings' | 'exercise' | 'admin';
-    onNavigate: (view: 'home' | 'settings' | 'admin') => void;
 }
 
-export function Layout({ children, currentView, onNavigate }: LayoutProps) {
+export function Layout({ children }: LayoutProps) {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const { settings } = useSettings();
     const { role } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -30,9 +31,9 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const isHome = currentView === 'home' || currentView === 'exercise';
-    const isAdmin = currentView === 'admin';
-    const isSettings = currentView === 'settings';
+    const isHome = location.pathname === '/' || location.pathname.startsWith('/exercise/');
+    const isAdmin = location.pathname === '/admin';
+    const isSettings = location.pathname === '/settings';
 
     // Page title logic
     const getTitle = () => {
@@ -57,21 +58,21 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                 <Tabbar labels={true} icons={true} className="fixed bottom-0 left-0">
                     <TabbarLink
                         active={isHome}
-                        onClick={() => onNavigate('home')}
+                        onClick={() => navigate('/')}
                         label="Home"
                         icon={<Icon ios={<Home size={24} />} material={<Home size={24} />} />}
                     />
                     {role === 'admin' && (
                         <TabbarLink
                             active={isAdmin}
-                            onClick={() => onNavigate('admin')}
+                            onClick={() => navigate('/admin')}
                             label="Admin"
                             icon={<Icon ios={<ShieldCheck size={24} />} material={<ShieldCheck size={24} />} />}
                         />
                     )}
                     <TabbarLink
                         active={isSettings}
-                        onClick={() => onNavigate('settings')}
+                        onClick={() => navigate('/settings')}
                         label="Settings"
                         icon={<Icon ios={<SettingsIcon size={24} />} material={<SettingsIcon size={24} />} />}
                     />
@@ -94,7 +95,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                     <MenuListItem
                         active={isHome}
                         title="Home"
-                        onClick={() => onNavigate('home')}
+                        onClick={() => navigate('/')}
                         media={<Home size={18} />}
                         className={isHome ? 'bg-[var(--bg-accent-subtle)]' : ''}
                     />
@@ -102,7 +103,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                         <MenuListItem
                             active={isAdmin}
                             title="Admin"
-                            onClick={() => onNavigate('admin')}
+                            onClick={() => navigate('/admin')}
                             media={<ShieldCheck size={18} />}
                             className={isAdmin ? 'bg-[var(--bg-accent-subtle)]' : ''}
                         />
@@ -110,7 +111,7 @@ export function Layout({ children, currentView, onNavigate }: LayoutProps) {
                     <MenuListItem
                         active={isSettings}
                         title="Settings"
-                        onClick={() => onNavigate('settings')}
+                        onClick={() => navigate('/settings')}
                         media={<SettingsIcon size={18} />}
                         className={isSettings ? 'bg-[var(--bg-accent-subtle)]' : ''}
                     />

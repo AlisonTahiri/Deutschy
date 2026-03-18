@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
-import { Play, ChevronRight, LogOut } from 'lucide-react';
+import { useLastActivity } from '../hooks/useLastActivity';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Play, ChevronRight, LogOut, RotateCcw } from 'lucide-react';
 import type { LocalLesson } from '../types';
 import {
     Block,
@@ -14,19 +16,19 @@ import {
     Preloader,
 } from 'konsta/react';
 
-interface HomeProps {
-    onStartExercise: (lessonId: string) => void;
-}
-
-export function Home({ onStartExercise }: HomeProps) {
+export function Home() {
     const { lessons, isLoading } = useVocabulary();
     const { session, signOut } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { getLastActivity } = useLastActivity();
+    const lastActivityPath = getLastActivity();
 
     const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
 
-    const [activeLevelId, setActiveLevelId] = useState<string | null>(null);
-    const [activeMethodId, setActiveMethodId] = useState<string | null>(null);
-    const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+    const activeLevelId = searchParams.get('level');
+    const activeMethodId = searchParams.get('method');
+    const activeLessonId = searchParams.get('lesson');
 
     const { levels, methodsMap, lessonsMap, allParts } = useMemo(() => {
         const uniqueLevels = new Map<string, { id: string; name: string }>();
@@ -80,8 +82,13 @@ export function Home({ onStartExercise }: HomeProps) {
     const activeMethod = activeMethodId ? methodsMap.get(activeMethodId) : undefined;
     const activeLesson = activeLessonId ? lessonsMap.get(activeLessonId) : undefined;
 
-    const handleSelectLevel = (levelId: string) => { setActiveLevelId(levelId); setActiveMethodId(null); setActiveLessonId(null); };
-    const handleSelectMethod = (methodId: string) => { setActiveMethodId(methodId); setActiveLessonId(null); };
+    const handleSelectLevel = (levelId: string) => { setSearchParams({ level: levelId }); };
+    const handleSelectMethod = (methodId: string) => { if (activeLevelId) setSearchParams({ level: activeLevelId, method: methodId }); };
+    const handleSelectLesson = (lessonId: string) => { if (activeLevelId && activeMethodId) setSearchParams({ level: activeLevelId, method: activeMethodId, lesson: lessonId }); };
+
+    const clearAll = () => setSearchParams({});
+    const clearToLevel = () => { if (activeLevelId) setSearchParams({ level: activeLevelId }); else clearAll(); };
+    const clearToMethod = () => { if (activeLevelId && activeMethodId) setSearchParams({ level: activeLevelId, method: activeMethodId }); else clearToLevel(); };
 
     if (isLoading) {
         return (
@@ -109,12 +116,37 @@ export function Home({ onStartExercise }: HomeProps) {
                 </div>
             </Block>
 
+            {/* Resume Activity Card */}
+            {lastActivityPath && (
+                <Block>
+                    <Card
+                        className="m-0 bg-(--bg-accent-subtle) border-2 border-(--accent-color)/30"
+                        onClick={() => navigate(lastActivityPath)}
+                    >
+                        <div className="flex flex-row items-center justify-between gap-4">
+                            <div className="flex flex-row items-center gap-3">
+                                <div className="p-2 rounded-full bg-(--accent-color)/10 text-(--accent-color)">
+                                    <RotateCcw size={20} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-sm">Pick up where you left off</span>
+                                    <span className="text-xs text-(--text-secondary)">Continue your last exercise</span>
+                                </div>
+                            </div>
+                            <Button small rounded className="w-auto px-4">
+                                <Play size={14} className="mr-1" /> Resume
+                            </Button>
+                        </div>
+                    </Card>
+                </Block>
+            )}
+
             {/* Breadcrumbs Navigation */}
             <div className="px-4 py-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <div className="flex flex-row gap-2 items-center text-sm text-(--text-secondary)">
                     <span
                         className={`cursor-pointer ${!activeLevelId ? 'text-(--text-primary) font-bold' : ''}`}
-                        onClick={() => { setActiveLevelId(null); setActiveMethodId(null); setActiveLessonId(null); }}
+                        onClick={clearAll}
                     >
                         All Levels
                     </span>
@@ -123,7 +155,7 @@ export function Home({ onStartExercise }: HomeProps) {
                             <ChevronRight size={14} />
                             <span
                                 className={`cursor-pointer ${!activeMethodId ? 'text-(--text-primary) font-bold' : ''}`}
-                                onClick={() => { setActiveMethodId(null); setActiveLessonId(null); }}
+                                onClick={clearToLevel}
                             >
                                 {activeLevel.name}
                             </span>
@@ -134,7 +166,7 @@ export function Home({ onStartExercise }: HomeProps) {
                             <ChevronRight size={14} />
                             <span
                                 className={`cursor-pointer ${!activeLessonId ? 'text-(--text-primary) font-bold' : ''}`}
-                                onClick={() => setActiveLessonId(null)}
+                                onClick={clearToMethod}
                             >
                                 {activeMethod.name}
                             </span>
@@ -178,7 +210,7 @@ export function Home({ onStartExercise }: HomeProps) {
                     {methodsForLevel.length === 0 ? (
                         <Card className="text-center py-10">
                             <p>No methods available for this level.</p>
-                            <Button className="mt-4" onClick={() => setActiveLevelId(null)}>Back to Levels</Button>
+                            <Button className="mt-4" onClick={clearAll}>Back to Levels</Button>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
@@ -207,17 +239,17 @@ export function Home({ onStartExercise }: HomeProps) {
                         </List>
                     )}
                     <Block>
-                        <Button outline onClick={() => setActiveLevelId(null)}>Back to Levels</Button>
+                        <Button outline onClick={clearAll}>Back to Levels</Button>
                     </Block>
                 </>
             ) : !activeLessonId ? (
                 /* Lesson Selection */
                 <>
-                    <BlockTitle>Lessons in {activeMethod?.name}</BlockTitle>
+                    <BlockTitle>Lessons in {activeMethod?.name} {activeLevel?.name}</BlockTitle>
                     {lessonsForMethod.length === 0 ? (
                         <Card className="text-center py-10">
                             <p>No lessons in this method.</p>
-                            <Button className="mt-4" onClick={() => setActiveMethodId(null)}>Back to Methods</Button>
+                            <Button className="mt-4" onClick={clearToLevel}>Back to Methods</Button>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
@@ -233,7 +265,7 @@ export function Home({ onStartExercise }: HomeProps) {
                                         link
                                         title={lesson.name}
                                         subtitle={`${totalWords} words total · ${Math.round(progress * 100)}% learned`}
-                                        onClick={() => setActiveLessonId(lesson.id)}
+                                        onClick={() => handleSelectLesson(lesson.id)}
                                         chevron
                                         footer={
                                             <div className="mt-2">
@@ -246,7 +278,7 @@ export function Home({ onStartExercise }: HomeProps) {
                         </List>
                     )}
                     <Block>
-                        <Button outline onClick={() => setActiveMethodId(null)}>Back to Methods</Button>
+                        <Button outline onClick={clearToLevel}>Back to Methods</Button>
                     </Block>
                 </>
             ) : (
@@ -265,42 +297,44 @@ export function Home({ onStartExercise }: HomeProps) {
                             <p>No parts available for this lesson.</p>
                         </Card>
                     ) : (
-                        <div className="grid gap-4 px-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                            {partsForLesson.map(part => {
-                                const learnedCount = part.words.filter(w => w.learned).length;
-                                const totalCount = part.words.length;
-                                const progress = totalCount === 0 ? 0 : learnedCount / totalCount;
+                        <Block className="!px-4">
+                            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                                {partsForLesson.map(part => {
+                                    const learnedCount = part.words.filter(w => w.learned).length;
+                                    const totalCount = part.words.length;
+                                    const progress = totalCount === 0 ? 0 : learnedCount / totalCount;
 
-                                return (
-                                    <Card key={part.id} className="m-0 bg-(--bg-card)">
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex flex-row justify-between items-start">
-                                                <h4 className="m-0 text-lg font-bold">{part.part_name}</h4>
-                                                <Button
-                                                    small
-                                                    rounded
-                                                    onClick={() => onStartExercise(part.id)}
-                                                    disabled={totalCount === 0}
-                                                    className="w-auto px-4"
-                                                >
-                                                    <Play size={16} className="mr-1" /> Start
-                                                </Button>
-                                            </div>
-                                            <div>
-                                                <Progressbar progress={progress} className="h-1.5 mb-2" />
-                                                <div className="flex flex-row justify-between text-xs text-(--text-secondary)">
-                                                    <span>{totalCount} words</span>
-                                                    <span>{Math.round(progress * 100)}% learned</span>
+                                    return (
+                                        <Card key={part.id} className="m-0 bg-(--bg-card)">
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex flex-row justify-between items-start">
+                                                    <h4 className="m-0 text-lg font-bold">{part.part_name}</h4>
+                                                    <Button
+                                                        small
+                                                        rounded
+                                                        onClick={() => navigate(`/exercise/${part.id}`)}
+                                                        disabled={totalCount === 0}
+                                                        className="w-auto px-4"
+                                                    >
+                                                        <Play size={16} className="mr-1" /> Start
+                                                    </Button>
+                                                </div>
+                                                <div>
+                                                    <Progressbar progress={progress} className="h-1.5 mb-2" />
+                                                    <div className="flex flex-row justify-between text-xs text-(--text-secondary)">
+                                                        <span>{totalCount} words</span>
+                                                        <span>{Math.round(progress * 100)}% learned</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
-                        </div>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
+                        </Block>
                     )}
-                    <Block>
-                        <Button outline onClick={() => setActiveLessonId(null)}>Back to Lessons</Button>
+                    <Block className="mt-4">
+                        <Button outline onClick={clearToMethod}>Back to Lessons</Button>
                     </Block>
                 </>
             )}
