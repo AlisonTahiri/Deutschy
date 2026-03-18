@@ -43,7 +43,7 @@ export function ExerciseContainer() {
         );
     }
 
-    const unlearnedWords = lesson.words.filter(w => !w.learned);
+    const unlearnedWords = lesson.words.filter(w => w.status !== 'learned');
     const isFullyLearned = unlearnedWords.length === 0 && lesson.words.length > 0;
     const wordsToPractice = isFullyLearned ? lesson.words : unlearnedWords;
     const hasMCQs = lesson.words.some(w => !!w.mcq);

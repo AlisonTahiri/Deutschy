@@ -1,17 +1,48 @@
 import { useState, useEffect } from 'react';
-import type { LocalLesson } from '../types';
+import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
 import { dbService } from '../services/db/provider';
+import { useAuth } from './useAuth';
 
 export function useVocabulary() {
-    const [lessons, setLessons] = useState<LocalLesson[]>([]);
+    const { user } = useAuth();
+    const [lessons, setLessons] = useState<ActiveLesson[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadLessons = async () => {
         try {
             setIsLoading(true);
             if (!dbService.isInitialized()) await dbService.init();
-            const loaded = await dbService.getLessons();
-            setLessons(loaded);
+            
+            const rawLessons = await dbService.getLessons();
+            let activeLessons: ActiveLesson[] = [];
+
+            if (user?.id) {
+                const progressMap = new Map();
+                const progressRecords = await dbService.getUserProgress(user.id);
+                progressRecords.forEach(p => {
+                    progressMap.set(p.word_id, p);
+                });
+
+                activeLessons = rawLessons.map(lesson => {
+                    const activeWords: ActiveWordPair[] = lesson.words.map(w => {
+                        const rec = progressMap.get(w.id);
+                        return {
+                            ...w,
+                            status: rec ? rec.status : 'learning',
+                            failCount: rec ? rec.fail_count : 0
+                        };
+                    });
+                    return { ...lesson, words: activeWords };
+                });
+            } else {
+                // If no user, just map defaults
+                activeLessons = rawLessons.map(lesson => ({
+                    ...lesson,
+                    words: lesson.words.map(w => ({ ...w, status: 'learning', failCount: 0 }))
+                }));
+            }
+
+            setLessons(activeLessons);
         } catch (err) {
             console.error("Failed to load lessons from DB", err);
         } finally {
@@ -31,18 +62,24 @@ export function useVocabulary() {
         return () => {
             window.removeEventListener('local-db-updated', handleSyncUpdate);
         };
-    }, []);
+    }, [user?.id]); // Reload when user changes
 
-    const persistLesson = async (lesson: LocalLesson) => {
+    const persistLesson = async (lesson: ActiveLesson) => {
         try {
-            await dbService.saveLesson(lesson as any); // Type cast due to db provider divergence, will be refactored with Sync
+            // Strip active properties before saving static lesson
+            const { words, ...staticLessonData } = lesson;
+            const staticLesson: LocalLesson = {
+                ...staticLessonData,
+                words: words.map(({ status, failCount, ...w }) => w)
+            };
+            await dbService.saveLesson(staticLesson);
         } catch (err) {
-            console.error("Failed to persist lesson", err);
+            console.error("Failed to persist static lesson", err);
         }
     };
 
     const addLesson = (name: string, wordsData: { german: string; albanian: string }[]) => {
-        const newLesson: LocalLesson = {
+        const newLesson: ActiveLesson = {
             id: crypto.randomUUID(),
             name,
             createdAt: Date.now(),
@@ -50,7 +87,7 @@ export function useVocabulary() {
                 id: crypto.randomUUID(),
                 german: w.german,
                 albanian: w.albanian,
-                learned: false,
+                status: 'learning',
                 failCount: 0
             }))
         };
@@ -90,23 +127,46 @@ export function useVocabulary() {
         persistLesson(updated);
     };
 
-    const updateWordStatus = (lessonId: string, wordId: string, learned: boolean) => {
+    const updateWordStatus = async (lessonId: string, wordId: string, learned: boolean) => {
+        if (!user?.id) return;
+
         const idx = lessons.findIndex(l => l.id === lessonId);
         if (idx === -1) return;
+
+        let newStatus: 'learning' | 'learned' = learned ? 'learned' : 'learning';
+        let newFailCount = 0;
 
         const updated = {
             ...lessons[idx],
             words: lessons[idx].words.map(w => {
                 if (w.id !== wordId) return w;
-                return { ...w, learned, failCount: learned ? w.failCount : w.failCount + 1 };
+                newFailCount = learned ? w.failCount : w.failCount + 1;
+                return { ...w, status: newStatus, failCount: newFailCount };
             })
         };
+
         const next = [...lessons];
         next[idx] = updated;
-
         setLessons(next);
-        persistLesson(updated);
+
+        try {
+            const records = await dbService.getUserProgress(user.id);
+            const existing = records.find(r => r.word_id === wordId);
+            
+            await dbService.saveUserProgress({
+                id: existing ? existing.id : crypto.randomUUID(),
+                user_id: user.id,
+                word_id: wordId,
+                status: newStatus,
+                fail_count: newFailCount,
+                last_updated_at: new Date().toISOString(),
+                is_synced: false
+            });
+        } catch (e) {
+            console.error(e);
+        }
     };
+
 
     const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: any }[]) => {
         const idx = lessons.findIndex(l => l.id === lessonId);
@@ -127,20 +187,42 @@ export function useVocabulary() {
         persistLesson(updated);
     };
 
-    const resetLessonProgress = (lessonId: string) => {
+    const resetLessonProgress = async (lessonId: string) => {
+        if (!user?.id) return;
+
         const idx = lessons.findIndex(l => l.id === lessonId);
         if (idx === -1) return;
 
         const updated = {
             ...lessons[idx],
-            words: lessons[idx].words.map(w => ({ ...w, learned: false, failCount: 0 }))
+            words: lessons[idx].words.map(w => ({ ...w, status: 'learning' as const, failCount: 0 }))
         };
         const next = [...lessons];
         next[idx] = updated;
 
         setLessons(next);
-        persistLesson(updated);
+        
+        try {
+            const records = await dbService.getUserProgress(user.id);
+            const wordsToReset = lessons[idx].words.map(w => w.id);
+            const updates = wordsToReset.map(wordId => {
+                const existing = records.find(r => r.word_id === wordId);
+                return {
+                    id: existing ? existing.id : crypto.randomUUID(),
+                    user_id: user.id,
+                    word_id: wordId,
+                    status: 'learning' as const,
+                    fail_count: 0,
+                    last_updated_at: new Date().toISOString(),
+                    is_synced: false
+                };
+            });
+            await dbService.bulkSaveUserProgress(updates);
+        } catch (e) {
+            console.error(e);
+        }
     };
+
 
 
 

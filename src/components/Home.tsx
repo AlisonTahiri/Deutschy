@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, ChevronRight, LogOut, RotateCcw } from 'lucide-react';
-import type { LocalLesson } from '../types';
+import type { ActiveLesson } from '../types';
 import {
     Block,
     BlockTitle,
@@ -34,7 +34,7 @@ export function Home() {
         const uniqueLevels = new Map<string, { id: string; name: string }>();
         const uniqueMethods = new Map<string, { id: string; name: string; level_id: string }>();
         const uniqueLessons = new Map<string, { id: string; name: string; method_id: string }>();
-        const partsList: LocalLesson[] = [];
+        const partsList: ActiveLesson[] = [];
 
         lessons.forEach(l => {
             const lvlId = l.level_id || 'legacy-lvl';
@@ -217,7 +217,7 @@ export function Home() {
                             {methodsForLevel.map(method => {
                                 const methodParts = allParts.filter(p => p.method_id === method.id);
                                 const totalWords = methodParts.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = methodParts.reduce((acc, p) => acc + p.words.filter(w => w.learned).length, 0);
+                                const learnedWords = methodParts.reduce((acc, p) => acc + p.words.filter(w => w.status === 'learned').length, 0);
                                 const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
 
                                 return (
@@ -256,7 +256,7 @@ export function Home() {
                             {lessonsForMethod.map(lesson => {
                                 const partsForThisLesson = allParts.filter(p => p.lesson_id === lesson.id);
                                 const totalWords = partsForThisLesson.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = partsForThisLesson.reduce((acc, p) => acc + p.words.filter(w => w.learned).length, 0);
+                                const learnedWords = partsForThisLesson.reduce((acc, p) => acc + p.words.filter(w => w.status === 'learned').length, 0);
                                 const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
 
                                 return (
@@ -300,7 +300,7 @@ export function Home() {
                         <Block className="!px-4">
                             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                 {partsForLesson.map(part => {
-                                    const learnedCount = part.words.filter(w => w.learned).length;
+                                    const learnedCount = part.words.filter(w => w.status === 'learned').length;
                                     const totalCount = part.words.length;
                                     const progress = totalCount === 0 ? 0 : learnedCount / totalCount;
 

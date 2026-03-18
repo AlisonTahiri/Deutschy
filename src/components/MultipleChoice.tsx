@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import type { WordPair } from '../types';
+import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight } from 'lucide-react';
 
 interface MultipleChoiceProps {
-    words: WordPair[];
+    words: ActiveWordPair[];
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -15,7 +15,7 @@ const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 ro
 
 export function MultipleChoice({ words, onResult, onComplete }: MultipleChoiceProps) {
     const { settings } = useSettings();
-    const [queue, setQueue] = useState<WordPair[]>(() => {
+    const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         const shuffled = [...words].sort(() => Math.random() - 0.5);
         if (!settings.aiApiKey) return shuffled.filter(w => w.mcq);
         return shuffled;

@@ -12,8 +12,6 @@ export interface WordPair {
   id: string; // Will align with lesson_parts.id
   german: string;
   albanian: string;
-  learned: boolean;
-  failCount: number;
   mcq?: {
     sentence: string;
     sentenceTranslation: string;
@@ -21,6 +19,22 @@ export interface WordPair {
     correctAnswer: string;
   };
 }
+
+export interface ActiveWordPair extends WordPair {
+  status: 'learning' | 'learned';
+  failCount: number;
+}
+
+export interface UserWordProgress {
+  id: string;
+  user_id: string;
+  word_id: string;
+  status: 'learning' | 'learned';
+  fail_count: number;
+  last_updated_at: string;
+  is_synced: boolean;
+}
+
 
 export interface LocalLesson {
   id: string;
@@ -37,6 +51,10 @@ export interface LocalLesson {
   lesson_id?: string;
   lesson_name?: string;
   part_name?: string;
+}
+
+export interface ActiveLesson extends Omit<LocalLesson, 'words'> {
+  words: ActiveWordPair[];
 }
 
 // --- Supabase DB Types ---

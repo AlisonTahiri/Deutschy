@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import type { WordPair } from '../types';
+import type { ActiveWordPair } from '../types';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 
 interface WritingProps {
-    words: WordPair[];
+    words: ActiveWordPair[];
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -13,7 +13,7 @@ const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-4 roun
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
 export function Writing({ words, onResult, onComplete }: WritingProps) {
-    const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
+    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
     const [currentIndex, setCurrentIndex] = useState(0);
     const [inputValue, setInputValue] = useState('');
     const [hintCount, setHintCount] = useState(0);

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { WordPair } from '../types';
+import type { ActiveWordPair } from '../types';
 import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
 import { Writing } from './Writing';
 import { useSettings } from '../hooks/useSettings';
 
 interface MixedProps {
-    words: WordPair[];
+    words: ActiveWordPair[];
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -16,13 +16,13 @@ type RandomMode = 'flashcards' | 'multiple-choice' | 'writing';
 export function Mixed({ words, onResult, onComplete }: MixedProps) {
     const { settings } = useSettings();
     // We keep a single unified queue of words to process
-    const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
+    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const currentWord = queue[currentIndex];
 
     // For the current word, pick a random mode
-    const pickRandomMode = (word: WordPair | undefined): RandomMode => {
+    const pickRandomMode = (word: ActiveWordPair | undefined): RandomMode => {
         if (!word) return 'flashcards'; // fallback
 
         const modes: RandomMode[] = ['flashcards', 'writing'];

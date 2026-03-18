@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { dbService } from '../services/db/provider';
 
 export function useAuth() {
     const [session, setSession] = useState<Session | null>(null);
@@ -70,6 +71,9 @@ export function useAuth() {
 
     const signOut = async () => {
         setRole(null);
+        if (user?.id) {
+            await dbService.clearUserProgress(user.id);
+        }
         await supabase.auth.signOut();
     };
 

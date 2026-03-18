@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { WordPair } from '../types';
+import type { ActiveWordPair } from '../types';
 import { Timer, Trophy, RefreshCcw } from 'lucide-react';
 
 interface MatchingGameProps {
-    words: WordPair[];
+    words: ActiveWordPair[];
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -24,7 +24,7 @@ const btnPrimary = 'inline-flex items-center justify-center gap-2 px-6 py-3 roun
 export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps) {
     const [leftColumn, setLeftColumn] = useState<CardSlot[]>([]);
     const [rightColumn, setRightColumn] = useState<CardSlot[]>([]);
-    const [pool, setPool] = useState<WordPair[]>([]);
+    const [pool, setPool] = useState<ActiveWordPair[]>([]);
     const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
     const [selectedRightId, setSelectedRightId] = useState<string | null>(null);
     const [score, setScore] = useState(0);

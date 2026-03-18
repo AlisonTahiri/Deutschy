@@ -66,13 +66,10 @@ export const syncService = {
                 const existingLesson = existingLessons.find(l => l.id === part.id);
 
                 const mappedWords: WordPair[] = partWords.map(w => {
-                    const existingWord = existingLesson?.words.find(ew => ew.id === w.id);
                     return {
                         id: w.id,
                         german: w.german,
                         albanian: w.albanian,
-                        learned: existingWord ? existingWord.learned : false,
-                        failCount: existingWord ? existingWord.failCount : 0,
                         mcq: w.mcq_sentence ? {
                             sentence: w.mcq_sentence,
                             sentenceTranslation: w.mcq_sentence_translation || '',
@@ -110,18 +107,90 @@ export const syncService = {
     },
 
     /**
+     * Downloads progress from Supabase and populates Dexie.
+     * Upsyncs pending local records first to resolve conflicts.
+     */
+    async syncUserProgress(userId: string): Promise<void> {
+        try {
+            // 1. Up-Sync any pending changes in Dexie first
+            await this.pushPendingProgress(userId);
+
+            // 2. Download from Supabase
+            const { data: remoteProgress, error } = await supabase
+                .from('user_word_progress')
+                .select('*')
+                .eq('user_id', userId);
+            
+            if (error) throw error;
+
+            if (remoteProgress && remoteProgress.length > 0) {
+                // Remove the database-specific fields we don't map locally or just map properly
+                const mappedProgress = remoteProgress.map(rp => ({
+                    id: rp.id,
+                    user_id: rp.user_id,
+                    word_id: rp.word_id,
+                    status: rp.status as 'learning' | 'learned',
+                    fail_count: rp.fail_count,
+                    last_updated_at: rp.last_updated_at,
+                    is_synced: true
+                }));
+
+                // Clear previous state and overwrite with source of truth
+                await dbService.clearUserProgress(userId);
+                await dbService.bulkSaveUserProgress(mappedProgress);
+            }
+
+            window.dispatchEvent(new CustomEvent('local-db-updated'));
+
+        } catch (error) {
+            console.error('Failed to sync progress:', error);
+        }
+    },
+
+    /**
+     * Pushes pending changes from Dexie to Supabase.
+     */
+    async pushPendingProgress(userId: string): Promise<void> {
+        try {
+            const pending = await dbService.getPendingSyncs(userId);
+            if (!pending || pending.length === 0) return;
+
+            const upsertData = pending.map(p => ({
+                id: p.id,
+                user_id: p.user_id,
+                word_id: p.word_id,
+                status: p.status,
+                fail_count: p.fail_count,
+                last_updated_at: p.last_updated_at
+            }));
+
+            const { error } = await supabase
+                .from('user_word_progress')
+                .upsert(upsertData, { onConflict: 'user_id,word_id' });
+
+            if (error) throw error;
+
+            // Mark as synced locally
+            const markedSynced = pending.map(p => ({ ...p, is_synced: true }));
+            await dbService.bulkSaveUserProgress(markedSynced);
+
+            window.dispatchEvent(new CustomEvent('sync-status-changed'));
+
+        } catch (error) {
+            console.error('Failed to push pending progress:', error);
+        }
+    },
+
+    /**
      * Backs up current local progress (learned words count) to Supabase user_progress table
+     * This remains for XP calculations.
      */
     async backupProgress(userId: string): Promise<void> {
         try {
-            const allLessons = await dbService.getLessons();
-            let totalLearned = 0;
+            // We should read the new user_word_progress to calculate XP
+            const allProgress = await dbService.getUserProgress(userId);
+            const totalLearned = allProgress.filter(p => p.status === 'learned').length;
 
-            allLessons.forEach(l => {
-                totalLearned += l.words.filter(w => w.learned).length;
-            });
-
-            // Calculate rudimentary XP
             const total_xp = totalLearned * 10;
 
             await supabase
@@ -132,6 +201,8 @@ export const syncService = {
                     last_activity_date: new Date().toISOString()
                 }, { onConflict: 'user_id' });
 
+            // Trigger the up-sync for vocabulary words
+            await this.pushPendingProgress(userId);
         } catch (error) {
             console.error('Failed to backup progress to remote:', error);
         }

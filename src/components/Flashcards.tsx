@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import type { WordPair } from '../types';
+import type { ActiveWordPair } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
 
 interface FlashcardsProps {
-    words: WordPair[];
+    words: ActiveWordPair[];
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
 
 export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
-    const [queue, setQueue] = useState<WordPair[]>([...words].sort(() => Math.random() - 0.5));
+    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showTranslation, setShowTranslation] = useState(false);
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
