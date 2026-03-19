@@ -36,6 +36,24 @@ export function Layout({ children }: LayoutProps) {
     const isAdmin = location.pathname === '/admin';
     const isSettings = location.pathname === '/settings';
 
+    // Persist home navigation state
+    useEffect(() => {
+        if (isHome) {
+            localStorage.setItem('dardha_last_home_url', location.pathname + location.search);
+        }
+    }, [location, isHome]);
+
+    const handleHomeClick = () => {
+        const lastUrl = localStorage.getItem('dardha_last_home_url');
+        // If we're not on home/exercise and have a saved URL, go there
+        // Otherwise go to root /
+        if (!isHome && lastUrl) {
+            navigate(lastUrl);
+        } else {
+            navigate('/');
+        }
+    };
+
     // Page title logic
     const getTitle = () => {
         if (isHome) return 'Dardha';
@@ -59,7 +77,7 @@ export function Layout({ children }: LayoutProps) {
                 <Tabbar labels={true} icons={true} className="fixed bottom-0 left-0">
                     <TabbarLink
                         active={isHome}
-                        onClick={() => navigate('/')}
+                        onClick={handleHomeClick}
                         label="Home"
                         icon={<Icon ios={<Home size={24} />} material={<Home size={24} />} />}
                     />
@@ -96,7 +114,7 @@ export function Layout({ children }: LayoutProps) {
                     <MenuListItem
                         active={isHome}
                         title="Home"
-                        onClick={() => navigate('/')}
+                        onClick={handleHomeClick}
                         media={<Home size={18} />}
                         className={isHome ? 'bg-[var(--bg-accent-subtle)]' : ''}
                     />
