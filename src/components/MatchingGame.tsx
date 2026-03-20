@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface MatchingGameProps {
     words: ActiveWordPair[];
+    initialSlideIndex?: number;
+    onProgress?: (index: number) => void;
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -22,11 +24,11 @@ interface CardSlot {
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
 const btnPrimary = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-(--accent-color) hover:bg-(--accent-hover) disabled:opacity-50';
 
-export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps) {
+export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResult, onComplete }: MatchingGameProps) {
     const [leftColumn, setLeftColumn] = useState<CardSlot[]>([]);
     const [rightColumn, setRightColumn] = useState<CardSlot[]>([]);
     const [slides, setSlides] = useState<ActiveWordPair[][]>([]);
-    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(initialSlideIndex);
     const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
     const [selectedRightId, setSelectedRightId] = useState<string | null>(null);
     const [score, setScore] = useState(0);
@@ -57,14 +59,14 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
         }
 
         setSlides(chunked);
-        setCurrentSlideIndex(0);
+        setCurrentSlideIndex(initialSlideIndex);
         setScore(0);
         setTime(0);
         setIsGameOver(false);
         setIsProcessingMatch(false);
         setIsGameStarted(true);
-        loadSlide(chunked[0]);
-    }, [words]);
+        loadSlide(chunked[initialSlideIndex] || chunked[0]);
+    }, [words, initialSlideIndex]);
 
     const loadSlide = (slideWords: ActiveWordPair[]) => {
         const leftArr: CardSlot[] = slideWords.map((w): CardSlot => ({
@@ -125,6 +127,7 @@ export function MatchingGame({ words, onResult, onComplete }: MatchingGameProps)
                 if (nextIdx < slides.length) {
                     setCurrentSlideIndex(nextIdx);
                     loadSlide(slides[nextIdx]);
+                    if (onProgress) onProgress(nextIdx);
                 } else {
                     setIsGameOver(true);
                 }

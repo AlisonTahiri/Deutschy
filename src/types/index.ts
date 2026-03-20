@@ -44,6 +44,8 @@ export interface SessionState {
   current_lesson_part_id: string | null;
   current_stage: number; // 1 | 2 | 3
   last_word_index: number;
+  exercise_mode?: ExerciseType | null;
+  word_ids?: string[]; // The specific order of words in the current exercise session
 }
 
 export interface LocalLesson {

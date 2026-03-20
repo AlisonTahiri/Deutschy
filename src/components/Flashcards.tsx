@@ -5,13 +5,26 @@ import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
 
 interface FlashcardsProps {
     words: ActiveWordPair[];
+    initialIndex?: number;
+    initialWordIds?: string[];
+    onProgress?: (index: number, wordIds: string[]) => void;
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
 
-export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
-    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
-    const [currentIndex, setCurrentIndex] = useState(0);
+export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: FlashcardsProps) {
+    const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
+        if (initialWordIds && initialWordIds.length > 0) {
+            // Restore queue order from saved IDs
+            const wordMap = new Map(words.map(w => [w.id, w]));
+            // Also handle words that might have been added back to queue
+            return initialWordIds
+                .map(id => wordMap.get(id))
+                .filter((w): w is ActiveWordPair => !!w);
+        }
+        return [...words].sort(() => Math.random() - 0.5);
+    });
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [showTranslation, setShowTranslation] = useState(false);
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
     const [history, setHistory] = useState<{ index: number, pushedToQueue: boolean }[]>([]);
@@ -33,22 +46,32 @@ export function Flashcards({ words, onResult, onComplete }: FlashcardsProps) {
             const pushedToQueue = !learned;
             if (pushedToQueue) nextQueue.push(currentWord);
             setHistory(prev => [...prev, { index: currentIndex, pushedToQueue }]);
+            const nextIndex = currentIndex + 1;
             setQueue(nextQueue);
-            setCurrentIndex(prev => prev + 1);
+            setCurrentIndex(nextIndex);
             setShowTranslation(false);
             setDirection(null);
-            if (currentIndex + 1 >= nextQueue.length) onComplete();
+            
+            if (onProgress) {
+                onProgress(nextIndex, nextQueue.map(w => w.id));
+            }
+
+            if (nextIndex >= nextQueue.length) onComplete();
         }, 300);
     };
 
     const handleBack = () => {
         if (history.length === 0) return;
         const lastAction = history[history.length - 1];
-        setHistory(prev => prev.slice(0, -1));
-        if (lastAction.pushedToQueue) setQueue(prev => prev.slice(0, -1));
-        setCurrentIndex(lastAction.index);
+        setHistory(prev => prev.slice(0, -1)); // Keep this line as it's not explicitly removed by the diff
+        const nextIndex = lastAction.index;
+        const nextQueue = queue; // queue doesn't change on back since we just decrease index and maybe pop from end
+        setCurrentIndex(nextIndex);
         setShowTranslation(false);
         setDirection(null);
+        if (onProgress) {
+            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id));
+        }
     };
 
     if (!currentWord) {

@@ -4,6 +4,9 @@ import { ArrowRight, Lightbulb } from 'lucide-react';
 
 interface WritingProps {
     words: ActiveWordPair[];
+    initialIndex?: number;
+    initialWordIds?: string[];
+    onProgress?: (index: number, wordIds: string[]) => void;
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -12,9 +15,17 @@ const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card
 const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-(--accent-color) hover:bg-(--accent-hover) disabled:opacity-50 disabled:cursor-not-allowed';
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
-export function Writing({ words, onResult, onComplete }: WritingProps) {
-    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
-    const [currentIndex, setCurrentIndex] = useState(0);
+export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: WritingProps) {
+    const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
+        if (initialWordIds && initialWordIds.length > 0) {
+            const wordMap = new Map(words.map(w => [w.id, w]));
+            return initialWordIds
+                .map(id => wordMap.get(id))
+                .filter((w): w is ActiveWordPair => !!w);
+        }
+        return [...words].sort(() => Math.random() - 0.5);
+    });
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [inputValue, setInputValue] = useState('');
     const [hintCount, setHintCount] = useState(0);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -72,14 +83,21 @@ export function Writing({ words, onResult, onComplete }: WritingProps) {
         onResult(currentWord.id, learned);
         let nextQueue = [...queue];
         if (!learned) nextQueue.push(currentWord);
+        
+        const nextIndex = currentIndex + 1;
         setQueue(nextQueue);
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex(nextIndex);
         setInputValue('');
         setHintCount(0);
         setHintUsed(false);
         setIsSubmitted(false);
         setIsCorrect(false);
-        if (currentIndex + 1 >= nextQueue.length) onComplete();
+
+        if (onProgress) {
+            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id));
+        }
+
+        if (nextIndex >= nextQueue.length) onComplete();
     };
 
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));

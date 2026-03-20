@@ -7,17 +7,28 @@ import { useSettings } from '../hooks/useSettings';
 
 interface MixedProps {
     words: ActiveWordPair[];
+    initialIndex?: number;
+    initialWordIds?: string[];
+    onProgress?: (index: number, wordIds: string[]) => void;
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
 
 type RandomMode = 'flashcards' | 'multiple-choice' | 'writing';
 
-export function Mixed({ words, onResult, onComplete }: MixedProps) {
+export function Mixed({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: MixedProps) {
     const { settings } = useSettings();
     // We keep a single unified queue of words to process
-    const [queue, setQueue] = useState<ActiveWordPair[]>([...words].sort(() => Math.random() - 0.5));
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
+        if (initialWordIds && initialWordIds.length > 0) {
+            const wordMap = new Map(words.map(w => [w.id, w]));
+            return initialWordIds
+                .map(id => wordMap.get(id))
+                .filter((w): w is ActiveWordPair => !!w);
+        }
+        return [...words].sort(() => Math.random() - 0.5);
+    });
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
     const currentWord = queue[currentIndex];
 
@@ -47,14 +58,19 @@ export function Mixed({ words, onResult, onComplete }: MixedProps) {
             nextQueue.push(currentWord);
         }
 
+        const nextIndex = currentIndex + 1;
         setQueue(nextQueue);
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex(nextIndex);
 
-        if (currentIndex + 1 >= nextQueue.length) {
+        if (onProgress) {
+            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id));
+        }
+
+        if (nextIndex >= nextQueue.length) {
             onComplete();
         } else {
             // Pick a new random mode for the next word
-            setCurrentMode(pickRandomMode(nextQueue[currentIndex + 1]));
+            setCurrentMode(pickRandomMode(nextQueue[nextIndex]));
         }
     };
 

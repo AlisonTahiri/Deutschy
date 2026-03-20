@@ -27,21 +27,52 @@ export function ExerciseContainer() {
 
     const lesson = lessons.find(l => l.id === lessonId);
     const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
+    const [lastWordIndex, setLastWordIndex] = useState(0);
+    const [restoredWordIds, setRestoredWordIds] = useState<string[] | undefined>(undefined);
+    const [isRestoring, setIsRestoring] = useState(true);
     
     const wordsToPractice = lesson ? lesson.words : [];
     const { currentStage, isFullyMastered, allowedActivities } = useLearningFlow(wordsToPractice);
 
-    // Save Session State
+    // Load Session State on Mount
     useEffect(() => {
-        if (lessonId) {
-            dbService.saveSessionState({
-                id: 'current',
-                current_lesson_part_id: lessonId,
-                current_stage: currentStage,
-                last_word_index: 0 // Default until specialized tracking is added
-            }).catch(console.error);
+        const loadSession = async () => {
+            if (!lessonId) return;
+            try {
+                const state = await dbService.getSessionState();
+                if (state && state.current_lesson_part_id === lessonId) {
+                    if (state.exercise_mode) setExerciseMode(state.exercise_mode);
+                    if (state.last_word_index) setLastWordIndex(state.last_word_index);
+                    if (state.word_ids) setRestoredWordIds(state.word_ids);
+                }
+            } catch (err) {
+                console.error("Failed to load session state", err);
+            } finally {
+                setIsRestoring(false);
+            }
+        };
+        loadSession();
+    }, [lessonId]);
+
+    // Save Session State
+    const saveProgress = (mode: ExerciseType | null, index: number, wordIds?: string[]) => {
+        if (!lessonId) return;
+        dbService.saveSessionState({
+            id: 'current',
+            current_lesson_part_id: lessonId,
+            current_stage: currentStage,
+            last_word_index: index,
+            exercise_mode: mode,
+            word_ids: wordIds || restoredWordIds
+        }).catch(console.error);
+    };
+
+    // Auto-save stage/lesson changes
+    useEffect(() => {
+        if (lessonId && !isRestoring) {
+            saveProgress(exerciseMode, lastWordIndex);
         }
-    }, [lessonId, currentStage]);
+    }, [lessonId, currentStage, exerciseMode]);
 
     const onExit = () => navigate('/');
 
@@ -176,19 +207,53 @@ export function ExerciseContainer() {
 
             <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 {exerciseMode === 'flashcards' && (
-                    <Flashcards words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Flashcards 
+                        words={wordsToPractice} 
+                        initialIndex={lastWordIndex}
+                        initialWordIds={restoredWordIds}
+                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('flashcards', idx, ids); }}
+                        onResult={handleWordResult} 
+                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                    />
                 )}
                 {exerciseMode === 'multiple-choice' && (
-                    <MultipleChoice words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <MultipleChoice 
+                        words={wordsToPractice} 
+                        initialIndex={lastWordIndex}
+                        initialWordIds={restoredWordIds}
+                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('multiple-choice', idx, ids); }}
+                        onResult={handleWordResult} 
+                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                    />
                 )}
                 {exerciseMode === 'writing' && (
-                    <Writing words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Writing 
+                        words={wordsToPractice} 
+                        initialIndex={lastWordIndex}
+                        initialWordIds={restoredWordIds}
+                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('writing', idx, ids); }}
+                        onResult={handleWordResult} 
+                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                    />
                 )}
                 {exerciseMode === 'mixed' && (
-                    <Mixed words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <Mixed 
+                        words={wordsToPractice} 
+                        initialIndex={lastWordIndex}
+                        initialWordIds={restoredWordIds}
+                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('mixed', idx, ids); }}
+                        onResult={handleWordResult} 
+                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                    />
                 )}
                 {exerciseMode === 'matching-game' && (
-                    <MatchingGame words={wordsToPractice} onResult={handleWordResult} onComplete={() => setExerciseMode(null)} />
+                    <MatchingGame 
+                        words={wordsToPractice} 
+                        initialSlideIndex={lastWordIndex}
+                        onProgress={(idx: number) => { setLastWordIndex(idx); saveProgress('matching-game', idx); }}
+                        onResult={handleWordResult} 
+                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); saveProgress(null, 0); }} 
+                    />
                 )}
             </div>
         </div>

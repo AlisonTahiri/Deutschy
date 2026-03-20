@@ -5,6 +5,9 @@ import { Loader2, ArrowRight } from 'lucide-react';
 
 interface MultipleChoiceProps {
     words: ActiveWordPair[];
+    initialIndex?: number;
+    initialWordIds?: string[];
+    onProgress?: (index: number, wordIds: string[]) => void;
     onResult: (wordId: string, learned: boolean) => void;
     onComplete: () => void;
 }
@@ -13,9 +16,15 @@ const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card
 const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-(--accent-color) hover:bg-(--accent-hover) disabled:opacity-50 disabled:cursor-not-allowed';
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50 text-left';
 
-export function MultipleChoice({ words, onResult, onComplete }: MultipleChoiceProps) {
+export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: MultipleChoiceProps) {
     const { settings } = useSettings();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
+        if (initialWordIds && initialWordIds.length > 0) {
+            const wordMap = new Map(words.map(w => [w.id, w]));
+            return initialWordIds
+                .map(id => wordMap.get(id))
+                .filter((w): w is ActiveWordPair => !!w);
+        }
         const shuffled = [...words].sort(() => Math.random() - 0.5);
         if (!settings.aiApiKey) return shuffled.filter(w => w.mcq);
         return shuffled;
@@ -25,7 +34,7 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
         return 0;
     });
 
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
@@ -46,11 +55,18 @@ export function MultipleChoice({ words, onResult, onComplete }: MultipleChoicePr
         onResult(currentWord.id, isCorrect);
         let nextQueue = [...queue];
         if (!isCorrect) nextQueue.push(currentWord);
+        
+        const nextIndex = currentIndex + 1;
         setQueue(nextQueue);
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex(nextIndex);
         setSelectedOption(null);
         setIsSubmitted(false);
-        if (currentIndex + 1 >= nextQueue.length) {
+
+        if (onProgress) {
+            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id));
+        }
+
+        if (nextIndex >= nextQueue.length) {
             if (skippedWords > 0) setShowSummary(true);
             else onComplete();
         }
