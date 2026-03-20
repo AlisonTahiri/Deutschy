@@ -14,10 +14,12 @@ interface SettingsContextType {
     updateColorTheme: (color: string) => void;
 }
 
+const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
 const defaultSettings: Settings = {
     aiApiKey: '',
     learningLevel: 'A1',
-    theme: 'dark',
+    theme: getSystemTheme(),
     konstaTheme: 'ios',
     colorTheme: '#2ea043', // Default green
 };
@@ -66,17 +68,26 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         
         document.documentElement.style.setProperty('--accent-color', primaryColor);
         document.documentElement.style.setProperty('--accent-hover', hoverColor);
-        document.documentElement.style.setProperty('--success-color', primaryColor); // Usually success is tied to brand in many places here
-        document.documentElement.style.setProperty('--success-hover', hoverColor);
+
+        // Explicit Success Colors - Force Green to prevent theme leaks
+        const successColor = isLight ? '#2ECC71' : '#2ea043';
+        const successHover = isLight ? '#27AE60' : '#238636';
+        
+        document.documentElement.style.setProperty('--success-color', successColor);
+        document.documentElement.style.setProperty('--success-hover', successHover);
+        document.documentElement.style.setProperty('--success-subtle', `${successColor}1a`); // ~10% opacity
         
         // Glow and subtle effects
         document.documentElement.style.setProperty('--shadow-glow', `0 0 20px ${primaryColor}33`); // 33 is ~20% opacity in hex
         document.documentElement.style.setProperty('--bg-accent-subtle', `${primaryColor}0d`); // 0d is ~5% opacity
-
+        
         // Konsta UI variables
         document.documentElement.style.setProperty('--k-color-primary', primaryColor);
         document.documentElement.style.setProperty('--k-color-primary-light', adjustColor(primaryColor, 15));
         document.documentElement.style.setProperty('--k-color-primary-dark', adjustColor(primaryColor, -15));
+        
+        // Explicitly set Konsta success color to match our Green
+        document.documentElement.style.setProperty('--k-color-success', successColor);
 
         // Dynamic Card backgrounds based on accent color
         if (isLight) {

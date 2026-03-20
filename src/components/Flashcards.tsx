@@ -178,7 +178,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                 </button>
                 <button
                     className="w-16 h-16 rounded-full flex items-center justify-center border-2 cursor-pointer transition-all hover:scale-110"
-                    style={{ backgroundColor: 'rgba(46, 160, 67, 0.1)', color: 'var(--success-color)', borderColor: 'var(--success-color)' }}
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--success-color) 10%, transparent)', color: 'var(--success-color)', borderColor: 'var(--success-color)' }}
                     onClick={() => handleCheck(true)}
                 >
                     <Check size={32} />
