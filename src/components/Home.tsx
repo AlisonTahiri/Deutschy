@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Play, ChevronRight, LogOut, RotateCcw } from 'lucide-react';
-import type { ActiveLesson } from '../types';
+import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
 import {
     Block,
     BlockTitle,
@@ -16,25 +16,42 @@ import {
     Preloader,
 } from 'konsta/react';
 
+const PERSISTENCE_KEY = 'dardha_home_view_state';
+
+interface ViewState {
+    levelId: string | null;
+    methodId: string | null;
+    lessonId: string | null;
+}
+
 export function Home() {
     const { lessons, isLoading } = useVocabulary();
     const { session, signOut } = useAuth();
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
     const { getLastActivity } = useLastActivity();
     const lastActivityPath = getLastActivity();
 
     const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
 
-    const activeLevelId = searchParams.get('level');
-    const activeMethodId = searchParams.get('method');
-    const activeLessonId = searchParams.get('lesson');
+    // Persisted view state
+    const [viewState, setViewState] = useState<ViewState>(() => {
+        const saved = localStorage.getItem(PERSISTENCE_KEY);
+        return saved ? JSON.parse(saved) : { levelId: null, methodId: null, lessonId: null };
+    });
+
+    useEffect(() => {
+        localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(viewState));
+    }, [viewState]);
+
+    const activeLevelId = viewState.levelId;
+    const activeMethodId = viewState.methodId;
+    const activeLessonId = viewState.lessonId;
 
     const { levels, methodsMap, lessonsMap, allParts } = useMemo(() => {
         const uniqueLevels = new Map<string, { id: string; name: string }>();
         const uniqueMethods = new Map<string, { id: string; name: string; level_id: string }>();
         const uniqueLessons = new Map<string, { id: string; name: string; method_id: string }>();
-        const partsList: ActiveLesson[] = [];
+        const partsList: LocalLesson[] = [];
 
         lessons.forEach(l => {
             const lvlId = l.level_id || 'legacy-lvl';
@@ -55,14 +72,14 @@ export function Home() {
                 method_id: mtdId,
                 level_id: lvlId,
                 lesson_id: lsnId,
-            });
+            } as any);
         });
 
         return {
             levels: Array.from(uniqueLevels.values()).sort((a, b) => a.name.localeCompare(b.name)),
             methodsMap: uniqueMethods,
             lessonsMap: uniqueLessons,
-            allParts: partsList,
+            allParts: partsList as unknown as ActiveLesson[],
         };
     }, [lessons]);
 
@@ -82,13 +99,19 @@ export function Home() {
     const activeMethod = activeMethodId ? methodsMap.get(activeMethodId) : undefined;
     const activeLesson = activeLessonId ? lessonsMap.get(activeLessonId) : undefined;
 
-    const handleSelectLevel = (levelId: string) => { setSearchParams({ level: levelId }); };
-    const handleSelectMethod = (methodId: string) => { if (activeLevelId) setSearchParams({ level: activeLevelId, method: methodId }); };
-    const handleSelectLesson = (lessonId: string) => { if (activeLevelId && activeMethodId) setSearchParams({ level: activeLevelId, method: activeMethodId, lesson: lessonId }); };
+    const handleSelectLevel = (levelId: string) => {
+        setViewState({ levelId, methodId: null, lessonId: null });
+    };
+    const handleSelectMethod = (methodId: string) => {
+        setViewState(prev => ({ ...prev, methodId, lessonId: null }));
+    };
+    const handleSelectLesson = (lessonId: string) => {
+        setViewState(prev => ({ ...prev, lessonId }));
+    };
 
-    const clearAll = () => setSearchParams({});
-    const clearToLevel = () => { if (activeLevelId) setSearchParams({ level: activeLevelId }); else clearAll(); };
-    const clearToMethod = () => { if (activeLevelId && activeMethodId) setSearchParams({ level: activeLevelId, method: activeMethodId }); else clearToLevel(); };
+    const clearAll = () => setViewState({ levelId: null, methodId: null, lessonId: null });
+    const clearToLevel = () => setViewState(prev => ({ ...prev, methodId: null, lessonId: null }));
+    const clearToMethod = () => setViewState(prev => ({ ...prev, lessonId: null }));
 
     if (isLoading) {
         return (
@@ -217,7 +240,7 @@ export function Home() {
                             {methodsForLevel.map(method => {
                                 const methodParts = allParts.filter(p => p.method_id === method.id);
                                 const totalWords = methodParts.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = methodParts.reduce((acc, p) => acc + p.words.filter(w => w.status === 'learned').length, 0);
+                                const learnedWords = methodParts.reduce((acc, p) => acc + p.words.filter((w: ActiveWordPair) => w.status === 'learned').length, 0);
                                 const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
 
                                 return (
@@ -256,7 +279,7 @@ export function Home() {
                             {lessonsForMethod.map(lesson => {
                                 const partsForThisLesson = allParts.filter(p => p.lesson_id === lesson.id);
                                 const totalWords = partsForThisLesson.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = partsForThisLesson.reduce((acc, p) => acc + p.words.filter(w => w.status === 'learned').length, 0);
+                                const learnedWords = partsForThisLesson.reduce((acc, p) => acc + p.words.filter((w: ActiveWordPair) => w.status === 'learned').length, 0);
                                 const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
 
                                 return (
@@ -300,7 +323,7 @@ export function Home() {
                         <Block className="!px-4">
                             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                 {partsForLesson.map(part => {
-                                    const learnedCount = part.words.filter(w => w.status === 'learned').length;
+                                    const learnedCount = part.words.filter((w: ActiveWordPair) => w.status === 'learned').length;
                                     const totalCount = part.words.length;
                                     const progress = totalCount === 0 ? 0 : learnedCount / totalCount;
 
