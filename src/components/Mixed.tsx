@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
@@ -17,6 +18,7 @@ interface MixedProps {
 type RandomMode = 'flashcards' | 'multiple-choice' | 'writing';
 
 export function Mixed({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: MixedProps) {
+    const { t } = useTranslation();
     const { settings } = useSettings();
     // We keep a single unified queue of words to process
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
@@ -86,7 +88,7 @@ export function Mixed({ words, initialIndex = 0, initialWordIds, onProgress, onR
     return (
         <div className="flex-1 flex flex-col relative">
             <div className="absolute -top-8 right-0 text-sm italic text-[var(--text-secondary)]">
-                Mixed Mode: {queue.length - currentIndex} left
+                {t('exercise.modes.mixed')}: {t('exercise.wordsLeft', { count: queue.length - currentIndex })}
             </div>
 
             {currentMode === 'flashcards' && (

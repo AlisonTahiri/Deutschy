@@ -1,0 +1,222 @@
+{
+  "common": {
+    "back": "Pas",
+    "backToLessons": "Kthehu te Mësimet",
+    "score": "Pikët",
+    "time": "Koha",
+    "loading": "Duke u ngarkuar...",
+    "error": "Gabim",
+    "tryAgain": "Provo përsëri",
+    "start": "Fillo",
+    "resume": "Vazhdo",
+    "next": "Vazhdo",
+    "backToMethods": "Kthehu te Metodat",
+    "backToLevels": "Kthehu te Nivelet",
+    "allLevels": "Të gjitha Nivelet",
+    "goBack": "Kthehu mbrapsht"
+  },
+  "home": {
+    "loadingContent": "Duke ngarkuar përmbajtjen...",
+    "yourProgress": "Progresi Juaj",
+    "mastery": "Zotërimi",
+    "learned": "Mësuar",
+    "introduced": "Prezantuar",
+    "inReview": "Në Rishikim",
+    "activeLesson": "Mësimi Aktiv:",
+    "account": "Llogaria",
+    "signOut": "Dil",
+    "pickUpLeftOff": "Vazhdo aty ku e lashë",
+    "continueLastExercise": "Vazhdo ushtrimin e fundit",
+    "selectLevel": "Zgjidh Nivelin",
+    "noCourses": "Nuk ka kurse në dispozicion ende.",
+    "availableMethods": "Metodat e disponueshme për {{name}}",
+    "noMethods": "Nuk ka metoda të disponueshme për këtë nivel.",
+    "words": "fjalë",
+    "masteryLabel": "zotërim",
+    "lessonsIn": "Mësimet në {{method}} {{level}}",
+    "noLessons": "Nuk ka mësime në këtë metodë.",
+    "lesson": "Mësimi:",
+    "containsInfo": "Përmban {{total}} fjalë në total në {{count}} pjesë.",
+    "lessonParts": "Pjesët e Mësimit",
+    "noParts": "Nuk ka pjesë të disponueshme për këtë mësim.",
+    "mastered": "zotëruar"
+  },
+  "matchingGame": {
+    "title": "Loja e Përputhjes",
+    "success": "Mjeshtër i Përputhjes!",
+    "successSub": "I keni lidhur të gjitha fjalët.",
+    "slideCount": "Sllajdi {{current}} nga {{total}}",
+    "gameOver": "Loja Mbaroi",
+    "finalScore": "Pikët Finale",
+    "playAgain": "Luaj përsëri",
+    "exit": "Dil",
+    "german": "Gjermanisht",
+    "albanian": "Shqip"
+  },
+  "multipleChoice": {
+    "title": "Zgjedhje e Shumëfishtë",
+    "slideCount": "Sllajdi {{current}} nga {{total}}",
+    "aiPreparing": "Inteligjenca artificiale po përgatit këtë ushtrim bazuar në fjalët e dhëna.",
+    "translation": "Përkthimi:",
+    "nextSlide": "Sllajdi tjetër",
+    "submit": "Dërgo Përgjigjen",
+    "exerciseComplete": "Ushtrimi përfundoi",
+    "wordsSkipped": "{{count}} fjalë u anashkaluan sepse nuk keni konfiguruar një çelës API për AI.",
+    "apiKeyRequired": "Kërkohet çelësi API i AI",
+    "noPreGenerated": "Asnjë nga fjalët e zgjedhura nuk ka pyetje të parapërgatitura.",
+    "goToSettings": "Ju lutem shkoni te Cilësimet dhe jepni një çelës API për të përdorur mënyrën me Zgjedhje të Shumëfishtë.",
+    "correct": "E saktë!",
+    "incorrect": "E gabuar. Provo përsëri."
+  },
+  "flashcards": {
+    "title": "Kartat e Kujtesës",
+    "cardCount": "Karta {{current}} nga {{total}}",
+    "tapToReveal": "Prekni kartën për të parë përkthimin",
+    "noWords": "Nuk ka fjalë në dispozicion.",
+    "swipeToLearn": "Rrëshqitni majtas/djathtas ose përdorni butonat më poshtë.",
+    "flip": "Rrotullo",
+    "gotIt": "E mësova",
+    "needReview": "Duhet rishikuar"
+  },
+  "settings": {
+    "title": "Cilëmesët",
+    "appearance": "Pamja",
+    "darkMode": "Mënyra e Errët",
+    "platformTheme": "Tema e Platformës",
+    "iosTheme": "Tema iOS",
+    "materialTheme": "Tema Material",
+    "colorTheme": "Tema e Ngjyrës",
+    "aiConfig": "Konfigurimi i AI",
+    "apiKey": "Çelësi API",
+    "apiKeyInfo": "Jepni çelësin tuaj Google Gemini ose OpenAI API për të gjeneruar fjali kontekstuale.",
+    "developerTesting": "Testimi i Zhvilluesit",
+    "triggerTestPurchase": "Aktivizo një mock blerjeje për Test Store.",
+    "testPurchaseFlow": "Testo rrjedhën e blerjes",
+    "processing": "Duke u përpunuar...",
+    "loadingSettings": "Duke ngarkuar cilësimet..."
+  },
+  "writing": {
+    "title": "Shkrim",
+    "wordCount": "Fjala {{current}} nga {{total}}",
+    "typeGerman": "Shkruani përkthimin në gjermanisht:",
+    "hint": "Ndihmë",
+    "check": "Kontrollo",
+    "correct": "E saktë!",
+    "correctWithHint": "E saktë, por është përdorur ndihma!",
+    "incorrect": "E gabuar",
+    "correctTranslationIs": "Përkthimi i saktë është:"
+  },
+  "auth": {
+    "welcome": "Mirë se vini",
+    "welcomeToDardha": "Mirë se vini në Dardha",
+    "signInDescription": "Hyni në llogarinë tuaj për të vazhduar mësimin e Gjermanishtes.",
+    "continueWithGoogle": "Vazhdo me Google",
+    "continueWithApple": "Vazhdo me Apple",
+    "or": "OSE",
+    "termsOfService": "Kushtet e Shërbimit",
+    "privacyPolicy": "Politikën e Privatësisë",
+    "byContinuing": "Duke vazhduar, ju pranoni <0>Kushtet e Shërbimit</0> dhe <1>Politikën e Privatësisë</1>.",
+    "errorFallback": "Diçka shkoi keq. Ju lutemi provoni përsëri."
+  },
+  "layout": {
+    "adminPanel": "Panel i Administratorit",
+    "settings": "Cilësimet",
+    "home": "Kreu",
+    "admin": "Admin"
+  },
+  "onboarding": {
+    "stepOf": "Hapi {{current}} nga {{total}}",
+    "start": "Fillimi",
+    "welcome": "Mirë se vini",
+    "welcomeToDardha": "Mirë se vini në Dardha!",
+    "haveAccountHeading": "A keni një llogari ekzistuese?",
+    "haveAccountDesc": "A keni një llogari ekzistuese dhe po kyçeni nga një pajisje tjetër?",
+    "yesHaveAccount": "Po, kam një llogari",
+    "noNewHere": "Jo, jam i ri këtu",
+    "whyLearnGerman": "Pse dëshiron të mësosh Gjermanisht?",
+    "chooseMotivation": "Zgjidhni motivimin tuaj kryesor.",
+    "currentKnowledge": "Sa është njohuria jote aktuale?",
+    "chooseLevel": "Zgjidhni nivelin që ju përshkruan.",
+    "dailyCommitment": "Sa minuta në ditë mund të mësosh?",
+    "chooseCommitment": "Zgjidhni angazhimin tuaj ditor.",
+    "planReady": "Plani yt personal është gati!",
+    "createAccountDesc": "Krijo llogarinë falas për të ruajtur progresin dhe për të filluar mësimin.",
+    "motivation": {
+      "work": "Punë",
+      "family": "Bashkim Familjar",
+      "exam": "Provim Zyrtar",
+      "daily": "Jetë e përditshme"
+    },
+    "level": {
+      "beginner": "Fillestar (Zero)",
+      "beginnerDesc": "Nuk di asnjë fjalë Gjermanisht",
+      "elementary": "Pak njohuri (A1/A2)",
+      "elementaryDesc": "Di disa fjalë dhe fraza bazike",
+      "intermediate": "Mund të komunikoj (B1+)",
+      "intermediateDesc": "Mund të mbaj biseda të thjeshta"
+    },
+    "commitment": {
+      "easy": "Lehtë",
+      "easyDesc": "Vetëm disa minuta në ditë",
+      "recommended": "Rekomanduar",
+      "recommendedDesc": "Ecuri e qëndrueshme dhe e sigurt",
+      "intensive": "Intensive",
+      "intensiveDesc": "Mëso sa më shpejt të jetë e mundur"
+    },
+    "aiLoading": {
+      "analyzing": "Po analizojmë profilin tënd...",
+      "preparing": "Po përgatisim fjalorin e punës...",
+      "ready": "Plani yt është gati!"
+    }
+  },
+  "paywall": {
+    "title": "Abonimi",
+    "unlockHeading": "Zhblloko Gjermanishten B2",
+    "unlockDesc": "Merrni akses të plotë në të gjitha mësimet, ushtrimet interaktive të AI dhe ndjekjen e fjalorit.",
+    "features": {
+      "feature1": "Kursi i plotë i fjalorit B2",
+      "feature2": "Lexim dhe dëgjim interaktive",
+      "feature3": "Ndjekja e progresit dhe analitika",
+      "feature4": "Gjenerim i pakufizuar me AI"
+    },
+    "selectPlan": "Zgjidhni një plan",
+    "monthlyDesc": "Faturuar në muaj",
+    "yearlyDesc": "Faturuar në vit",
+    "lifetimeDesc": "Pagesë njëherë",
+    "processing": "Duke procesuar blerjen...",
+    "loadingOptions": "Duke ngarkuar opsionet..."
+  },
+  "app": {
+    "initializing": "Duke u inicializuar...",
+    "waitMoment": "Ju lutem prisni një moment."
+  },
+  "exercise": {
+    "loadingLesson": "Duke ngarkuar mësimin...",
+    "lessonNotFound": "Mësimi nuk u gjet",
+    "allMastered": "🎉 Të gjitha fjalët u zotëruan!",
+    "practiceAgain": "Mund të praktikoni çdo aktivitet përsëri, ose të rinisni progresin tuaj.",
+    "resetProgress": "Rinis Progresin",
+    "chooseActivity": "Zgjidhni një mënyrë ushtrimi:",
+    "wordsLeft": "{{count}} fjalë të mbetura",
+    "modes": {
+      "flashcards": "Kartat e Kujtesës",
+      "flashcardsDesc": "Rrëshqitni djathtas nëse e dini. (Zhbllokon Përputhjen)",
+      "matchingGame": "Loja e Përputhjes",
+      "matchingGameDesc": "Zhbllokohet duke kaluar Kartat.",
+      "multipleChoice": "Zgjedhje e Shumëfishtë",
+      "multipleChoiceDesc": "Zhbllokohet duke kaluar Kartat.",
+      "writing": "Shkrim",
+      "writingPractice": "Ushtrim Shkrimi",
+      "writingDesc": "Zhbllokohet duke kaluar fazën e Njohjes.",
+      "mixed": "Mënyra Mix",
+      "mixedPractice": "Ushtrim i Përzier",
+      "mixedDesc": "Më e mira për rishikim pasi të jetë zotëruar."
+    },
+    "stages": {
+      "discovery": "Zbulim",
+      "recognition": "Njohje",
+      "production": "Prodhim",
+      "current": "Faza {{current}}: {{mode}}."
+    }
+  }
+}

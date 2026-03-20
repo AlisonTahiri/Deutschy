@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
 import type { ExerciseType } from '../types';
@@ -18,6 +19,7 @@ const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
 export function ExerciseContainer() {
+    const { t } = useTranslation();
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
     const { lessons, isLoading, resetLessonProgress } = useVocabulary();
@@ -79,7 +81,7 @@ export function ExerciseContainer() {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
-                <p>Loading lesson...</p>
+                <p>{t('exercise.loadingLesson')}</p>
             </div>
         );
     }
@@ -87,8 +89,8 @@ export function ExerciseContainer() {
     if (!lesson) {
         return (
             <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
-                <h2>Lesson not found</h2>
-                <button className={btnSecondary} onClick={onExit}>Go Back</button>
+                <h2>{t('exercise.lessonNotFound')}</h2>
+                <button className={btnSecondary} onClick={onExit}>{t('common.goBack')}</button>
             </div>
         );
     }
@@ -116,16 +118,16 @@ export function ExerciseContainer() {
                         className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2`}
                         style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
                     >
-                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>🎉 All words mastered!</h3>
-                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>You can practice any activity again, or reset your progress.</p>
+                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>{t('exercise.allMastered')}</h3>
+                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>{t('exercise.practiceAgain')}</p>
                         <button className={`${btnSecondary} mt-2`} onClick={() => resetLessonProgress(lesson.id)}>
-                            Reset Progress
+                            {t('exercise.resetProgress')}
                         </button>
                     </div>
                 )}
 
                 <p className="text-center" style={{ color: 'var(--text-secondary)' }}>
-                    {isFullyMastered ? 'Practicing all words.' : `Stage ${currentStage}: ${currentStage === 1 ? 'Discovery' : currentStage === 2 ? 'Recognition' : 'Production'}.`} Choose an exercise mode:
+                    {isFullyMastered ? t('exercise.practiceAgain') : t('exercise.stages.current', { current: currentStage, mode: currentStage === 1 ? t('exercise.stages.discovery') : currentStage === 2 ? t('exercise.stages.recognition') : t('exercise.stages.production') })} {t('exercise.chooseActivity')}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
@@ -135,8 +137,8 @@ export function ExerciseContainer() {
                         onClick={() => allowedActivities.includes('flashcards') && setExerciseMode('flashcards')}
                     >
                         <Layers size={32} color="var(--accent-color)" />
-                        <h3>Flashcards</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Swipe right if you know it. (Unlocks Matching)</span>
+                        <h3>{t('exercise.modes.flashcards')}</h3>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.flashcardsDesc')}</span>
                     </button>
 
                     <button
@@ -145,8 +147,8 @@ export function ExerciseContainer() {
                         onClick={() => allowedActivities.includes('matching-game') && setExerciseMode('matching-game')}
                     >
                         <Grid size={32} color="var(--accent-color)" />
-                        <h3>Matching Game</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Flashcards.</span>
+                        <h3>{t('exercise.modes.matchingGame')}</h3>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.matchingGameDesc')}</span>
                     </button>
 
                     {canDoQuiz && (
@@ -156,8 +158,8 @@ export function ExerciseContainer() {
                             onClick={() => allowedActivities.includes('multiple-choice') && setExerciseMode('multiple-choice')}
                         >
                             <MessageSquare size={32} color="var(--success-color)" />
-                            <h3>Multiple Choice</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Flashcards.</span>
+                            <h3>{t('exercise.modes.multipleChoice')}</h3>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.multipleChoiceDesc')}</span>
                         </button>
                     )}
 
@@ -167,8 +169,8 @@ export function ExerciseContainer() {
                         onClick={() => allowedActivities.includes('writing') && setExerciseMode('writing')}
                     >
                         <PenTool size={32} color="var(--warning-color)" />
-                        <h3>Writing</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Unlock by passing Recognition stage.</span>
+                        <h3>{t('exercise.modes.writing')}</h3>
+                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.writingDesc')}</span>
                     </button>
 
                     {canDoQuiz && (
@@ -178,8 +180,8 @@ export function ExerciseContainer() {
                             onClick={() => allowedActivities.includes('mixed') && setExerciseMode('mixed')}
                         >
                             <Shuffle size={32} color="var(--text-primary)" />
-                            <h3>Mixed Mode</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>Best for review once Mastered.</span>
+                            <h3>{t('exercise.modes.mixed')}</h3>
+                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.mixedDesc')}</span>
                         </button>
                     )}
                 </div>
@@ -194,14 +196,14 @@ export function ExerciseContainer() {
                     <ArrowLeft size={20} />
                 </button>
                 <h3 className="m-0 flex-1 text-xl">
-                    {exerciseMode === 'flashcards' && 'Flashcards'}
-                    {exerciseMode === 'multiple-choice' && 'Multiple Choice'}
-                    {exerciseMode === 'writing' && 'Writing Practice'}
-                    {exerciseMode === 'mixed' && 'Mixed Practice'}
-                    {exerciseMode === 'matching-game' && 'Matching Game'}
+                    {exerciseMode === 'flashcards' && t('exercise.modes.flashcards')}
+                    {exerciseMode === 'multiple-choice' && t('exercise.modes.multipleChoice')}
+                    {exerciseMode === 'writing' && t('exercise.modes.writingPractice')}
+                    {exerciseMode === 'mixed' && t('exercise.modes.mixedPractice')}
+                    {exerciseMode === 'matching-game' && t('exercise.modes.matchingGame')}
                 </h3>
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {wordsToPractice.length} words left
+                    {t('exercise.wordsLeft', { count: wordsToPractice.length })}
                 </span>
             </div>
 

@@ -1,0 +1,222 @@
+{
+  "common": {
+    "back": "Back",
+    "backToLessons": "Back to Lessons",
+    "score": "Score",
+    "time": "Time",
+    "loading": "Loading...",
+    "error": "Error",
+    "tryAgain": "Try Again",
+    "start": "Start",
+    "resume": "Resume",
+    "next": "Next",
+    "backToMethods": "Back to Methods",
+    "backToLevels": "Back to Levels",
+    "allLevels": "All Levels",
+    "goBack": "Go Back"
+  },
+  "home": {
+    "loadingContent": "Loading content...",
+    "yourProgress": "Your Progress",
+    "mastery": "Mastery",
+    "learned": "Learned",
+    "introduced": "Introduced",
+    "inReview": "In Review",
+    "activeLesson": "Active Lesson:",
+    "account": "Account",
+    "signOut": "Sign Out",
+    "pickUpLeftOff": "Pick up where you left off",
+    "continueLastExercise": "Continue your last exercise",
+    "selectLevel": "Select Level",
+    "noCourses": "No courses available yet.",
+    "availableMethods": "Available Methods for {{name}}",
+    "noMethods": "No methods available for this level.",
+    "words": "words",
+    "masteryLabel": "mastery",
+    "lessonsIn": "Lessons in {{method}} {{level}}",
+    "noLessons": "No lessons in this method.",
+    "lesson": "Lesson:",
+    "containsInfo": "Contains {{total}} words total across {{count}} parts.",
+    "lessonParts": "Lesson Parts",
+    "noParts": "No parts available for this lesson.",
+    "mastered": "mastered"
+  },
+  "matchingGame": {
+    "title": "Matching Game",
+    "success": "Matching Master!",
+    "successSub": "You've connected all the words.",
+    "slideCount": "Slide {{current}} of {{total}}",
+    "gameOver": "Game Over",
+    "finalScore": "Final Score",
+    "playAgain": "Play Again",
+    "exit": "Exit",
+    "german": "German",
+    "albanian": "Albanian"
+  },
+  "multipleChoice": {
+    "title": "Multiple Choice",
+    "slideCount": "Slide {{current}} of {{total}}",
+    "aiPreparing": "AI is preparing this exercise based on the words you provided.",
+    "translation": "Translation:",
+    "nextSlide": "Next Slide",
+    "submit": "Submit Answer",
+    "exerciseComplete": "Exercise Complete",
+    "wordsSkipped": "{{count}} words were skipped because you don't have an AI API key configured.",
+    "apiKeyRequired": "AI API Key Required",
+    "noPreGenerated": "None of your chosen words have pre-generated questions.",
+    "goToSettings": "Please go to Settings and provide an API key to use Multiple Choice mode.",
+    "correct": "Correct!",
+    "incorrect": "Incorrect. Try again."
+  },
+  "flashcards": {
+    "title": "Flashcards",
+    "cardCount": "Card {{current}} of {{total}}",
+    "tapToReveal": "Tap card to reveal translation",
+    "noWords": "No words available.",
+    "swipeToLearn": "Swipe left/right or use the buttons below.",
+    "flip": "Flip",
+    "gotIt": "Got it",
+    "needReview": "Need review"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "darkMode": "Dark Mode",
+    "platformTheme": "Platform Theme",
+    "iosTheme": "iOS Theme",
+    "materialTheme": "Material Theme",
+    "colorTheme": "Color Theme",
+    "aiConfig": "AI Configuration",
+    "apiKey": "API Key",
+    "apiKeyInfo": "Provide your Google Gemini or OpenAI API key to generate context sentences.",
+    "developerTesting": "Developer Testing",
+    "triggerTestPurchase": "Trigger a Test Store purchase mock.",
+    "testPurchaseFlow": "Test Purchase Flow",
+    "processing": "Processing...",
+    "loadingSettings": "Loading Settings..."
+  },
+  "writing": {
+    "title": "Writing",
+    "wordCount": "Word {{current}} of {{total}}",
+    "typeGerman": "Type the German translation:",
+    "hint": "Hint",
+    "check": "Check",
+    "correct": "Correct!",
+    "correctWithHint": "Correct, but hint was used!",
+    "incorrect": "Incorrect",
+    "correctTranslationIs": "The correct translation is:"
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "welcomeToDardha": "Welcome to Dardha",
+    "signInDescription": "Sign in to your account to continue learning German.",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "or": "OR",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "byContinuing": "By continuing, you accept our <0>Terms of Service</0> and <1>Privacy Policy</1>.",
+    "errorFallback": "Something went wrong. Please try again."
+  },
+  "layout": {
+    "adminPanel": "Admin Panel",
+    "settings": "Settings",
+    "home": "Home",
+    "admin": "Admin"
+  },
+  "onboarding": {
+    "stepOf": "Step {{current}} of {{total}}",
+    "start": "Start",
+    "welcome": "Welcome",
+    "welcomeToDardha": "Welcome to Dardha!",
+    "haveAccountHeading": "Already have an account?",
+    "haveAccountDesc": "Do you have an existing account and are signing in from another device?",
+    "yesHaveAccount": "Yes, I have an account",
+    "noNewHere": "No, I'm new here",
+    "whyLearnGerman": "Why do you want to learn German?",
+    "chooseMotivation": "Choose your primary motivation.",
+    "currentKnowledge": "What is your current knowledge level?",
+    "chooseLevel": "Choose the level that describes you.",
+    "dailyCommitment": "How many minutes a day can you learn?",
+    "chooseCommitment": "Choose your daily commitment.",
+    "planReady": "Your personal plan is ready!",
+    "createAccountDesc": "Create a free account to save your progress and start learning.",
+    "motivation": {
+      "work": "Work",
+      "family": "Family Reunion",
+      "exam": "Official Exam",
+      "daily": "Daily Life"
+    },
+    "level": {
+      "beginner": "Beginner (Zero)",
+      "beginnerDesc": "I don't know any German words",
+      "elementary": "Some knowledge (A1/A2)",
+      "elementaryDesc": "I know some basic words and phrases",
+      "intermediate": "I can communicate (B1+)",
+      "intermediateDesc": "I can hold simple conversations"
+    },
+    "commitment": {
+      "easy": "Easy",
+      "easyDesc": "Just a few minutes a day",
+      "recommended": "Recommended",
+      "recommendedDesc": "Steady and sure progress",
+      "intensive": "Intensive",
+      "intensiveDesc": "Learn as fast as possible"
+    },
+    "aiLoading": {
+      "analyzing": "Analyzing your profile...",
+      "preparing": "Preparing your work vocabulary...",
+      "ready": "Your plan is ready!"
+    }
+  },
+  "paywall": {
+    "title": "Subscription",
+    "unlockHeading": "Unlock German B2",
+    "unlockDesc": "Get full access to all lessons, interactive AI exercises, and complete vocabulary tracking.",
+    "features": {
+      "feature1": "Complete B2 Vocabulary Course",
+      "feature2": "Interactive Reading & Listening",
+      "feature3": "Progress Tracking & Analytics",
+      "feature4": "Unlimited AI Generation"
+    },
+    "selectPlan": "Choose a plan",
+    "monthlyDesc": "Billed monthly",
+    "yearlyDesc": "Billed yearly",
+    "lifetimeDesc": "One-time payment",
+    "processing": "Processing purchase...",
+    "loadingOptions": "Loading options..."
+  },
+  "app": {
+    "initializing": "Initializing...",
+    "waitMoment": "Please wait a moment."
+  },
+  "exercise": {
+    "loadingLesson": "Loading lesson...",
+    "lessonNotFound": "Lesson not found",
+    "allMastered": "🎉 All words mastered!",
+    "practiceAgain": "You can practice any activity again, or reset your progress.",
+    "resetProgress": "Reset Progress",
+    "chooseActivity": "Choose an exercise mode:",
+    "wordsLeft": "{{count}} words left",
+    "modes": {
+      "flashcards": "Flashcards",
+      "flashcardsDesc": "Swipe right if you know it. (Unlocks Matching)",
+      "matchingGame": "Matching Game",
+      "matchingGameDesc": "Unlock by passing Flashcards.",
+      "multipleChoice": "Multiple Choice",
+      "multipleChoiceDesc": "Unlock by passing Flashcards.",
+      "writing": "Writing",
+      "writingPractice": "Writing Practice",
+      "writingDesc": "Unlock by passing Recognition stage.",
+      "mixed": "Mixed Mode",
+      "mixedPractice": "Mixed Practice",
+      "mixedDesc": "Best for review once Mastered."
+    },
+    "stages": {
+      "discovery": "Discovery",
+      "recognition": "Recognition",
+      "production": "Production",
+      "current": "Stage {{current}}: {{mode}}."
+    }
+  }
+}

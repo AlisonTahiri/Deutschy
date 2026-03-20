@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { SocialLoginService } from '../services/auth/SocialLoginService';
 import { AlertCircle, Apple } from 'lucide-react';
 import {
@@ -10,6 +11,7 @@ import {
 } from 'konsta/react';
 
 export function Auth() {
+    const { t } = useTranslation();
     const [authLoading, setAuthLoading] = useState<'google' | 'apple' | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,7 @@ export function Auth() {
             }
         } catch (err: any) {
             console.error('Login error:', err);
-            setError(err.message || 'Diçka shkoi keq. Ju lutemi provoni përsëri.');
+            setError(err.message || t('auth.errorFallback'));
         } finally {
             setAuthLoading(null);
         }
@@ -33,7 +35,7 @@ export function Auth() {
     return (
         <Page className="bg-(--bg-color)">
             <Navbar
-                title="Mirë se vini"
+                title={t('auth.welcome')}
                 className="top-0 sticky"
             />
 
@@ -44,10 +46,10 @@ export function Auth() {
                             🍐
                         </div>
                         <h1 className="text-3xl font-bold leading-tight text-(--text-primary)">
-                            Mirë se vini në Dardha
+                            {t('auth.welcomeToDardha')}
                         </h1>
                         <p className="text-base text-(--text-secondary) px-4">
-                            Hyni në llogarinë tuaj për të vazhduar mësimin e Gjermanishtes.
+                            {t('auth.signInDescription')}
                         </p>
                     </div>
 
@@ -76,15 +78,15 @@ export function Auth() {
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                 </svg>
                             )}
-                            Vazhdo me Google
+                            {t('auth.continueWithGoogle')}
                         </Button>
-
+ 
                         <div className="flex items-center gap-3 my-2">
                             <div className="flex-1 h-px bg-(--border-color)" />
-                            <span className="text-xs font-medium text-(--text-secondary)">OSE</span>
+                            <span className="text-xs font-medium text-(--text-secondary)">{t('auth.or')}</span>
                             <div className="flex-1 h-px bg-(--border-color)" />
                         </div>
-
+ 
                         <Button
                             large
                             rounded
@@ -97,15 +99,17 @@ export function Auth() {
                             ) : (
                                 <Apple size={20} />
                             )}
-                            Vazhdo me Apple
+                            {t('auth.continueWithApple')}
                         </Button>
                     </div>
 
                     <Block className="text-center text-xs text-(--text-secondary) mt-8">
-                        Duke vazhduar, ju pranoni{' '}
-                        <span className="underline cursor-pointer text-(--accent-color)">Kushtet e Shërbimit</span>
-                        {' '}dhe{' '}
-                        <span className="underline cursor-pointer text-(--accent-color)">Politikën e Privatësisë</span>.
+                        <Trans i18nKey="auth.byContinuing">
+                            Duke vazhduar, ju pranoni{' '}
+                            <span className="underline cursor-pointer text-(--accent-color)">Kushtet e Shërbimit</span>
+                            {' '}dhe{' '}
+                            <span className="underline cursor-pointer text-(--accent-color)">Politikën e Privatësisë</span>.
+                        </Trans>
                     </Block>
                 </div>
             </div>

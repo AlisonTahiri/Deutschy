@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { SocialLoginService } from '../services/auth/SocialLoginService';
 import {
     Page,
@@ -40,33 +41,34 @@ async function handleOnboardingComplete(data: OnboardingData) {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const motivationOptions = [
-    { id: 'work', label: 'Punë', emoji: '💼' },
-    { id: 'family', label: 'Bashkim Familjar', emoji: '👨‍👩‍👧' },
-    { id: 'exam', label: 'Provim Zyrtar', emoji: '📜' },
-    { id: 'daily', label: 'Jetë e përditshme', emoji: '📅' },
+    { id: 'work', labelKey: 'onboarding.motivation.work', emoji: '💼' },
+    { id: 'family', labelKey: 'onboarding.motivation.family', emoji: '👨‍👩‍👧' },
+    { id: 'exam', labelKey: 'onboarding.motivation.exam', emoji: '📜' },
+    { id: 'daily', labelKey: 'onboarding.motivation.daily', emoji: '📅' },
 ];
 
 const levelOptions = [
-    { id: 'beginner', label: 'Fillestar (Zero)', desc: 'Nuk di asnjë fjalë Gjermanisht' },
-    { id: 'elementary', label: 'Pak njohuri (A1/A2)', desc: 'Di disa fjalë dhe fraza bazike' },
-    { id: 'intermediate', label: 'Mund të komunikoj (B1+)', desc: 'Mund të mbaj biseda të thjeshta' },
+    { id: 'beginner', labelKey: 'onboarding.level.beginner', descKey: 'onboarding.level.beginnerDesc' },
+    { id: 'elementary', labelKey: 'onboarding.level.elementary', descKey: 'onboarding.level.elementaryDesc' },
+    { id: 'intermediate', labelKey: 'onboarding.level.intermediate', descKey: 'onboarding.level.intermediateDesc' },
 ];
 
 const commitmentOptions = [
-    { id: '5', label: '5 min', badge: 'Lehtë', desc: 'Vetëm disa minuta në ditë' },
-    { id: '15', label: '15 min', badge: 'Rekomanduar', desc: 'Ecuri e qëndrueshme dhe e sigurt' },
-    { id: '30', label: '30 min', badge: 'Intensive', desc: 'Mëso sa më shpejt të jetë e mundur' },
+    { id: '5', label: '5 min', badgeKey: 'onboarding.commitment.easy', descKey: 'onboarding.commitment.easyDesc' },
+    { id: '15', label: '15 min', badgeKey: 'onboarding.commitment.recommended', descKey: 'onboarding.commitment.recommendedDesc' },
+    { id: '30', label: '30 min', badgeKey: 'onboarding.commitment.intensive', descKey: 'onboarding.commitment.intensiveDesc' },
 ];
 
-const aiLoadingTexts = [
-    'Po analizojmë profilin tënd...',
-    'Po përgatisim fjalorin e punës...',
-    'Plani yt është gati!',
+const aiLoadingKeys = [
+    'onboarding.aiLoading.analyzing',
+    'onboarding.aiLoading.preparing',
+    'onboarding.aiLoading.ready',
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function Onboarding({ onComplete }: OnboardingProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState(1);
     const [data, setData] = useState<OnboardingData>({ motivation: null, level: null, commitment: null });
     const [loadingTextIdx, setLoadingTextIdx] = useState(0);
@@ -81,11 +83,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         setLoadingTextIdx(0);
 
         loadingTimer.current = setInterval(() => {
-            setLoadingTextIdx(i => (i + 1) % aiLoadingTexts.length);
+            setLoadingTextIdx(i => (i + 1) % aiLoadingKeys.length);
         }, 2000);
 
         advanceTimer.current = setTimeout(() => {
-            clearInterval(loadingTimer.current!);
+            if (loadingTimer.current) clearInterval(loadingTimer.current);
             setStep(6);
         }, 6200);
 
@@ -120,10 +122,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             } else if (provider === 'apple') {
                 await SocialLoginService.signInWithApple();
             }
-            // Note: onComplete() is NOT called here. 
-            // The App component will handle the transition once the Supabase session is updated.
         } catch (err: any) {
-            setAuthError(err.message || 'Diçka shkoi keq. Ju lutemi provoni përsëri.');
+            setAuthError(err.message || t('auth.errorFallback'));
         } finally {
             setAuthLoading(null);
         }
@@ -132,7 +132,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     return (
         <Page className="bg-(--bg-color)">
             <Navbar
-                title={step >= 2 && step <= 4 ? `Hapi ${step - 1} nga 3` : (step === 1 ? 'Fillimi' : 'Mirë se vini')}
+                title={step >= 2 && step <= 4 ? t('onboarding.stepOf', { current: step - 1, total: 3 }) : (step === 1 ? t('onboarding.start') : t('onboarding.welcome'))}
                 className="top-0 sticky"
             />
 
@@ -155,10 +155,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     <UserCircle size={48} className="text-white" />
                                 </div>
                                 <h1 className="text-3xl font-bold leading-tight text-(--text-primary)">
-                                    Mirë se vini në Dardha!
+                                    {t('onboarding.welcomeToDardha')}
                                 </h1>
                                 <p className="text-base text-(--text-secondary) px-4">
-                                    A keni një llogari ekzistuese dhe po kyçeni nga një pajisje tjetër?
+                                    {t('onboarding.haveAccountDesc')}
                                 </p>
                             </div>
 
@@ -169,7 +169,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     onClick={() => onComplete()}
                                     className="bg-(--accent-color) text-white flex items-center justify-center gap-3 h-16 text-lg font-semibold shadow-lg shadow-(--accent-color)/20"
                                 >
-                                    Po, kam një llogari
+                                    {t('onboarding.yesHaveAccount')}
                                 </Button>
                                 <Button
                                     large
@@ -178,7 +178,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     onClick={() => setStep(2)}
                                     className="border-2 border-(--border-color) text-(--text-primary) flex items-center justify-center gap-3 h-16 text-lg font-semibold"
                                 >
-                                    Jo, jam i ri këtu
+                                    {t('onboarding.noNewHere')}
                                 </Button>
                             </div>
                         </div>
@@ -187,9 +187,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     {/* Step 2: Motivation */}
                     {step === 2 && (
                         <div className="animate-[fadeIn_0.4s_ease-out]">
-                            <BlockTitle large className="text-center px-0">Pse dëshiron të mësosh Gjermanisht?</BlockTitle>
+                            <BlockTitle large className="text-center px-0">{t('onboarding.whyLearnGerman')}</BlockTitle>
                             <Block className="text-center text-(--text-secondary)">
-                                Zgjidhni motivimin tuaj kryesor.
+                                {t('onboarding.chooseMotivation')}
                             </Block>
 
                             <div className="grid grid-cols-2 gap-3 mb-8">
@@ -205,7 +205,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     >
                                         <span className="text-3xl">{opt.emoji}</span>
                                         <span className={`text-sm font-semibold text-center leading-tight ${data.motivation === opt.id ? 'text-(--accent-color)' : 'text-(--text-primary)'}`}>
-                                            {opt.label}
+                                            {t(opt.labelKey)}
                                         </span>
                                     </Button>
                                 ))}
@@ -219,7 +219,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     onClick={handleBack}
                                     className="flex-1"
                                 >
-                                    Kthehu
+                                    {t('common.back')}
                                 </Button>
                                 <Button
                                     large
@@ -228,7 +228,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     disabled={!canAdvance()}
                                     className="flex-2"
                                 >
-                                    Vazhdo
+                                    {t('common.next')}
                                 </Button>
                             </div>
                         </div>
@@ -237,9 +237,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     {/* Step 3: Level */}
                     {step === 3 && (
                         <div className="animate-[fadeIn_0.4s_ease-out]">
-                            <BlockTitle large className="text-center">Sa është njohuria jote aktuale?</BlockTitle>
+                            <BlockTitle large className="text-center">{t('onboarding.currentKnowledge')}</BlockTitle>
                             <Block className="text-center text-(--text-secondary)">
-                                Zgjidhni nivelin që ju përshkruan.
+                                {t('onboarding.chooseLevel')}
                             </Block>
 
                             <List strong inset className="m-0 mb-8 overflow-hidden rounded-2xl border-0 shadow-lg">
@@ -248,8 +248,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                         key={opt.id}
                                         link
                                         onClick={() => setData(d => ({ ...d, level: opt.id }))}
-                                        title={opt.label}
-                                        subtitle={opt.desc}
+                                        title={t(opt.labelKey)}
+                                        subtitle={t(opt.descKey)}
                                         media={
                                             <Radio
                                                 component="div"
@@ -270,7 +270,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     onClick={handleBack}
                                     className="flex-1"
                                 >
-                                    Kthehu
+                                    {t('common.back')}
                                 </Button>
                                 <Button
                                     large
@@ -279,7 +279,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     disabled={!canAdvance()}
                                     className="flex-2"
                                 >
-                                    Vazhdo
+                                    {t('common.next')}
                                 </Button>
                             </div>
                         </div>
@@ -288,9 +288,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     {/* Step 4: Daily Commitment */}
                     {step === 4 && (
                         <div className="animate-[fadeIn_0.4s_ease-out]">
-                            <BlockTitle large >Sa minuta në ditë mund të mësosh?</BlockTitle>
+                            <BlockTitle large >{t('onboarding.dailyCommitment')}</BlockTitle>
                             <Block className="text-center text-(--text-secondary)">
-                                Zgjidhni angazhimin tuaj ditor.
+                                {t('onboarding.chooseCommitment')}
                             </Block>
 
                             <List strong inset className="m-0 mb-8 overflow-hidden rounded-2xl border-0 shadow-lg">
@@ -300,8 +300,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                         link
                                         onClick={() => setData(d => ({ ...d, commitment: opt.id }))}
                                         title={<span className="font-bold text-lg">{opt.label}</span>}
-                                        after={<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${data.commitment === opt.id ? 'bg-(--accent-color) text-white' : 'bg-gray-200 text-gray-600'}`}>{opt.badge}</span>}
-                                        subtitle={opt.desc}
+                                        after={<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${data.commitment === opt.id ? 'bg-(--accent-color) text-white' : 'bg-gray-200 text-gray-600'}`}>{t(opt.badgeKey)}</span>}
+                                        subtitle={t(opt.descKey)}
                                         media={
                                             <Checkbox
                                                 component="div"
@@ -322,7 +322,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     onClick={handleBack}
                                     className="flex-1"
                                 >
-                                    Kthehu
+                                    {t('common.back')}
                                 </Button>
                                 <Button
                                     large
@@ -331,7 +331,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     disabled={!canAdvance()}
                                     className="flex-2"
                                 >
-                                    Vazhdo
+                                    {t('common.next')}
                                 </Button>
                             </div>
                         </div>
@@ -350,10 +350,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
                             <div className="flex flex-col items-center gap-4 text-center min-h-[80px]">
                                 <p key={loadingTextIdx} className="text-xl font-bold animate-[fadeIn_0.4s_ease-out] text-(--text-primary)">
-                                    {aiLoadingTexts[loadingTextIdx]}
+                                    {t(aiLoadingKeys[loadingTextIdx])}
                                 </p>
                                 <div className="flex gap-2 justify-center">
-                                    {aiLoadingTexts.map((_, i) => (
+                                    {aiLoadingKeys.map((_, i) => (
                                         <div
                                             key={i}
                                             className={`w-2 h-2 rounded-full transition-all duration-300 ${i === loadingTextIdx ? 'bg-(--accent-color) scale-150' : 'bg-(--border-color)'}`}
@@ -372,10 +372,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     🍐
                                 </div>
                                 <h1 className="text-3xl font-bold leading-tight text-(--text-primary)">
-                                    Plani yt personal është gati!
+                                    {t('onboarding.planReady')}
                                 </h1>
                                 <p className="text-base text-(--text-secondary) px-4">
-                                    Krijo llogarinë falas për të ruajtur progresin dhe për të filluar mësimin.
+                                    {t('onboarding.createAccountDesc')}
                                 </p>
                             </div>
 
@@ -404,12 +404,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                         </svg>
                                     )}
-                                    Vazhdo me Google
+                                    {t('auth.continueWithGoogle')}
                                 </Button>
 
                                 <div className="flex items-center gap-3 my-2">
                                     <div className="flex-1 h-px bg-(--border-color)" />
-                                    <span className="text-xs font-medium text-(--text-secondary)">OSE</span>
+                                    <span className="text-xs font-medium text-(--text-secondary)">{t('auth.or')}</span>
                                     <div className="flex-1 h-px bg-(--border-color)" />
                                 </div>
 
@@ -425,15 +425,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     ) : (
                                         <Apple size={20} />
                                     )}
-                                    Vazhdo me Apple
+                                    {t('auth.continueWithApple')}
                                 </Button>
                             </div>
 
                             <Block className="text-center text-xs text-(--text-secondary) mt-8">
-                                Duke vazhduar, ju pranoni{' '}
-                                <span className="underline cursor-pointer text-(--accent-color)">Kushtet e Shërbimit</span>
-                                {' '}dhe{' '}
-                                <span className="underline cursor-pointer text-(--accent-color)">Politikën e Privatësisë</span>.
+                                <Trans i18nKey="auth.byContinuing">
+                                    Duke vazhduar, ju pranoni{' '}
+                                    <span className="underline cursor-pointer text-(--accent-color)">Kushtet e Shërbimit</span>
+                                    {' '}dhe{' '}
+                                    <span className="underline cursor-pointer text-(--accent-color)">Politikën e Privatësisë</span>.
+                                </Trans>
                             </Block>
                         </div>
                     )}

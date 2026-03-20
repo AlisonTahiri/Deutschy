@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight } from 'lucide-react';
@@ -17,6 +18,7 @@ const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-3 roun
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50 text-left';
 
 export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: MultipleChoiceProps) {
+    const { t } = useTranslation();
     const { settings } = useSettings();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         if (initialWordIds && initialWordIds.length > 0) {
@@ -75,9 +77,9 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
     if (showSummary) {
         return (
             <div className={`${glassPanel} text-center animate-[fadeIn_0.4s_ease-out] flex flex-col items-center gap-4`}>
-                <h3 style={{ color: 'var(--warning-color)' }}>Exercise Complete</h3>
-                <p><strong>{skippedWords}</strong> words were skipped because you don't have an AI API key configured.</p>
-                <button className={btnPrimary} onClick={onComplete}>Back to Lessons</button>
+                <h3 style={{ color: 'var(--warning-color)' }}>{t('multipleChoice.exerciseComplete')}</h3>
+                <p><strong>{skippedWords}</strong> {t('multipleChoice.wordsSkipped', { count: skippedWords })}</p>
+                <button className={btnPrimary} onClick={onComplete}>{t('common.backToLessons')}</button>
             </div>
         );
     }
@@ -85,10 +87,10 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
     if (!settings.aiApiKey && queue.length === 0) {
         return (
             <div className={`${glassPanel} text-center`}>
-                <h3 style={{ color: 'var(--warning-color)' }}>AI API Key Required</h3>
-                <p>None of your chosen words have pre-generated questions.</p>
-                <p>Please go to Settings and provide an API key to use Multiple Choice mode.</p>
-                <button className={`${btnSecondary} mt-4`} onClick={onComplete}>Back</button>
+                <h3 style={{ color: 'var(--warning-color)' }}>{t('multipleChoice.apiKeyRequired')}</h3>
+                <p>{t('multipleChoice.noPreGenerated')}</p>
+                <p>{t('multipleChoice.goToSettings')}</p>
+                <button className={`${btnSecondary} mt-4`} onClick={onComplete}>{t('common.back')}</button>
             </div>
         );
     }
@@ -103,7 +105,7 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
             {/* Progress */}
             <div className="w-full mb-4">
                 <div className="flex flex-row justify-between mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <span>Slide {currentIndex + 1} of {queue.length}</span>
+                    <span>{t('multipleChoice.slideCount', { current: currentIndex + 1, total: queue.length })}</span>
                 </div>
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
                     <div className="h-full transition-all duration-300" style={{ backgroundColor: 'var(--accent-color)', width: `${progressPercent}%` }} />
@@ -114,7 +116,7 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                 {!questionData ? (
                     <div className="flex flex-col items-center justify-center gap-4 min-h-[200px]">
                         <Loader2 className="animate-spin" size={32} color="var(--accent-color)" />
-                        <p className="text-center" style={{ color: 'var(--text-secondary)' }}>AI is preparing this exercise based on the words you provided.</p>
+                        <p className="text-center" style={{ color: 'var(--text-secondary)' }}>{t('multipleChoice.aiPreparing')}</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
@@ -153,10 +155,10 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
 
                         {isSubmitted && (
                             <div className="flex flex-col items-center gap-2 animate-[fadeIn_0.4s_ease-out] mt-2 p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-color-secondary)' }}>
-                                <p className="font-semibold m-0">Translation: <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
+                                <p className="font-semibold m-0">{t('multipleChoice.translation')} <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
                                 <p className="text-sm text-center m-0" style={{ color: 'var(--text-secondary)' }}>{questionData.sentenceTranslation}</p>
                                 <button className={`${btnPrimary} w-full mt-1`} onClick={handleNext}>
-                                    Next Slide <ArrowRight size={18} />
+                                    {t('multipleChoice.nextSlide')} <ArrowRight size={18} />
                                 </button>
                             </div>
                         )}
@@ -167,7 +169,7 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                                 disabled={!selectedOption}
                                 onClick={handleSubmit}
                             >
-                                Submit Answer
+                                {t('multipleChoice.submit')}
                             </button>
                         )}
                     </div>

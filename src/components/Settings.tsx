@@ -1,4 +1,5 @@
 import { useSettings } from '../hooks/useSettings';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useState } from 'react';
 import {
@@ -13,6 +14,7 @@ import {
 } from 'konsta/react';
 
 export function Settings() {
+    const { t } = useTranslation();
     const { settings, isLoading, updateApiKey, updateTheme, updateKonstaTheme, updateColorTheme } = useSettings();
     const { role } = useAuth();
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -36,7 +38,7 @@ export function Settings() {
     if (isLoading) {
         return (
             <Block className="text-center">
-                <p>Loading Settings...</p>
+                <p>{t('settings.loadingSettings')}</p>
             </Block>
         );
     }
@@ -51,10 +53,10 @@ export function Settings() {
 
     return (
         <>
-            <BlockTitle>Appearance</BlockTitle>
+            <BlockTitle>{t('settings.appearance')}</BlockTitle>
             <List strong inset>
                 <ListItem
-                    title="Dark Mode"
+                    title={t('settings.darkMode')}
                     after={
                         <Toggle
                             component="label"
@@ -64,21 +66,21 @@ export function Settings() {
                     }
                 />
                 <ListItem
-                    title="Platform Theme"
+                    title={t('settings.platformTheme')}
                     after={
                         <select
                             className="bg-transparent border-none text-(--k-color-primary) font-semibold outline-none cursor-pointer"
                             value={settings.konstaTheme}
                             onChange={(e) => updateKonstaTheme(e.target.value as 'ios' | 'material')}
                         >
-                            <option value="ios">iOS Theme</option>
-                            <option value="material">Material Theme</option>
+                            <option value="ios">{t('settings.iosTheme')}</option>
+                            <option value="material">{t('settings.materialTheme')}</option>
                         </select>
                     }
                 />
             </List>
 
-            <BlockTitle>Color Theme</BlockTitle>
+            <BlockTitle>{t('settings.colorTheme')}</BlockTitle>
             <List strong inset>
                 {colorOptions.map((opt) => (
                     <ListItem
@@ -113,15 +115,15 @@ export function Settings() {
 
             {role === 'admin' && (
                 <>
-                    <BlockTitle>AI Configuration</BlockTitle>
+                    <BlockTitle>{t('settings.aiConfig')}</BlockTitle>
                     <List strong inset>
                         <ListInput
-                            label="API Key"
+                            label={t('settings.apiKey')}
                             type="password"
                             placeholder="sk-..."
                             value={settings.aiApiKey}
                             onChange={(e) => updateApiKey(e.target.value)}
-                            info="Provide your Google Gemini or OpenAI API key to generate context sentences."
+                            info={t('settings.apiKeyInfo')}
                         />
                     </List>
                 </>
@@ -129,17 +131,17 @@ export function Settings() {
 
             {role === 'member' && (
                 <>
-                    <BlockTitle>Developer Testing</BlockTitle>
+                    <BlockTitle>{t('settings.developerTesting')}</BlockTitle>
                     <Block strong inset>
                         <p className="mb-4 text-sm text-(--text-secondary)">
-                            Trigger a Test Store purchase mock.
+                            {t('settings.triggerTestPurchase')}
                         </p>
                         <Button
                             large
                             onClick={testPurchase}
                             disabled={isPurchasing}
                         >
-                            {isPurchasing ? 'Processing...' : 'Test Purchase Flow'}
+                            {isPurchasing ? t('settings.processing') : t('settings.testPurchaseFlow')}
                         </Button>
                         {purchaseError && (
                             <p className="mt-2 text-sm text-(--danger-color)">{purchaseError}</p>

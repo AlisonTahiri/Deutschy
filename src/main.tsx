@@ -5,6 +5,7 @@ import { App as KonstaProvider } from 'konsta/react';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { AuthProvider } from './hooks/useAuth';
 import './index.css';
+import './i18n/config';
 
 function KonstaAppWrapper() {
   const { settings, isLoading } = useSettings();

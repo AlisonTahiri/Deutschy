@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 
@@ -16,6 +17,7 @@ const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-4 roun
 const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 
 export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: WritingProps) {
+    const { t } = useTranslation();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         if (initialWordIds && initialWordIds.length > 0) {
             const wordMap = new Map(words.map(w => [w.id, w]));
@@ -108,7 +110,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
             {/* Progress */}
             <div className="w-full mb-4">
                 <div className="flex flex-row justify-between mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <span>Word {currentIndex + 1} of {queue.length}</span>
+                    <span>{t('writing.wordCount', { current: currentIndex + 1, total: queue.length })}</span>
                 </div>
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
                     <div className="h-full transition-all duration-300" style={{ backgroundColor: 'var(--accent-color)', width: `${progressPercent}%` }} />
@@ -121,7 +123,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                 </h2>
 
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    Type the German translation:
+                    {t('writing.typeGerman')}
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -174,9 +176,9 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                     {!isSubmitted && (
                         <div className="flex flex-row gap-2 justify-center w-full">
                             <button type="button" className={`${btnSecondary} flex-1`} onClick={handleHint}>
-                                <Lightbulb size={18} style={{ color: 'var(--text-primary)' }} /> Hint
+                                <Lightbulb size={18} style={{ color: 'var(--text-primary)' }} /> {t('writing.hint')}
                             </button>
-                            <button type="submit" className={`${btnPrimary} flex-1`}>Check</button>
+                            <button type="submit" className={`${btnPrimary} flex-1`}>{t('writing.check')}</button>
                         </div>
                     )}
                 </form>
@@ -184,15 +186,15 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                 {isSubmitted && (
                     <div className="flex flex-col items-center gap-4 animate-[fadeIn_0.4s_ease-out]">
                         {isCorrect ? (
-                            <h3 style={{ color: 'var(--success-color)' }}>{hintUsed ? 'Correct, but hint was used!' : 'Correct!'}</h3>
+                            <h3 style={{ color: 'var(--success-color)' }}>{hintUsed ? t('writing.correctWithHint') : t('writing.correct')}</h3>
                         ) : (
                             <div className="flex flex-col gap-2">
-                                <h3 style={{ color: 'var(--danger-color)' }}>Incorrect</h3>
-                                <p>The correct translation is: <strong style={{ color: 'var(--accent-color)' }}>{currentWord.german}</strong></p>
+                                <h3 style={{ color: 'var(--danger-color)' }}>{t('writing.incorrect')}</h3>
+                                <p>{t('writing.correctTranslationIs')} <strong style={{ color: 'var(--accent-color)' }}>{currentWord.german}</strong></p>
                             </div>
                         )}
                         <button className={`${btnPrimary} w-full mt-4`} onClick={handleNext}>
-                            Next <ArrowRight size={18} />
+                            {t('writing.next')} <ArrowRight size={18} />
                         </button>
                     </div>
                 )}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
@@ -13,6 +14,7 @@ interface FlashcardsProps {
 }
 
 export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: FlashcardsProps) {
+    const { t } = useTranslation();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         if (initialWordIds && initialWordIds.length > 0) {
             // Restore queue order from saved IDs
@@ -77,7 +79,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
     if (!currentWord) {
         return (
             <div className="flex flex-col items-center justify-center h-full">
-                <p>No words available.</p>
+                <p>{t('flashcards.noWords')}</p>
             </div>
         );
     }
@@ -90,7 +92,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
             {/* Progress */}
             <div className="w-full mb-4">
                 <div className="flex flex-row justify-between items-center mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <span>Card {currentIndex + 1} of {queue.length}</span>
+                    <span>{t('flashcards.cardCount', { current: currentIndex + 1, total: queue.length })}</span>
                     <button
                         className="flex items-center gap-1 px-2 py-1 rounded-lg border text-xs cursor-pointer transition-colors"
                         style={{ padding: '0.25rem 0.5rem', backgroundColor: 'transparent', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
@@ -146,7 +148,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
 
                         {!showTranslation && (
                             <p className="absolute bottom-8 text-sm" style={{ color: 'var(--text-primary)' }}>
-                                Tap card to reveal translation
+                                {t('flashcards.tapToReveal')}
                             </p>
                         )}
                     </motion.div>
@@ -184,7 +186,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                 <div className="w-12" />
             </div>
             <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                Swipe left/right or use the buttons below.
+                {t('flashcards.swipeToLearn')}
             </p>
         </div>
     );

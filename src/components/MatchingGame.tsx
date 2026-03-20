@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { Timer, Trophy, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +26,7 @@ const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card
 const btnPrimary = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white border-0 cursor-pointer transition-all duration-200 bg-(--accent-color) hover:bg-(--accent-hover) disabled:opacity-50';
 
 export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResult, onComplete }: MatchingGameProps) {
+    const { t } = useTranslation();
     const [leftColumn, setLeftColumn] = useState<CardSlot[]>([]);
     const [rightColumn, setRightColumn] = useState<CardSlot[]>([]);
     const [slides, setSlides] = useState<ActiveWordPair[][]>([]);
@@ -224,30 +226,30 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                     <div className="p-4 rounded-full bg-(--bg-accent-subtle) mb-2">
                         <Trophy size={64} color="var(--warning-color)" className="animate-bounce" />
                     </div>
-                    <h2 className="text-3xl font-bold">Matching Master!</h2>
-                    <p style={{ color: 'var(--text-secondary)' }}>You've connected all the words.</p>
+                    <h2 className="text-3xl font-bold">{t('matchingGame.success')}</h2>
+                    <p style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.successSub')}</p>
                     
                     <div className="grid grid-cols-2 gap-4 w-full mt-4">
                         <div className="p-4 rounded-2xl bg-(--bg-color) border border-(--border-color)">
-                            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Score</div>
+                            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>{t('common.score')}</div>
                             <div className="text-2xl font-bold text-(--accent-color)">{score}</div>
                         </div>
                         <div className="p-4 rounded-2xl bg-(--bg-color) border border-(--border-color)">
-                            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>Time</div>
+                            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>{t('common.time')}</div>
                             <div className="text-2xl font-bold">{formatTime(time)}</div>
                         </div>
                     </div>
 
                     <div className="flex flex-col gap-3 w-full mt-6">
                         <button className={btnPrimary} onClick={initGame}>
-                            <RefreshCcw size={18} /> Play Again
+                            <RefreshCcw size={18} /> {t('matchingGame.playAgain')}
                         </button>
                         <button 
                             className="text-sm font-medium transition-colors hover:text-(--accent-color)" 
                             style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
                             onClick={onComplete}
                         >
-                            Back to Lessons
+                            {t('common.backToLessons')}
                         </button>
                     </div>
                 </div>
@@ -322,7 +324,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                 <div className="flex items-center gap-4">
                     {slides.length > 0 && (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-(--bg-accent-subtle)" style={{ color: 'var(--accent-color)' }}>
-                            Slide {currentSlideIndex + 1} of {slides.length}
+                            {t('matchingGame.slideCount', { current: currentSlideIndex + 1, total: slides.length })}
                         </span>
                     )}
                     <div className="flex items-center gap-2">
@@ -344,13 +346,13 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                 >
                     {/* German Column */}
                     <div className="flex-1 flex flex-col gap-2 relative">
-                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>German</div>
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.german')}</div>
                         {leftColumn.map(card => renderCard(card))}
                     </div>
 
                     {/* Albanian Column */}
                     <div className="flex-1 flex flex-col gap-2 relative">
-                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>Albanian</div>
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.albanian')}</div>
                         {rightColumn.map(card => renderCard(card))}
                     </div>
                 </motion.div>

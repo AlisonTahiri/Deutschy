@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from './components/Layout';
 import { Home } from './components/Home';
 import { Settings } from './components/Settings';
@@ -15,6 +16,7 @@ import { Paywall } from './components/Paywall';
 import { Onboarding } from './components/Onboarding';
 
 function App() {
+  const { t } = useTranslation();
   const [isDbReady, setIsDbReady] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(() =>
     localStorage.getItem('dardha_onboarding_done') === 'true'
@@ -49,8 +51,8 @@ function App() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[var(--bg-color)] text-[var(--text-primary)]">
         <div className="w-10 h-10 border-4 border-[var(--border-color)] border-t-[var(--accent-color)] rounded-full animate-spin"></div>
-        <h2 className="m-0 text-xl font-semibold">Initializing...</h2>
-        <p className="m-0 text-[var(--text-secondary)]">Please wait a moment.</p>
+        <h2 className="m-0 text-xl font-semibold">{t('app.initializing')}</h2>
+        <p className="m-0 text-[var(--text-secondary)]">{t('app.waitMoment')}</p>
       </div>
     );
   }

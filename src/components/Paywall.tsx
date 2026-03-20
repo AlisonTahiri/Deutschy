@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Page,
     Navbar,
@@ -28,6 +29,7 @@ interface PaywallProps {
 }
 
 export function Paywall({ onPurchaseSuccess }: PaywallProps) {
+    const { t } = useTranslation();
     const [packages, setPackages] = useState<MockPackage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -44,7 +46,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
                     { identifier: '$rc_lifetime', packageType: 'LIFETIME', product: { identifier: 'lifetime', description: 'Lifetime access', title: 'Lifetime', price: 199.99, priceString: '$199.99', currencyCode: 'USD', productCategory: 'NON_SUBSCRIPTION' } },
                 ]);
             } catch (err: any) {
-                setError(`Failed to load subscription options: ${err.message || 'Unknown error'}`);
+                setError(`${t('paywall.loadingOptions')} ${err.message || 'Unknown error'}`);
             } finally {
                 setIsLoading(false);
             }
@@ -76,7 +78,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
             <Page>
                 <div className="flex flex-col items-center justify-center min-h-screen">
                     <Preloader className="w-12 h-12" />
-                    <p className="mt-4 text-(--text-secondary)">Loading Options...</p>
+                    <p className="mt-4 text-(--text-secondary)">{t('paywall.loadingOptions')}</p>
                 </div>
             </Page>
         );
@@ -84,23 +86,23 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
 
     return (
         <Page className="bg-(--bg-color)">
-            <Navbar title="Abonimi" />
+            <Navbar title={t('paywall.title')} />
 
             <div className="max-w-xl mx-auto pb-12">
                 <Block className="text-center pt-8">
-                    <BlockTitle large className="text-4xl m-0 text-(--text-primary)">Unlock German B2</BlockTitle>
+                    <BlockTitle large className="text-4xl m-0 text-(--text-primary)">{t('paywall.unlockHeading')}</BlockTitle>
                     <p className="text-lg mt-4 text-(--text-secondary)">
-                        Get full access to all lessons, interactive AI exercises, and complete vocabulary tracking.
+                        {t('paywall.unlockDesc')}
                     </p>
                 </Block>
 
                 <Block strong inset className="m-4 bg-(--bg-card) border border-(--border-color) rounded-2xl shadow-sm">
                     <div className="flex flex-col gap-4 py-2">
                         {[
-                            'Complete B2 Vocabulary Course',
-                            'Interactive Reading & Listening',
-                            'Progress Tracking & Analytics',
-                            'Unlimited AI Generation',
+                            t('paywall.features.feature1'),
+                            t('paywall.features.feature2'),
+                            t('paywall.features.feature3'),
+                            t('paywall.features.feature4'),
                         ].map((feature, i) => (
                             <div key={i} className="flex items-center gap-3">
                                 <CheckCircle2 size={20} className="text-(--success-color) shrink-0" />
@@ -117,7 +119,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
                     </Block>
                 )}
 
-                <BlockTitle>Zgjidhni një plan</BlockTitle>
+                <BlockTitle>{t('paywall.selectPlan')}</BlockTitle>
                 <div className="px-4 flex flex-col gap-4">
                     {packages.map((pkg) => (
                         <Button
@@ -133,7 +135,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
                                         {pkg.product.title.replace(/\(.*\)/, '').trim()}
                                     </span>
                                     <span className="text-sm text-(--text-secondary)">
-                                        {pkg.packageType === 'LIFETIME' ? 'Pagesë njëherë' : `Faturuar në muaj`}
+                                        {pkg.packageType === 'LIFETIME' ? t('paywall.lifetimeDesc') : (pkg.packageType === 'ANNUAL' ? t('paywall.yearlyDesc') : t('paywall.monthlyDesc'))}
                                     </span>
                                 </div>
                                 <div className="text-right">
@@ -150,7 +152,7 @@ export function Paywall({ onPurchaseSuccess }: PaywallProps) {
                     <Block className="text-center">
                         <div className="flex items-center justify-center gap-3 text-(--text-secondary)">
                             <Preloader className="w-5 h-5" />
-                            <span>Duke procesuar blerjen...</span>
+                            <span>{t('paywall.processing')}</span>
                         </div>
                     </Block>
                 )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import {
     Page,
@@ -20,6 +21,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+    const { t } = useTranslation();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const { settings } = useSettings();
     const { role } = useAuth();
@@ -57,8 +59,8 @@ export function Layout({ children }: LayoutProps) {
     // Page title logic
     const getTitle = () => {
         if (isHome) return 'Dardha';
-        if (isAdmin) return 'Admin Panel';
-        if (isSettings) return 'Settings';
+        if (isAdmin) return t('layout.adminPanel');
+        if (isSettings) return t('layout.settings');
         return 'Dardha';
     };
 
@@ -78,21 +80,21 @@ export function Layout({ children }: LayoutProps) {
                     <TabbarLink
                         active={isHome}
                         onClick={handleHomeClick}
-                        label="Home"
+                        label={t('layout.home')}
                         icon={<Icon ios={<Home size={24} />} material={<Home size={24} />} />}
                     />
                     {role === 'admin' && (
                         <TabbarLink
                             active={isAdmin}
                             onClick={() => navigate('/admin')}
-                            label="Admin"
+                            label={t('layout.admin')}
                             icon={<Icon ios={<ShieldCheck size={24} />} material={<ShieldCheck size={24} />} />}
                         />
                     )}
                     <TabbarLink
                         active={isSettings}
                         onClick={() => navigate('/settings')}
-                        label="Settings"
+                        label={t('layout.settings')}
                         icon={<Icon ios={<SettingsIcon size={24} />} material={<SettingsIcon size={24} />} />}
                     />
                 </Tabbar>
@@ -113,7 +115,7 @@ export function Layout({ children }: LayoutProps) {
                 <List className="mt-0" dividers={false}>
                     <MenuListItem
                         active={isHome}
-                        title="Home"
+                        title={t('layout.home')}
                         onClick={handleHomeClick}
                         media={<Home size={18} />}
                         className={isHome ? 'bg-[var(--bg-accent-subtle)]' : ''}
@@ -121,7 +123,7 @@ export function Layout({ children }: LayoutProps) {
                     {role === 'admin' && (
                         <MenuListItem
                             active={isAdmin}
-                            title="Admin"
+                            title={t('layout.admin')}
                             onClick={() => navigate('/admin')}
                             media={<ShieldCheck size={18} />}
                             className={isAdmin ? 'bg-[var(--bg-accent-subtle)]' : ''}
@@ -129,7 +131,7 @@ export function Layout({ children }: LayoutProps) {
                     )}
                     <MenuListItem
                         active={isSettings}
-                        title="Settings"
+                        title={t('layout.settings')}
                         onClick={() => navigate('/settings')}
                         media={<SettingsIcon size={18} />}
                         className={isSettings ? 'bg-[var(--bg-accent-subtle)]' : ''}

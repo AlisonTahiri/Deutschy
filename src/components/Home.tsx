@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
@@ -25,6 +26,7 @@ interface ViewState {
 }
 
 export function Home() {
+    const { t } = useTranslation();
     const { lessons, isLoading } = useVocabulary();
     const { session, signOut } = useAuth();
     const navigate = useNavigate();
@@ -157,7 +159,7 @@ export function Home() {
         return (
             <Block className="text-center py-20">
                 <Preloader className="w-8 h-8" />
-                <p className="mt-4 text-(--text-secondary)">Loading content...</p>
+                <p className="mt-4 text-(--text-secondary)">{t('home.loadingContent')}</p>
             </Block>
         );
     }
@@ -168,30 +170,30 @@ export function Home() {
             <Block strong inset className="bg-(--bg-card) border border-(--border-card) mb-6">
                 <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="text-(--accent-color)" size={20} />
-                    <h2 className="m-0 text-lg font-bold">Your Progress</h2>
+                    <h2 className="m-0 text-lg font-bold">{t('home.yourProgress')}</h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Star size={12} /> Mastery
+                            <Star size={12} /> {t('home.mastery')}
                         </span>
                         <span className="text-xl font-bold">{Math.round(dashboardMetrics.overallMastery * 100)}%</span>
                     </div>
                     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Award size={12} /> Learned
+                            <Award size={12} /> {t('home.learned')}
                         </span>
                         <span className="text-xl font-bold">{dashboardMetrics.learned} / {dashboardMetrics.total}</span>
                     </div>
                     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <BookOpen size={12} /> Introduced
+                            <BookOpen size={12} /> {t('home.introduced')}
                         </span>
                         <span className="text-xl font-bold">{dashboardMetrics.introduced}</span>
                     </div>
                     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Play size={12} /> In Review
+                            <Play size={12} /> {t('home.inReview')}
                         </span>
                         <span className="text-xl font-bold">{dashboardMetrics.introduced - dashboardMetrics.learned}</span>
                     </div>
@@ -200,7 +202,7 @@ export function Home() {
                 {dashboardMetrics.currentLessonName && (
                     <div className="mt-6 p-4 rounded-2xl bg-(--accent-color)/5 border border-(--accent-color)/20">
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-semibold">Active Lesson: {dashboardMetrics.currentLessonName}</span>
+                            <span className="text-sm font-semibold">{t('home.activeLesson')} {dashboardMetrics.currentLessonName}</span>
                             <span className="text-sm font-bold text-(--accent-color)">{Math.round(dashboardMetrics.currentLessonProgress * 100)}%</span>
                         </div>
                         <Progressbar progress={dashboardMetrics.currentLessonProgress} className="h-2 rounded-full" />
@@ -212,7 +214,7 @@ export function Home() {
             <Block strong inset className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-3 mb-4">
                 <div>
                     <p className="m-0 text-[10px] uppercase tracking-wider font-bold text-(--text-secondary)">
-                        Account
+                        {t('home.account')}
                     </p>
                     <p className="m-0 text-sm font-medium">
                         {userEmail}
@@ -222,7 +224,7 @@ export function Home() {
                     onClick={() => session && signOut()}
                     className="flex items-center gap-1 bg-transparent border-0 text-xs cursor-pointer w-fit p-0 text-(--danger-color) hover:opacity-80"
                 >
-                    <LogOut size={14} /> Sign Out
+                    <LogOut size={14} /> {t('home.signOut')}
                 </button>
             </Block>
 
@@ -239,12 +241,12 @@ export function Home() {
                                     <RotateCcw size={20} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="font-bold text-sm">Pick up where you left off</span>
-                                    <span className="text-xs text-(--text-secondary)">Continue your last exercise</span>
+                                    <span className="font-bold text-sm">{t('home.pickUpLeftOff')}</span>
+                                    <span className="text-xs text-(--text-secondary)">{t('home.continueLastExercise')}</span>
                                 </div>
                             </div>
                             <Button small rounded className="w-auto px-4">
-                                <Play size={14} className="mr-1" /> Resume
+                                <Play size={14} className="mr-1" /> {t('common.resume')}
                             </Button>
                         </div>
                     </Card>
@@ -258,7 +260,7 @@ export function Home() {
                         className={`cursor-pointer ${!activeLevelId ? 'text-(--text-primary) font-bold' : ''}`}
                         onClick={clearAll}
                     >
-                        All Levels
+                        {t('common.allLevels')}
                     </span>
                     {activeLevel && (
                         <>
@@ -294,10 +296,10 @@ export function Home() {
             {/* Level Selection */}
             {!activeLevelId ? (
                 <>
-                    <BlockTitle>Select Level</BlockTitle>
+                    <BlockTitle>{t('home.selectLevel')}</BlockTitle>
                     {levels.length === 0 ? (
                         <Card className="text-center py-10">
-                            <p>No courses available yet.</p>
+                            <p>{t('home.noCourses')}</p>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
@@ -316,11 +318,11 @@ export function Home() {
             ) : !activeMethodId ? (
                 /* Method Selection */
                 <>
-                    <BlockTitle>Available Methods for {activeLevel?.name}</BlockTitle>
+                    <BlockTitle>{t('home.availableMethods', { name: activeLevel?.name })}</BlockTitle>
                     {methodsForLevel.length === 0 ? (
                         <Card className="text-center py-10">
-                            <p>No methods available for this level.</p>
-                            <Button className="mt-4" onClick={clearAll}>Back to Levels</Button>
+                            <p>{t('home.noMethods')}</p>
+                            <Button className="mt-4" onClick={clearAll}>{t('common.backToLevels')}</Button>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
@@ -334,7 +336,7 @@ export function Home() {
                                         key={method.id}
                                         link
                                         title={method.name}
-                                        subtitle={`${totalWords} words · ${Math.round(progress * 100)}% mastery`}
+                                        subtitle={`${totalWords} ${t('home.words')} · ${Math.round(progress * 100)}% ${t('home.masteryLabel')}`}
                                         onClick={() => handleSelectMethod(method.id)}
                                         chevron
                                         footer={
@@ -348,17 +350,17 @@ export function Home() {
                         </List>
                     )}
                     <Block>
-                        <Button outline onClick={clearAll}>Back to Levels</Button>
+                        <Button outline onClick={clearAll}>{t('common.backToLevels')}</Button>
                     </Block>
                 </>
             ) : !activeLessonId ? (
                 /* Lesson Selection */
                 <>
-                    <BlockTitle>Lessons in {activeMethod?.name} {activeLevel?.name}</BlockTitle>
+                    <BlockTitle>{t('home.lessonsIn', { method: activeMethod?.name, level: activeLevel?.name })}</BlockTitle>
                     {lessonsForMethod.length === 0 ? (
                         <Card className="text-center py-10">
-                            <p>No lessons in this method.</p>
-                            <Button className="mt-4" onClick={clearToLevel}>Back to Methods</Button>
+                            <p>{t('home.noLessons')}</p>
+                            <Button className="mt-4" onClick={clearToLevel}>{t('common.backToMethods')}</Button>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
@@ -372,7 +374,7 @@ export function Home() {
                                         key={lesson.id}
                                         link
                                         title={lesson.name}
-                                        subtitle={`${totalWords} words total · ${Math.round(progress * 100)}% mastery`}
+                                        subtitle={`${totalWords} ${t('home.words')} total · ${Math.round(progress * 100)}% ${t('home.masteryLabel')}`}
                                         onClick={() => handleSelectLesson(lesson.id)}
                                         chevron
                                         footer={
@@ -386,23 +388,23 @@ export function Home() {
                         </List>
                     )}
                     <Block>
-                        <Button outline onClick={clearToLevel}>Back to Methods</Button>
+                        <Button outline onClick={clearToLevel}>{t('common.backToMethods')}</Button>
                     </Block>
                 </>
             ) : (
                 /* Lesson Parts Selection */
                 <>
-                    <BlockTitle>Lesson: {activeLesson?.name}</BlockTitle>
+                    <BlockTitle>{t('home.lesson')} {activeLesson?.name}</BlockTitle>
                     <Block strong inset className="bg-(--bg-accent-subtle)">
                         <p className="m-0 text-sm">
-                            Contains {partsForLesson.reduce((acc, p) => acc + p.words.length, 0)} words total across {partsForLesson.length} part{partsForLesson.length !== 1 ? 's' : ''}.
+                            {t('home.containsInfo', { total: partsForLesson.reduce((acc, p) => acc + p.words.length, 0), count: partsForLesson.length })}
                         </p>
                     </Block>
 
-                    <BlockTitle>Lesson Parts</BlockTitle>
+                    <BlockTitle>{t('home.lessonParts')}</BlockTitle>
                     {partsForLesson.length === 0 ? (
                         <Card className="text-center py-10">
-                            <p>No parts available for this lesson.</p>
+                            <p>{t('home.noParts')}</p>
                         </Card>
                     ) : (
                         <Block className="!px-4">
@@ -423,14 +425,14 @@ export function Home() {
                                                         disabled={totalCount === 0}
                                                         className="w-auto px-4"
                                                     >
-                                                        <Play size={16} className="mr-1" /> Start
+                                                        <Play size={16} className="mr-1" /> {t('common.start')}
                                                     </Button>
                                                 </div>
                                                 <div>
                                                     <Progressbar progress={progress} className="h-2 mb-2 rounded-full" />
                                                     <div className="flex flex-row justify-between text-xs text-(--text-secondary)">
-                                                        <span>{totalCount} words</span>
-                                                        <span>{Math.round(progress * 100)}% mastered</span>
+                                                        <span>{totalCount} {t('home.words')}</span>
+                                                        <span>{Math.round(progress * 100)}% {t('home.mastered')}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -441,7 +443,7 @@ export function Home() {
                         </Block>
                     )}
                     <Block className="mt-4">
-                        <Button outline onClick={clearToMethod}>Back to Lessons</Button>
+                        <Button outline onClick={clearToMethod}>{t('common.backToLessons')}</Button>
                     </Block>
                 </>
             )}
