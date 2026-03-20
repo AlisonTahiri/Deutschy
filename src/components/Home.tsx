@@ -3,7 +3,7 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight, LogOut, RotateCcw } from 'lucide-react';
+import { Play, ChevronRight, LogOut, RotateCcw, Award, BookOpen, Star, TrendingUp } from 'lucide-react';
 import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
 import {
     Block,
@@ -113,6 +113,46 @@ export function Home() {
     const clearToLevel = () => setViewState(prev => ({ ...prev, methodId: null, lessonId: null }));
     const clearToMethod = () => setViewState(prev => ({ ...prev, lessonId: null }));
 
+    // Helper to calculate progress based on confidence scores
+    const calculateProgress = (parts: ActiveLesson[]) => {
+        let totalScore = 0;
+        let totalWords = 0;
+        parts.forEach(p => {
+            p.words.forEach((w: ActiveWordPair) => {
+                totalScore += w.confidenceScore || 0;
+                totalWords++;
+            });
+        });
+        return totalWords === 0 ? 0 : totalScore / (totalWords * 5);
+    };
+
+    const dashboardMetrics = useMemo(() => {
+        const words = allParts.flatMap(p => p.words);
+        const learned = words.filter(w => w.status === 'learned' || w.confidenceScore === 5).length;
+        const total = words.length;
+        const overallMastery = calculateProgress(allParts);
+        const introduced = words.filter(w => (w.confidenceScore || 0) > 0 || (w.failCount || 0) > 0).length;
+
+        // Current lesson progress if applicable
+        let currentLessonName = '';
+        let currentLessonProgress = 0;
+        if (lastActivityPath) {
+            const match = lastActivityPath.match(/\/exercise\/([^/]+)/);
+            if (match) {
+                const partId = match[1];
+                const part = allParts.find(p => p.id === partId);
+                if (part && part.lesson_id) {
+                    const lesson = lessonsMap.get(part.lesson_id);
+                    currentLessonName = lesson?.name || part.part_name || '';
+                    const lessonParts = allParts.filter(p => p.lesson_id === part.lesson_id);
+                    currentLessonProgress = calculateProgress(lessonParts);
+                }
+            }
+        }
+
+        return { learned, total, overallMastery, introduced, currentLessonName, currentLessonProgress };
+    }, [allParts, lastActivityPath, lessonsMap]);
+
     if (isLoading) {
         return (
             <Block className="text-center py-20">
@@ -124,19 +164,66 @@ export function Home() {
 
     return (
         <div className="animate-[fadeIn_0.4s_ease-out]">
-            {/* Context Info */}
-            <Block strong inset className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <p className="m-0 text-sm text-(--text-secondary)">
-                        Signed in as <strong>{userEmail}</strong>
-                    </p>
-                    <button
-                        onClick={() => session && signOut()}
-                        className="flex items-center gap-1 bg-transparent border-0 text-xs mt-2 cursor-pointer w-fit p-0 text-(--danger-color)"
-                    >
-                        <LogOut size={14} /> Sign Out
-                    </button>
+            {/* Dashboard */}
+            <Block strong inset className="bg-(--bg-card) border border-(--border-card) mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="text-(--accent-color)" size={20} />
+                    <h2 className="m-0 text-lg font-bold">Your Progress</h2>
                 </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <Star size={12} /> Mastery
+                        </span>
+                        <span className="text-xl font-bold">{Math.round(dashboardMetrics.overallMastery * 100)}%</span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <Award size={12} /> Learned
+                        </span>
+                        <span className="text-xl font-bold">{dashboardMetrics.learned} / {dashboardMetrics.total}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <BookOpen size={12} /> Introduced
+                        </span>
+                        <span className="text-xl font-bold">{dashboardMetrics.introduced}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <Play size={12} /> In Review
+                        </span>
+                        <span className="text-xl font-bold">{dashboardMetrics.introduced - dashboardMetrics.learned}</span>
+                    </div>
+                </div>
+
+                {dashboardMetrics.currentLessonName && (
+                    <div className="mt-6 p-4 rounded-2xl bg-(--accent-color)/5 border border-(--accent-color)/20">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-semibold">Active Lesson: {dashboardMetrics.currentLessonName}</span>
+                            <span className="text-sm font-bold text-(--accent-color)">{Math.round(dashboardMetrics.currentLessonProgress * 100)}%</span>
+                        </div>
+                        <Progressbar progress={dashboardMetrics.currentLessonProgress} className="h-2 rounded-full" />
+                    </div>
+                )}
+            </Block>
+
+            {/* Context Info */}
+            <Block strong inset className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-3 mb-4">
+                <div>
+                    <p className="m-0 text-[10px] uppercase tracking-wider font-bold text-(--text-secondary)">
+                        Account
+                    </p>
+                    <p className="m-0 text-sm font-medium">
+                        {userEmail}
+                    </p>
+                </div>
+                <button
+                    onClick={() => session && signOut()}
+                    className="flex items-center gap-1 bg-transparent border-0 text-xs cursor-pointer w-fit p-0 text-(--danger-color) hover:opacity-80"
+                >
+                    <LogOut size={14} /> Sign Out
+                </button>
             </Block>
 
             {/* Resume Activity Card */}
@@ -240,20 +327,19 @@ export function Home() {
                             {methodsForLevel.map(method => {
                                 const methodParts = allParts.filter(p => p.method_id === method.id);
                                 const totalWords = methodParts.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = methodParts.reduce((acc, p) => acc + p.words.filter((w: ActiveWordPair) => w.status === 'learned').length, 0);
-                                const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
+                                const progress = calculateProgress(methodParts);
 
                                 return (
                                     <ListItem
                                         key={method.id}
                                         link
                                         title={method.name}
-                                        subtitle={`${totalWords} words · ${Math.round(progress * 100)}% learned`}
+                                        subtitle={`${totalWords} words · ${Math.round(progress * 100)}% mastery`}
                                         onClick={() => handleSelectMethod(method.id)}
                                         chevron
                                         footer={
                                             <div className="mt-2">
-                                                <Progressbar progress={progress} className="h-1" />
+                                                <Progressbar progress={progress} className="h-1.5" />
                                             </div>
                                         }
                                     />
@@ -279,20 +365,19 @@ export function Home() {
                             {lessonsForMethod.map(lesson => {
                                 const partsForThisLesson = allParts.filter(p => p.lesson_id === lesson.id);
                                 const totalWords = partsForThisLesson.reduce((acc, p) => acc + p.words.length, 0);
-                                const learnedWords = partsForThisLesson.reduce((acc, p) => acc + p.words.filter((w: ActiveWordPair) => w.status === 'learned').length, 0);
-                                const progress = totalWords === 0 ? 0 : learnedWords / totalWords;
+                                const progress = calculateProgress(partsForThisLesson);
 
                                 return (
                                     <ListItem
                                         key={lesson.id}
                                         link
                                         title={lesson.name}
-                                        subtitle={`${totalWords} words total · ${Math.round(progress * 100)}% learned`}
+                                        subtitle={`${totalWords} words total · ${Math.round(progress * 100)}% mastery`}
                                         onClick={() => handleSelectLesson(lesson.id)}
                                         chevron
                                         footer={
                                             <div className="mt-2">
-                                                <Progressbar progress={progress} className="h-1" />
+                                                <Progressbar progress={progress} className="h-1.5" />
                                             </div>
                                         }
                                     />
@@ -323,9 +408,8 @@ export function Home() {
                         <Block className="!px-4">
                             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                 {partsForLesson.map(part => {
-                                    const learnedCount = part.words.filter((w: ActiveWordPair) => w.status === 'learned').length;
                                     const totalCount = part.words.length;
-                                    const progress = totalCount === 0 ? 0 : learnedCount / totalCount;
+                                    const progress = calculateProgress([part]);
 
                                     return (
                                         <Card key={part.id} className="m-0 bg-(--bg-card)">
@@ -343,10 +427,10 @@ export function Home() {
                                                     </Button>
                                                 </div>
                                                 <div>
-                                                    <Progressbar progress={progress} className="h-1.5 mb-2" />
+                                                    <Progressbar progress={progress} className="h-2 mb-2 rounded-full" />
                                                     <div className="flex flex-row justify-between text-xs text-(--text-secondary)">
                                                         <span>{totalCount} words</span>
-                                                        <span>{Math.round(progress * 100)}% learned</span>
+                                                        <span>{Math.round(progress * 100)}% mastered</span>
                                                     </div>
                                                 </div>
                                             </div>
