@@ -72,11 +72,11 @@ export function Layout({ children }: LayoutProps) {
                     centerTitle={settings.konstaTheme === 'ios'}
                 /> */}
 
-                <div className="pb-20"> {/* Padding for Tabbar */}
+                <div className="pb-16 "> {/* Padding for Tabbar */}
                     {children}
                 </div>
 
-                <Tabbar labels={true} icons={true} className="fixed bottom-0 left-0">
+                <Tabbar  labels={true} icons={true} className="fixed bottom-0 left-0 h-18">
                     <TabbarLink
                         active={isHome}
                         onClick={handleHomeClick}
@@ -97,19 +97,19 @@ export function Layout({ children }: LayoutProps) {
                         label={t('layout.settings')}
                         icon={<Icon ios={<SettingsIcon size={24} />} material={<SettingsIcon size={24} />} />}
                     />
-                </Tabbar>
+                </Tabbar> 
             </Page>
         );
     }
 
     return (
-        <div className="flex min-h-screen bg-[var(--bg-color)]">
+        <div className="flex min-h-screen bg-(--bg-color)">
             <aside
-                className="w-[240px] flex flex-col gap-4 sticky top-0 h-screen border-r border-[var(--border-color)] bg-[var(--bg-color-secondary)]"
+                className="w-[240px] flex flex-col gap-4 sticky top-0 h-screen border-r border-(--border-color) bg-(--bg-color-secondary)"
             >
                 <div className="flex items-center gap-2 p-6 mb-2">
-                    <BookOpen className="text-[var(--k-color-primary)]" size={28} />
-                    <h2 className="text-xl font-bold m-0 text-[var(--text-primary)]">Dardha</h2>
+                    <BookOpen className="text-(--k-color-primary)" size={28} />
+                    <h2 className="text-xl font-bold m-0 text-(--text-primary)">Dardha</h2>
                 </div>
 
                 <List className="mt-0" dividers={false}>
@@ -118,7 +118,7 @@ export function Layout({ children }: LayoutProps) {
                         title={t('layout.home')}
                         onClick={handleHomeClick}
                         media={<Home size={18} />}
-                        className={isHome ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                        className={isHome ? 'bg-(--bg-accent-subtle)' : ''}
                     />
                     {role === 'admin' && (
                         <MenuListItem
@@ -126,7 +126,7 @@ export function Layout({ children }: LayoutProps) {
                             title={t('layout.admin')}
                             onClick={() => navigate('/admin')}
                             media={<ShieldCheck size={18} />}
-                            className={isAdmin ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                            className={isAdmin ? 'bg-(--bg-accent-subtle)' : ''}
                         />
                     )}
                     <MenuListItem
@@ -134,7 +134,7 @@ export function Layout({ children }: LayoutProps) {
                         title={t('layout.settings')}
                         onClick={() => navigate('/settings')}
                         media={<SettingsIcon size={18} />}
-                        className={isSettings ? 'bg-[var(--bg-accent-subtle)]' : ''}
+                        className={isSettings ? 'bg-(--bg-accent-subtle)' : ''}
                     />
                 </List>
             </aside>

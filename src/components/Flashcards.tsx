@@ -87,10 +87,12 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
 
     return (
-        <div className="flex flex-col items-center justify-center gap-8" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem', overflow: 'hidden' }}>
+        <div className="flex flex-col h-[calc(100vh-10rem)] items-center justify-between gap-8 w-full overflow-hidden max-[500px] px-0.5" 
+
+        >
 
             {/* Progress */}
-            <div className="w-full mb-4">
+            <div className="w-full mb-0">
                 <div className="flex flex-row justify-between items-center mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     <span>{t('flashcards.cardCount', { current: currentIndex + 1, total: queue.length })}</span>
                     <button
@@ -108,7 +110,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
             </div>
 
             {/* Card */}
-            <div style={{ position: 'relative', width: '100%', height: '350px', perspective: '1000px' }}>
+            <div className='h-[300px] relative w-full flex-1 perspective-far' >
                 <AnimatePresence mode="popLayout">
                     <motion.div
                         key={currentWord.id + currentIndex}
@@ -156,7 +158,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
             </div>
 
             {/* Controls */}
-            <div className="flex flex-row justify-center items-center gap-8 mt-8 w-full">
+            <div className="flex flex-row justify-center items-center gap-8  w-full">
                 <div className="w-12">
                     {history.length > 0 && (
                         <button
@@ -185,9 +187,10 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                 </button>
                 <div className="w-12" />
             </div>
-            <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+           { !currentIndex && <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                 {t('flashcards.swipeToLearn')}
             </p>
+}
         </div>
     );
 }
