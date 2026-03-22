@@ -67,10 +67,10 @@ export function Layout({ children }: LayoutProps) {
     if (isMobile) {
         return (
             <Page>
-                <Navbar
+                {/* <Navbar
                     title={getTitle()}
                     centerTitle={settings.konstaTheme === 'ios'}
-                />
+                /> */}
 
                 <div className="pb-20"> {/* Padding for Tabbar */}
                     {children}
