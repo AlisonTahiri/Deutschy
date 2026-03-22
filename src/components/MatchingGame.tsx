@@ -290,7 +290,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                 key={card.id}
                 onClick={() => !isMatched && handleCardClick(card.id, card.type)}
                 disabled={isMatched || isGameOver || isProcessingMatch}
-                className="relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full"
+                className="relative rounded-xl border-2 px-3 py-1.5 flex items-center justify-center text-center transition-all duration-300 cursor-pointer overflow-hidden group w-full flex-1 max-h-20"
                 style={{
                     borderColor,
                     backgroundColor: bgColor,
@@ -305,7 +305,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                     aspectRatio: '3 / 1'
                 }}
             >
-                <span className="text-xs sm:text-sm font-semibold leading-tight line-clamp-2">
+                <span className="text-sm sm:text-sm font-semibold leading-tight line-clamp-2">
                     {card.text}
                 </span>
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-[0.02] transition-opacity pointer-events-none" />
@@ -314,7 +314,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
     };
 
     return (
-        <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto px-2">
+        <div className="flex flex-col items-center  justify-between gap-4 w-full max-w-2xl mx-auto px-2">
             {/* Header / Stats */}
             <div className="flex justify-between items-center px-4">
                 <div className="flex items-center gap-2">
@@ -342,22 +342,21 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="flex gap-4 pb-8"
+                    className="flex h-[calc(100vh-200px)] gap-4 justify-between"
                 >
                     {/* German Column */}
-                    <div className="flex-1 flex flex-col gap-2 relative">
-                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.german')}</div>
+                    <div className="flex-1 flex flex-col gap-2">
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-2" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.german')}</div>
                         {leftColumn.map(card => renderCard(card))}
                     </div>
 
                     {/* Albanian Column */}
-                    <div className="flex-1 flex flex-col gap-2 relative">
-                        <div className="text-[10px] uppercase tracking-widest text-center mb-1" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.albanian')}</div>
+                    <div className="flex-1 flex flex-col gap-2">
+                        <div className="text-[10px] uppercase tracking-widest text-center mb-2" style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.albanian')}</div>
                         {rightColumn.map(card => renderCard(card))}
                     </div>
                 </motion.div>
             </AnimatePresence>
-
             <style>{`
                 @keyframes match-bounce {
                     0% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--success-color) 40%, transparent); border-color: var(--success-color); background-color: color-mix(in srgb, var(--success-color) 10%, var(--bg-card)); opacity: 1; }
