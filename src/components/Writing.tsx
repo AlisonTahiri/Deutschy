@@ -43,16 +43,32 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
 
     if (!currentWord) return null;
 
+    const getTargetText = () => {
+        let text = currentWord.german.trim();
+        if (text.includes('/')) {
+            text = text.split('/')[0].trim();
+        }
+        return text;
+    };
+
     const handleHint = () => {
         setHintUsed(true);
-        const target = currentWord.german;
-        const nextHintCount = Math.min(hintCount + 1, target.length);
+        const target = getTargetText();
+        const halfLength = Math.floor(target.length / 2);
+        
+        let nextHintCount = hintCount;
+        if (hintCount < halfLength) {
+            nextHintCount = halfLength;
+        } else {
+            nextHintCount = target.length;
+        }
+        
         setHintCount(nextHintCount);
         setInputValue(target.substring(0, nextHintCount));
         if (inputRef.current) inputRef.current.focus();
     };
 
-    const calculateResult = () => currentWord.german.trim().toLowerCase() === inputValue.trim().toLowerCase();
+    const calculateResult = () => getTargetText().toLowerCase() === inputValue.trim().toLowerCase();
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();

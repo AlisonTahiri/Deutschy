@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface MultipleChoiceProps {
     words: ActiveWordPair[];
@@ -41,19 +41,37 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
 
+    const [pastAnswers, setPastAnswers] = useState<Record<number, { selectedOption: string, options: string[] }>>({});
+    const [viewingPastIndex, setViewingPastIndex] = useState<number | null>(null);
+
+    const isViewingPast = viewingPastIndex !== null;
+    const activeIndex = isViewingPast ? viewingPastIndex : currentIndex;
+
     const currentWord = queue[currentIndex];
-    const questionData = currentWord?.mcq ? currentWord.mcq : null;
+    const currentQuestionData = currentWord?.mcq ? currentWord.mcq : null;
+
+    const activeWord = queue[activeIndex];
+    const activeQuestionData = activeWord?.mcq ? activeWord.mcq : null;
 
     // Shuffle options whenever the current word changes
-    const shuffledOptions = useMemo(() => {
-        if (!questionData?.options) return [];
-        return [...questionData.options].sort(() => Math.random() - 0.5);
-    }, [currentWord?.id, questionData?.options]);
+    const currentShuffledOptions = useMemo(() => {
+        if (!currentQuestionData?.options) return [];
+        return [...currentQuestionData.options].sort(() => Math.random() - 0.5);
+    }, [currentWord?.id, currentQuestionData?.options, currentIndex]);
+
+    const activeOptions = isViewingPast ? pastAnswers[activeIndex]?.options || [] : currentShuffledOptions;
+    const activeSelectedOption = isViewingPast ? pastAnswers[activeIndex]?.selectedOption : selectedOption;
+    const activeIsSubmitted = isViewingPast ? true : isSubmitted;
 
     const handleSubmit = () => { if (!selectedOption || isSubmitted) return; setIsSubmitted(true); };
 
     const handleNext = () => {
-        const isCorrect = selectedOption === questionData?.correctAnswer;
+        setPastAnswers(prev => ({
+            ...prev,
+            [currentIndex]: { selectedOption: selectedOption!, options: currentShuffledOptions }
+        }));
+        
+        const isCorrect = selectedOption === currentQuestionData?.correctAnswer;
         onResult(currentWord.id, isCorrect);
         let nextQueue = [...queue];
         if (!isCorrect) nextQueue.push(currentWord);
@@ -95,45 +113,90 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
         );
     }
 
-    if (!currentWord) return null;
+    if (!activeWord) return null;
 
-    const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
+    const progressPercent = Math.min(100, Math.round((activeIndex / queue.length) * 100));
 
     return (
         <div className="flex flex-col items-center justify-center gap-8" style={{ flex: 1, width: '100%', maxWidth: '600px', margin: '0 auto', padding: '0 0.5rem' }}>
 
             {/* Progress */}
-            <div className="w-full mb-4">
-                <div className="flex flex-row justify-between mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <span>{t('multipleChoice.slideCount', { current: currentIndex + 1, total: queue.length })}</span>
+            <div className="w-full mb-0">
+                <div className="flex flex-row items-center justify-between mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <button 
+                        onClick={() => {
+                            if (activeIndex > 0) {
+                                setViewingPastIndex(activeIndex - 1);
+                            }
+                        }}
+                        disabled={activeIndex === 0}
+                        className={`flex items-center gap-1 p-1 -ml-1 rounded transition-colors ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:text-(--text-primary) text-(--accent-color)'}`}
+                        title={t('common.back')}
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+
+                    <span className="font-medium">
+                        {t('multipleChoice.slideCount', { current: activeIndex + 1, total: queue.length })}
+                    </span>
+
+                    <button 
+                        onClick={() => {
+                            if (isViewingPast) {
+                                if (activeIndex + 1 === currentIndex) {
+                                    setViewingPastIndex(null);
+                                } else {
+                                    setViewingPastIndex(activeIndex + 1);
+                                }
+                            }
+                        }}
+                        disabled={!isViewingPast}
+                        className={`flex items-center gap-1 p-1 -mr-1 rounded transition-colors ${!isViewingPast ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:text-(--text-primary) text-(--accent-color)'}`}
+                        title={t('common.next')}
+                    >
+                        <ArrowRight size={18} />
+                    </button>
                 </div>
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
-                    <div className="h-full transition-all duration-300" style={{ backgroundColor: 'var(--accent-color)', width: `${progressPercent}%` }} />
+                    <div className="h-full transition-all duration-300" style={{ backgroundColor: isViewingPast ? 'var(--text-secondary)' : 'var(--accent-color)', width: `${progressPercent}%` }} />
                 </div>
             </div>
 
             <div className={`${glassPanel} w-full flex flex-col gap-8`}>
-                {!questionData ? (
+                {!activeQuestionData ? (
                     <div className="flex flex-col items-center justify-center gap-4 min-h-[200px]">
                         <Loader2 className="animate-spin" size={32} color="var(--accent-color)" />
                         <p className="text-center" style={{ color: 'var(--text-secondary)' }}>{t('multipleChoice.aiPreparing')}</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]">
+                    <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]" key={activeWord.id + activeIndex}>
                         <h2 className="text-center text-xl font-medium leading-snug" style={{ margin: '0.5rem 0' }}>
-                            {questionData.sentence}
+                            {activeIsSubmitted && activeQuestionData.sentence.includes('_') ? (
+                                activeQuestionData.sentence.split(/_+/).map((part, index, array) => (
+                                    <span key={index}>
+                                        {part}
+                                        {index < array.length - 1 && (
+                                            <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>
+                                                {activeQuestionData.correctAnswer}
+                                            </span>
+                                        )}
+                                    </span>
+                                ))
+                            ) : (
+                                activeQuestionData.sentence
+                            )}
                         </h2>
 
                         <div className="flex flex-col gap-2">
-                            {shuffledOptions.map((option, idx) => {
+                            {activeOptions.map((option, idx) => {
                                 let extraStyle: React.CSSProperties = {};
-                                if (isSubmitted) {
-                                    const isCorrectAnswer = option === questionData.correctAnswer;
-                                    const isSelected = option === selectedOption;
+                                if (activeIsSubmitted) {
+                                    const isCorrectAnswer = option === activeQuestionData.correctAnswer;
+                                    const isSelected = option === activeSelectedOption;
                                     if (isCorrectAnswer) extraStyle = { backgroundColor: 'var(--success-color)', color: '#FFF', borderColor: 'var(--success-hover)' };
                                     else if (isSelected && !isCorrectAnswer) extraStyle = { backgroundColor: 'var(--danger-color)', color: '#FFF', borderColor: 'var(--danger-hover)' };
                                     else extraStyle = { opacity: 0.5 };
-                                } else if (option === selectedOption) {
+                                } else if (option === activeSelectedOption) {
                                     extraStyle = { backgroundColor: 'var(--accent-color)', color: '#FFF', borderColor: 'var(--accent-color)' };
                                 }
 
@@ -142,8 +205,8 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                                         key={idx}
                                         className={`${btnSecondary} justify-start min-h-12 w-full`}
                                         style={{ ...extraStyle }}
-                                        onClick={() => !isSubmitted && setSelectedOption(option)}
-                                        disabled={isSubmitted}
+                                        onClick={() => !activeIsSubmitted && setSelectedOption(option)}
+                                        disabled={activeIsSubmitted}
                                     >
                                         <div className="flex w-full justify-between items-center">
                                             <span>{option}</span>
@@ -153,20 +216,22 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                             })}
                         </div>
 
-                        {isSubmitted && (
+                        {activeIsSubmitted && (
                             <div className="flex flex-col items-center gap-2 animate-[fadeIn_0.4s_ease-out] mt-2 p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-color-secondary)' }}>
-                                <p className="font-semibold m-0">{t('multipleChoice.translation')} <span style={{ color: 'var(--accent-color)' }}>{currentWord.albanian}</span></p>
-                                <p className="text-sm text-center m-0" style={{ color: 'var(--text-secondary)' }}>{questionData.sentenceTranslation}</p>
-                                <button className={`${btnPrimary} w-full mt-1`} onClick={handleNext}>
-                                    {t('multipleChoice.nextSlide')} <ArrowRight size={18} />
-                                </button>
+                                <p className="font-semibold m-0">{t('multipleChoice.translation')} <span style={{ color: 'var(--accent-color)' }}>{activeWord.albanian}</span></p>
+                                <p className="text-sm text-center m-0" style={{ color: 'var(--text-secondary)' }}>{activeQuestionData.sentenceTranslation}</p>
+                                {!isViewingPast && (
+                                    <button className={`${btnPrimary} w-full mt-1`} onClick={handleNext}>
+                                        {t('multipleChoice.nextSlide')} <ArrowRight size={18} />
+                                    </button>
+                                )}
                             </div>
                         )}
 
-                        {!isSubmitted && (
+                        {!activeIsSubmitted && (
                             <button
                                 className={`${btnPrimary} w-full mt-2`}
-                                disabled={!selectedOption}
+                                disabled={!activeSelectedOption}
                                 onClick={handleSubmit}
                             >
                                 {t('multipleChoice.submit')}

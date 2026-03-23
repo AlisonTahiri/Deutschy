@@ -45,7 +45,7 @@
     "title": "Loja e Përputhjes",
     "success": "Mjeshtër i Përputhjes!",
     "successSub": "I keni lidhur të gjitha fjalët.",
-    "slideCount": "Sllajdi {{current}} nga {{total}}",
+    "slideCount": "Faqja {{current}} nga {{total}}",
     "gameOver": "Loja Mbaroi",
     "finalScore": "Pikët Finale",
     "playAgain": "Luaj përsëri",
@@ -55,10 +55,10 @@
   },
   "multipleChoice": {
     "title": "Zgjedhje e Shumëfishtë",
-    "slideCount": "Sllajdi {{current}} nga {{total}}",
+    "slideCount": "Pyetja {{current}} nga {{total}}",
     "aiPreparing": "Inteligjenca artificiale po përgatit këtë ushtrim bazuar në fjalët e dhëna.",
     "translation": "Përkthimi:",
-    "nextSlide": "Sllajdi tjetër",
+    "nextSlide": "Pyetja tjetër",
     "submit": "Dërgo Përgjigjen",
     "exerciseComplete": "Ushtrimi përfundoi",
     "wordsSkipped": "{{count}} fjalë u anashkaluan sepse nuk keni konfiguruar një çelës API për AI.",
@@ -104,7 +104,8 @@
     "correct": "E saktë!",
     "correctWithHint": "E saktë, por është përdorur ndihma!",
     "incorrect": "E gabuar",
-    "correctTranslationIs": "Përkthimi i saktë është:"
+    "correctTranslationIs": "Përkthimi i saktë është:",
+    "next": "Ushtrimi i radhës"
   },
   "auth": {
     "welcome": "Mirë se vini",
