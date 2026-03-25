@@ -4,6 +4,7 @@ import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { SpeakButton } from './SpeakButton';
+import { useGermanSpeech } from '../hooks/useGermanSpeech';
 
 interface MultipleChoiceProps {
     words: ActiveWordPair[];
@@ -21,6 +22,7 @@ const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-3 ro
 export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: MultipleChoiceProps) {
     const { t } = useTranslation();
     const { settings } = useSettings();
+    const { speak } = useGermanSpeech();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         if (initialWordIds && initialWordIds.length > 0) {
             const wordMap = new Map(words.map(w => [w.id, w]));
@@ -64,7 +66,10 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
     const activeSelectedOption = isViewingPast ? pastAnswers[activeIndex]?.selectedOption : selectedOption;
     const activeIsSubmitted = isViewingPast ? true : isSubmitted;
 
-    const handleSubmit = () => { if (!selectedOption || isSubmitted) return; setIsSubmitted(true); };
+    const handleSubmit = () => {
+        if (!selectedOption || isSubmitted) return;
+        setIsSubmitted(true);
+    };
 
     const handleNext = () => {
         setPastAnswers(prev => ({
@@ -188,7 +193,12 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                                     activeQuestionData.sentence
                                 )}
                             </h2>
-                            <SpeakButton text={activeIsSubmitted ? activeQuestionData.sentence.replace(/_+/g, activeQuestionData.correctAnswer) : activeQuestionData.sentence} />
+                            {activeIsSubmitted && (
+                                <SpeakButton 
+                                    text={activeQuestionData.sentence.replace(/_+/g, activeQuestionData.correctAnswer)} 
+                                    size={20}
+                                />
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -209,7 +219,11 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                                         key={idx}
                                         className={`${btnSecondary} justify-start min-h-12 w-full`}
                                         style={{ ...extraStyle }}
-                                        onClick={() => !activeIsSubmitted && setSelectedOption(option)}
+                                        onClick={() => {
+                                            if (activeIsSubmitted) return;
+                                            setSelectedOption(option);
+                                            speak(option);
+                                        }}
                                         disabled={activeIsSubmitted}
                                     >
                                         <div className="flex w-full justify-between items-center">
