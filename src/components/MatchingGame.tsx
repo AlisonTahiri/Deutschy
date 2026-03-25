@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
-import { Timer, Trophy, RefreshCcw } from 'lucide-react';
+import { Timer, Trophy, RefreshCcw, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGermanSpeech } from '../hooks/useGermanSpeech';
 
 interface MatchingGameProps {
     words: ActiveWordPair[];
@@ -38,6 +39,8 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
     const [isGameOver, setIsGameOver] = useState(false);
     const [isProcessingMatch, setIsProcessingMatch] = useState(false);
     const [isGameStarted, setIsGameStarted] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+    const { speak } = useGermanSpeech();
 
     // Initialize game
     const initGame = useCallback(() => {
@@ -152,6 +155,8 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                 setLeftColumn(prev => prev.map(c => c.id === cardId ? { ...c, status: 'idle' } : c));
                 return;
             }
+            // Speak German word on selection
+            if (!isMuted) speak(card.text);
             setSelectedLeftId(cardId);
             setLeftColumn(prev => prev.map(c => {
                 if (c.isMatched) return c;
@@ -327,6 +332,14 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                             {t('matchingGame.slideCount', { current: currentSlideIndex + 1, total: slides.length })}
                         </span>
                     )}
+                    <button
+                        onClick={() => setIsMuted(prev => !prev)}
+                        title={isMuted ? t('common.unmuteAudio') : t('common.muteAudio')}
+                        className="flex items-center justify-center rounded-full cursor-pointer transition-all hover:scale-110 active:scale-95"
+                        style={{ width: 32, height: 32, backgroundColor: 'color-mix(in srgb, var(--text-secondary) 12%, transparent)', border: 'none', color: 'var(--text-secondary)' }}
+                    >
+                        {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
                     <div className="flex items-center gap-2">
                         <Timer size={18} style={{ color: 'var(--text-secondary)' }} />
                         <span className="font-mono text-base">{formatTime(time)}</span>

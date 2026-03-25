@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { SpeakButton } from './SpeakButton';
 
 interface MultipleChoiceProps {
     words: ActiveWordPair[];
@@ -170,22 +171,25 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease-out]" key={activeWord.id + activeIndex}>
-                        <h2 className="text-center text-xl font-medium leading-snug" style={{ margin: '0.5rem 0' }}>
-                            {activeIsSubmitted && activeQuestionData.sentence.includes('_') ? (
-                                activeQuestionData.sentence.split(/_+/).map((part, index, array) => (
-                                    <span key={index}>
-                                        {part}
-                                        {index < array.length - 1 && (
-                                            <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>
-                                                {activeQuestionData.correctAnswer}
-                                            </span>
-                                        )}
-                                    </span>
-                                ))
-                            ) : (
-                                activeQuestionData.sentence
-                            )}
-                        </h2>
+                        <div className="flex items-center justify-center gap-2">
+                            <h2 className="text-center text-xl font-medium leading-snug" style={{ margin: '0.5rem 0' }}>
+                                {activeIsSubmitted && activeQuestionData.sentence.includes('_') ? (
+                                    activeQuestionData.sentence.split(/_+/).map((part, index, array) => (
+                                        <span key={index}>
+                                            {part}
+                                            {index < array.length - 1 && (
+                                                <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>
+                                                    {activeQuestionData.correctAnswer}
+                                                </span>
+                                            )}
+                                        </span>
+                                    ))
+                                ) : (
+                                    activeQuestionData.sentence
+                                )}
+                            </h2>
+                            <SpeakButton text={activeIsSubmitted ? activeQuestionData.sentence.replace(/_+/g, activeQuestionData.correctAnswer) : activeQuestionData.sentence} />
+                        </div>
 
                         <div className="flex flex-col gap-2">
                             {activeOptions.map((option, idx) => {
@@ -218,7 +222,10 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
 
                         {activeIsSubmitted && (
                             <div className="flex flex-col items-center gap-2 animate-[fadeIn_0.4s_ease-out] mt-2 p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-color-secondary)' }}>
-                                <p className="font-semibold m-0">{t('multipleChoice.translation')} <span style={{ color: 'var(--accent-color)' }}>{activeWord.albanian}</span></p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-semibold m-0">{t('multipleChoice.translation')} <span style={{ color: 'var(--accent-color)' }}>{activeWord.albanian}</span></p>
+                                    <SpeakButton text={activeQuestionData.correctAnswer} size={16} />
+                                </div>
                                 <p className="text-sm text-center m-0" style={{ color: 'var(--text-secondary)' }}>{activeQuestionData.sentenceTranslation}</p>
                                 {!isViewingPast && (
                                     <button className={`${btnPrimary} w-full mt-1`} onClick={handleNext}>

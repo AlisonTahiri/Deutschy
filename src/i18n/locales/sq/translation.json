@@ -13,7 +13,10 @@
     "backToMethods": "Kthehu te Metodat",
     "backToLevels": "Kthehu te Nivelet",
     "allLevels": "Të gjitha Nivelet",
-    "goBack": "Kthehu mbrapsht"
+    "goBack": "Kthehu mbrapsht",
+    "listenWord": "Dëgjo shqiptimin",
+    "muteAudio": "Hiq zërin",
+    "unmuteAudio": "Aktivizo zërin"
   },
   "home": {
     "loadingContent": "Duke ngarkuar përmbajtjen...",

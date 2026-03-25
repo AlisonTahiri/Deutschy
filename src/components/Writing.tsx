@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { ArrowRight, Lightbulb } from 'lucide-react';
+import { SpeakButton } from './SpeakButton';
 
 interface WritingProps {
     words: ActiveWordPair[];
@@ -150,7 +151,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                                     <button
                                         key={char}
                                         type="button"
-                                        className={`${btnSecondary} !p-2 !text-xl !min-w-[44px]`}
+                                        className={`${btnSecondary} p-2! text-xl! min-w-[44px]!`}
                                         onClick={() => handleSpecialChar(char)}
                                         tabIndex={-1}
                                     >
@@ -163,7 +164,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                                     <button
                                         key={char}
                                         type="button"
-                                        className={`${btnSecondary} !p-2 !text-xl !min-w-[44px]`}
+                                        className={`${btnSecondary} p-2! text-xl! min-w-[44px]!`}
                                         onClick={() => handleSpecialChar(char)}
                                         tabIndex={-1}
                                     >
@@ -176,7 +177,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
 
                     <input
                         ref={inputRef}
-                        className="w-full px-4 py-3 rounded-xl border text-xl text-center min-h-[3rem] outline-none transition-all duration-200 focus:ring-2"
+                        className="w-full px-4 py-3 rounded-xl border text-xl text-center min-h-12 outline-none transition-all duration-200 focus:ring-2"
                         style={{
                             fontSize: '1.25rem',
                             backgroundColor: 'var(--bg-color)',
@@ -206,7 +207,10 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                         ) : (
                             <div className="flex flex-col gap-2">
                                 <h3 style={{ color: 'var(--danger-color)' }}>{t('writing.incorrect')}</h3>
-                                <p>{t('writing.correctTranslationIs')} <strong style={{ color: 'var(--accent-color)' }}>{currentWord.german}</strong></p>
+                                <div className="flex items-center gap-2 justify-center">
+                                    <p className="m-0">{t('writing.correctTranslationIs')} <strong style={{ color: 'var(--accent-color)' }}>{currentWord.german}</strong></p>
+                                    <SpeakButton text={currentWord.german} size={16} />
+                                </div>
                             </div>
                         )}
                         <button className={`${btnPrimary} w-full mt-4`} onClick={handleNext}>

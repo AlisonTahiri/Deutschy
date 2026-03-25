@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
+import { SpeakButton } from './SpeakButton';
 
 interface FlashcardsProps {
     words: ActiveWordPair[];
@@ -133,6 +134,12 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                         <div className="absolute top-4 right-4" style={{ color: 'var(--text-primary)' }} title="Tap to flip">
                             <RotateCcw size={20} />
                         </div>
+
+                        {languageMode === 'german' && (
+                            <div className="absolute top-4 left-4">
+                                <SpeakButton text={currentWord.german} size={18} />
+                            </div>
+                        )}
 
                         <h2 className="text-4xl text-center mb-4">
                             {languageMode === 'german' ? currentWord.german : currentWord.albanian}

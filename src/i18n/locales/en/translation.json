@@ -13,7 +13,10 @@
     "backToMethods": "Back to Methods",
     "backToLevels": "Back to Levels",
     "allLevels": "All Levels",
-    "goBack": "Go Back"
+    "goBack": "Go Back",
+    "listenWord": "Listen to pronunciation",
+    "muteAudio": "Mute audio",
+    "unmuteAudio": "Unmute audio"
   },
   "home": {
     "loadingContent": "Loading content...",
