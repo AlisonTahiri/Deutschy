@@ -16,7 +16,7 @@ export function useGermanSpeech() {
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'de-DE';
         utterance.rate = 1; 
-        utterance.pitch = 0.9;
+        // utterance.pitch = 0.9;
 
         utterance.onstart = () => setIsPlaying(true);
         utterance.onend = () => setIsPlaying(false);
