@@ -14,6 +14,7 @@ import { Admin } from './components/Admin';
 import { useSubscription } from './hooks/useSubscription';
 import { Paywall } from './components/Paywall';
 import { Onboarding } from './components/Onboarding';
+import { useSyncManager } from './hooks/useSyncManager';
 
 function App() {
   const { t } = useTranslation();
@@ -22,6 +23,9 @@ function App() {
     localStorage.getItem('dardha_onboarding_done') === 'true'
   );
   const { session, role, isLoading: authLoading } = useAuth();
+
+  // Initialize offline sync manager
+  useSyncManager();
 
   // Initialize revenuecat and sync subscription
   const { isChecking, activeLevelId, checkSubscription } = useSubscription();

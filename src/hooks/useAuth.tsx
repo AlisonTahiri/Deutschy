@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { dbService } from '../services/db/provider';
+import { syncService } from '../services/syncService';
 
 interface AuthContextType {
     session: Session | null;
@@ -162,6 +163,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signOut = async () => {
+        if (user?.id) {
+            try {
+                await syncService.pushPendingProgress(user.id);
+            } catch (err) {
+                console.error("Failed to push progress before logout:", err);
+            }
+        }
         setRole(null);
         localStorage.removeItem(ROLE_CACHE_KEY);
         if (user?.id) {

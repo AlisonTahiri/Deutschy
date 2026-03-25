@@ -110,25 +110,86 @@ export const syncService = {
      * Downloads progress from Supabase and populates Dexie.
      * Upsyncs pending local records first to resolve conflicts.
      */
-    async syncUserProgress(_userId: string): Promise<void> {
-        // Disabled per user request - keeping progress purely local for now
-        return;
+    async syncUserProgress(userId: string): Promise<void> {
+        try {
+            // 1. Push pending first to ensure local changes aren't overwritten
+            await this.pushPendingProgress(userId);
+
+            // 2. Fetch remote progress
+            const { data, error } = await supabase
+                .from('user_word_progress')
+                .select('*')
+                .eq('user_id', userId);
+
+            if (error) throw error;
+            if (!data || data.length === 0) return;
+
+            // 3. Mark as synced and populate local
+            const localFormats = data.map(record => ({
+                ...record,
+                is_synced: true
+            }));
+
+            await dbService.bulkSaveUserProgress(localFormats);
+        } catch (error) {
+            console.error('Failed to sync user progress from Supabase:', error);
+        }
     },
 
     /**
      * Pushes pending changes from Dexie to Supabase.
      */
-    async pushPendingProgress(_userId: string): Promise<void> {
-        // Disabled per user request
-        return;
+    async pushPendingProgress(userId: string): Promise<void> {
+        try {
+            const pending = await dbService.getPendingSyncs(userId);
+            if (pending.length === 0) return;
+
+            // Strip local-only fields
+            const toUpdate = pending.map(p => {
+                const { is_synced, ...rest } = p;
+                return rest;
+            });
+
+            // Bulk upsert to Supabase
+            const { error } = await supabase
+                .from('user_word_progress')
+                .upsert(toUpdate, { onConflict: 'id' });
+
+            if (error) throw error;
+
+            // Mark locally as synced
+            const nowSynced = pending.map(p => ({
+                ...p,
+                is_synced: true
+            }));
+            await dbService.bulkSaveUserProgress(nowSynced);
+            
+            // Backup XP
+            await this.backupProgress(userId);
+            
+        } catch (error) {
+            console.error('Failed to push pending progress to Supabase:', error);
+        }
     },
 
     /**
      * Backs up current local progress (learned words count) to Supabase user_progress table
      * This remains for XP calculations.
      */
-    async backupProgress(_userId: string): Promise<void> {
-        // Disabled per user request
-        return;
+    async backupProgress(userId: string): Promise<void> {
+        try {
+            const allProgress = await dbService.getUserProgress(userId);
+            const learnedWords = allProgress.filter(p => p.status === 'learned').length;
+            
+            await supabase
+                .from('user_progress')
+                .upsert({
+                    user_id: userId,
+                    words_learned: learnedWords,
+                    last_active_date: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+        } catch (error) {
+            console.error('Failed to backup progress summary:', error);
+        }
     }
 };

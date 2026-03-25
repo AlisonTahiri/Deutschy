@@ -13,6 +13,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLearningFlow } from '../hooks/useLearningFlow';
 import { useProgressManager } from '../hooks/useProgressManager';
 import { dbService } from '../services/db/provider';
+import { syncService } from '../services/syncService';
 import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide-react';
 
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg transition-all duration-300';
@@ -23,7 +24,7 @@ export function ExerciseContainer() {
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
     const { lessons, isLoading, resetLessonProgress } = useVocabulary();
-    const { role } = useAuth();
+    const { role, user } = useAuth();
     const { updateWordScore } = useProgressManager();
     useLastActivity(); // Tracks activity automatically inside the hook logic
 
@@ -101,6 +102,16 @@ export function ExerciseContainer() {
     const handleWordResult = async (wordId: string, learned: boolean) => {
         if (!exerciseMode) return;
         await updateWordScore(wordId, learned, exerciseMode, false);
+    };
+
+    const handleExerciseComplete = () => {
+        setExerciseMode(null);
+        setLastWordIndex(0);
+        setRestoredWordIds(undefined);
+        saveProgress(null, 0);
+        if (user?.id) {
+            syncService.pushPendingProgress(user.id).catch(console.error);
+        }
     };
 
     if (!exerciseMode) {
@@ -215,7 +226,7 @@ export function ExerciseContainer() {
                         initialWordIds={restoredWordIds}
                         onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('flashcards', idx, ids); }}
                         onResult={handleWordResult} 
-                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                        onComplete={handleExerciseComplete} 
                     />
                 )}
                 {exerciseMode === 'multiple-choice' && (
@@ -225,7 +236,7 @@ export function ExerciseContainer() {
                         initialWordIds={restoredWordIds}
                         onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('multiple-choice', idx, ids); }}
                         onResult={handleWordResult} 
-                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                        onComplete={handleExerciseComplete} 
                     />
                 )}
                 {exerciseMode === 'writing' && (
@@ -235,7 +246,7 @@ export function ExerciseContainer() {
                         initialWordIds={restoredWordIds}
                         onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('writing', idx, ids); }}
                         onResult={handleWordResult} 
-                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                        onComplete={handleExerciseComplete} 
                     />
                 )}
                 {exerciseMode === 'mixed' && (
@@ -245,7 +256,7 @@ export function ExerciseContainer() {
                         initialWordIds={restoredWordIds}
                         onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('mixed', idx, ids); }}
                         onResult={handleWordResult} 
-                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); setRestoredWordIds(undefined); saveProgress(null, 0); }} 
+                        onComplete={handleExerciseComplete} 
                     />
                 )}
                 {exerciseMode === 'matching-game' && (
@@ -254,7 +265,7 @@ export function ExerciseContainer() {
                         initialSlideIndex={lastWordIndex}
                         onProgress={(idx: number) => { setLastWordIndex(idx); saveProgress('matching-game', idx); }}
                         onResult={handleWordResult} 
-                        onComplete={() => { setExerciseMode(null); setLastWordIndex(0); saveProgress(null, 0); }} 
+                        onComplete={handleExerciseComplete} 
                     />
                 )}
             </div>
