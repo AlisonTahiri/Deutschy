@@ -12,13 +12,16 @@ import {
     ListInput,
     Button,
 } from 'konsta/react';
+import { LogOut } from 'lucide-react';
 
 export function Settings() {
     const { t } = useTranslation();
     const { settings, isLoading, updateApiKey, updateTheme, updateKonstaTheme, updateColorTheme } = useSettings();
-    const { role } = useAuth();
+    const { session, role, signOut } = useAuth();
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
+    const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
 
     const testPurchase = async () => {
         setIsPurchasing(true);
@@ -53,6 +56,20 @@ export function Settings() {
 
     return (
         <>
+            <BlockTitle>{t('settings.account', { defaultValue: 'Llogaria ime' })}</BlockTitle>
+            <List strong inset>
+                <ListItem
+                    title={userEmail}
+                    subtitle={role === 'admin' ? 'Administrator' : 'Student'}
+                />
+                <ListItem
+                    link
+                    title={<span className="text-(--danger-color) font-bold">{t('home.signOut', { defaultValue: 'Dil' })}</span>}
+                    onClick={() => session && signOut()}
+                    media={<LogOut className="text-(--danger-color)" size={20} />}
+                />
+            </List>
+
             <BlockTitle>{t('settings.appearance')}</BlockTitle>
             <List strong inset>
                 <ListItem

@@ -4,7 +4,7 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight, LogOut, RotateCcw, Award, BookOpen, Star, TrendingUp } from 'lucide-react';
+import { Play, ChevronRight, Award, BookOpen, Star, TrendingUp } from 'lucide-react';
 import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
 import {
     Block,
@@ -27,13 +27,21 @@ interface ViewState {
 export function Home() {
     const { t } = useTranslation();
     const { lessons, isLoading } = useVocabulary();
-    const { session, signOut } = useAuth();
+    const { session } = useAuth();
     const navigate = useNavigate();
     const { getLastActivity } = useLastActivity();
     const lastActivityPath = getLastActivity();
 
-    const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
+    const userName = session?.user?.user_metadata?.first_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'User';
+    const avatarUrl = session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture;
+    const userInitials = userName.substring(0, 2).toUpperCase();
 
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return t('home.goodMorning', { defaultValue: 'Mirëmëngjes' });
+        if (hour < 18) return t('home.goodAfternoon', { defaultValue: 'Mirëdita' });
+        return t('home.goodEvening', { defaultValue: 'Mirëmbrëma' });
+    };
     // Persisted view state
     const [viewState, setViewState] = useState<ViewState>(() => {
         const saved = localStorage.getItem(PERSISTENCE_KEY);
@@ -158,11 +166,29 @@ export function Home() {
 
     return (
         <div className="animate-[fadeIn_0.4s_ease-out]">
+            {/* Header / Profile section */}
+            <div className="flex justify-between items-center px-4 py-2">
+                <div className="flex flex-col">
+                    <span className="text-sm text-(--text-secondary) font-medium">{getGreeting()},</span>
+                    <span className="text-xl font-bold">{userName} 👋</span>
+                </div>
+                <div 
+                    onClick={() => navigate('/settings')}
+                    className="w-12 h-12 rounded-full overflow-hidden border-2 border-(--border-color) bg-(--accent-color)/10 flex items-center justify-center cursor-pointer text-(--accent-color) font-bold text-lg"
+                >
+                    {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                        userInitials
+                    )}
+                </div>
+            </div>
+
             {/* Dashboard */}
-            <Block strong inset className="bg-(--bg-card) border border-(--border-card) mb-6">
+            <Block strong inset className="bg-(--bg-card) border border-(--border-card)">
                 <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="text-(--accent-color)" size={20} />
-                    <h2 className="m-0 text-lg font-bold">{t('home.yourProgress')}</h2>
+                    <h2 className="m-0 text-lg font-bold">{t('home.yourProgress', { defaultValue: 'Progresi Juaj' })}</h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
@@ -191,68 +217,41 @@ export function Home() {
                     </div>
                 </div>
 
-                {dashboardMetrics.currentLessonName && (
-                    <div className="mt-6 p-4 rounded-2xl bg-(--accent-color)/5 border border-(--accent-color)/20">
+                {dashboardMetrics.currentLessonName && lastActivityPath && (
+                    <div 
+                        className="mt-6 p-4 rounded-2xl bg-(--accent-color)/5 border border-(--accent-color)/20 cursor-pointer active:scale-[0.98] transition-all"
+                        onClick={() => navigate(lastActivityPath)}
+                    >
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-semibold">{t('home.activeLesson')} {dashboardMetrics.currentLessonName}</span>
-                            <span className="text-sm font-bold text-(--accent-color)">{Math.round(dashboardMetrics.currentLessonProgress * 100)}%</span>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold">{t('home.activeLesson')}: {dashboardMetrics.currentLessonName}</span>
+                                <span className="text-xs text-(--accent-color) mt-1 font-bold">{Math.round(dashboardMetrics.currentLessonProgress * 100)}% {t('home.masteryLabel')}</span>
+                            </div>
+                            <Button 
+                                small 
+                                rounded 
+                                className="w-auto px-3"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(lastActivityPath);
+                                }}
+                            >
+                                <Play size={14} className="mr-1" /> {t('common.resume')}
+                            </Button>
                         </div>
-                        <Progressbar progress={dashboardMetrics.currentLessonProgress} className="h-2 rounded-full" />
+                        <Progressbar progress={dashboardMetrics.currentLessonProgress} className="h-1.5 rounded-full mt-2" />
                     </div>
                 )}
             </Block>
 
-            {/* Context Info */}
-            <Block strong inset className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-3 mb-4">
-                <div>
-                    <p className="m-0 text-[10px] uppercase tracking-wider font-bold text-(--text-secondary)">
-                        {t('home.account')}
-                    </p>
-                    <p className="m-0 text-sm font-medium">
-                        {userEmail}
-                    </p>
-                </div>
-                <button
-                    onClick={() => session && signOut()}
-                    className="flex items-center gap-1 bg-transparent border-0 text-xs cursor-pointer w-fit p-0 text-(--danger-color) hover:opacity-80"
-                >
-                    <LogOut size={14} /> {t('home.signOut')}
-                </button>
-            </Block>
-
-            {/* Resume Activity Card */}
-            {lastActivityPath && (
-                <Block>
-                    <Card
-                        className="m-0 bg-(--bg-accent-subtle) border-2 border-(--accent-color)/30"
-                        onClick={() => navigate(lastActivityPath)}
-                    >
-                        <div className="flex flex-row items-center justify-between gap-4">
-                            <div className="flex flex-row items-center gap-3">
-                                <div className="p-2 rounded-full bg-(--accent-color)/10 text-(--accent-color)">
-                                    <RotateCcw size={20} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-sm">{t('home.pickUpLeftOff')}</span>
-                                    <span className="text-xs text-(--text-secondary)">{t('home.continueLastExercise')}</span>
-                                </div>
-                            </div>
-                            <Button small rounded className="w-auto px-4">
-                                <Play size={14} className="mr-1" /> {t('common.resume')}
-                            </Button>
-                        </div>
-                    </Card>
-                </Block>
-            )}
-
             {/* Breadcrumbs Navigation */}
-            <div className="px-4 py-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div className="px-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <div className="flex flex-row gap-2 items-center text-sm text-(--text-secondary)">
                     <span
                         className={`cursor-pointer ${!activeLevelId ? 'text-(--text-primary) font-bold' : ''}`}
                         onClick={clearAll}
                     >
-                        Leksionet e mia
+                        {t('common.myLessons', { defaultValue: 'Leksionet e mia' })}
                     </span>
                     {activeLevel && (
                         <>
@@ -299,7 +298,7 @@ export function Home() {
             ) : !activeLessonId ? (
                 /* Lesson Selection */
                 <>
-                    <BlockTitle>{t('home.lessonsInLevel', { level: activeLevel?.name, defaultValue: 'Lessons in ' + activeLevel?.name })}</BlockTitle>
+                    <BlockTitle>{t('home.lessonsInLevel', { level: activeLevel?.name })}</BlockTitle>
                     {lessonsForLevel.length === 0 ? (
                         <Card className="text-center py-10">
                             <p>{t('home.noLessons')}</p>
