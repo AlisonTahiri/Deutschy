@@ -99,6 +99,7 @@ export async function extractWordsFromImage(
     const prompt = `
 Extract all the German words from this image and translate them into Albanian.
 If a word has a plural form or ending indicated with a hyphen (e.g. "die Neuigkeit -en"), replace the hyphen with a slash (e.g. "die Neuigkeit/en"). Do not leave it as a hyphen.
+IMPORTANT: In addition to extracting the words from the image, you must also generate 7-8 EXTRA German words (with their Albanian translations) that are highly relevant to the general topic or theme of the extracted words. Add these extra words to the end of your JSON array. This is to ensure a richer vocabulary list.
 Return the result strictly as a JSON array of objects, with each object having exactly two string keys: "german" and "albanian".
 Example:
 [

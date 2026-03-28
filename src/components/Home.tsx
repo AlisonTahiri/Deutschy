@@ -21,7 +21,6 @@ const PERSISTENCE_KEY = 'dardha_home_view_state';
 
 interface ViewState {
     levelId: string | null;
-    methodId: string | null;
     lessonId: string | null;
 }
 
@@ -38,7 +37,7 @@ export function Home() {
     // Persisted view state
     const [viewState, setViewState] = useState<ViewState>(() => {
         const saved = localStorage.getItem(PERSISTENCE_KEY);
-        return saved ? JSON.parse(saved) : { levelId: null, methodId: null, lessonId: null };
+        return saved ? JSON.parse(saved) : { levelId: null, lessonId: null };
     });
 
     useEffect(() => {
@@ -46,7 +45,6 @@ export function Home() {
     }, [viewState]);
 
     const activeLevelId = viewState.levelId;
-    const activeMethodId = viewState.methodId;
     const activeLessonId = viewState.lessonId;
 
     const { levels, methodsMap, lessonsMap, allParts } = useMemo(() => {
@@ -85,12 +83,11 @@ export function Home() {
         };
     }, [lessons]);
 
-    const methodsForLevel = activeLevelId
-        ? Array.from(methodsMap.values()).filter(m => m.level_id === activeLevelId).sort((a, b) => a.name.localeCompare(b.name))
-        : [];
-
-    const lessonsForMethod = activeMethodId
-        ? Array.from(lessonsMap.values()).filter(l => l.method_id === activeMethodId)
+    const lessonsForLevel = activeLevelId
+        ? Array.from(lessonsMap.values()).filter(l => {
+            const method = methodsMap.get(l.method_id);
+            return method && method.level_id === activeLevelId;
+        }).sort((a, b) => a.name.localeCompare(b.name))
         : [];
 
     const partsForLesson = activeLessonId
@@ -98,22 +95,17 @@ export function Home() {
         : [];
 
     const activeLevel = levels.find(l => l.id === activeLevelId);
-    const activeMethod = activeMethodId ? methodsMap.get(activeMethodId) : undefined;
     const activeLesson = activeLessonId ? lessonsMap.get(activeLessonId) : undefined;
 
     const handleSelectLevel = (levelId: string) => {
-        setViewState({ levelId, methodId: null, lessonId: null });
-    };
-    const handleSelectMethod = (methodId: string) => {
-        setViewState(prev => ({ ...prev, methodId, lessonId: null }));
+        setViewState({ levelId, lessonId: null });
     };
     const handleSelectLesson = (lessonId: string) => {
         setViewState(prev => ({ ...prev, lessonId }));
     };
 
-    const clearAll = () => setViewState({ levelId: null, methodId: null, lessonId: null });
-    const clearToLevel = () => setViewState(prev => ({ ...prev, methodId: null, lessonId: null }));
-    const clearToMethod = () => setViewState(prev => ({ ...prev, lessonId: null }));
+    const clearAll = () => setViewState({ levelId: null, lessonId: null });
+    const clearToLevel = () => setViewState(prev => ({ ...prev, lessonId: null }));
 
     // Helper to calculate progress based on confidence scores
     const calculateProgress = (parts: ActiveLesson[]) => {
@@ -260,27 +252,16 @@ export function Home() {
                         className={`cursor-pointer ${!activeLevelId ? 'text-(--text-primary) font-bold' : ''}`}
                         onClick={clearAll}
                     >
-                        {t('common.allLevels')}
+                        Leksionet e mia
                     </span>
                     {activeLevel && (
                         <>
                             <ChevronRight size={14} />
                             <span
-                                className={`cursor-pointer ${!activeMethodId ? 'text-(--text-primary) font-bold' : ''}`}
+                                className={`cursor-pointer ${!activeLessonId ? 'text-(--text-primary) font-bold' : ''}`}
                                 onClick={clearToLevel}
                             >
                                 {activeLevel.name}
-                            </span>
-                        </>
-                    )}
-                    {activeMethod && (
-                        <>
-                            <ChevronRight size={14} />
-                            <span
-                                className={`cursor-pointer ${!activeLessonId ? 'text-(--text-primary) font-bold' : ''}`}
-                                onClick={clearToMethod}
-                            >
-                                {activeMethod.name}
                             </span>
                         </>
                     )}
@@ -315,56 +296,18 @@ export function Home() {
                         </List>
                     )}
                 </>
-            ) : !activeMethodId ? (
-                /* Method Selection */
+            ) : !activeLessonId ? (
+                /* Lesson Selection */
                 <>
-                    <BlockTitle>{t('home.availableMethods', { name: activeLevel?.name })}</BlockTitle>
-                    {methodsForLevel.length === 0 ? (
+                    <BlockTitle>{t('home.lessonsInLevel', { level: activeLevel?.name, defaultValue: 'Lessons in ' + activeLevel?.name })}</BlockTitle>
+                    {lessonsForLevel.length === 0 ? (
                         <Card className="text-center py-10">
-                            <p>{t('home.noMethods')}</p>
+                            <p>{t('home.noLessons')}</p>
                             <Button className="mt-4" onClick={clearAll}>{t('common.backToLevels')}</Button>
                         </Card>
                     ) : (
                         <List strong inset dividersIos>
-                            {methodsForLevel.map(method => {
-                                const methodParts = allParts.filter(p => p.method_id === method.id);
-                                const totalWords = methodParts.reduce((acc, p) => acc + p.words.length, 0);
-                                const progress = calculateProgress(methodParts);
-
-                                return (
-                                    <ListItem
-                                        key={method.id}
-                                        link
-                                        title={method.name}
-                                        subtitle={`${totalWords} ${t('home.words')} · ${Math.round(progress * 100)}% ${t('home.masteryLabel')}`}
-                                        onClick={() => handleSelectMethod(method.id)}
-                                        chevron
-                                        footer={
-                                            <div className="mt-2">
-                                                <Progressbar progress={progress} className="h-1.5" />
-                                            </div>
-                                        }
-                                    />
-                                );
-                            })}
-                        </List>
-                    )}
-                    <Block>
-                        <Button outline onClick={clearAll}>{t('common.backToLevels')}</Button>
-                    </Block>
-                </>
-            ) : !activeLessonId ? (
-                /* Lesson Selection */
-                <>
-                    <BlockTitle>{t('home.lessonsIn', { method: activeMethod?.name, level: activeLevel?.name })}</BlockTitle>
-                    {lessonsForMethod.length === 0 ? (
-                        <Card className="text-center py-10">
-                            <p>{t('home.noLessons')}</p>
-                            <Button className="mt-4" onClick={clearToLevel}>{t('common.backToMethods')}</Button>
-                        </Card>
-                    ) : (
-                        <List strong inset dividersIos>
-                            {lessonsForMethod.map(lesson => {
+                            {lessonsForLevel.map(lesson => {
                                 const partsForThisLesson = allParts.filter(p => p.lesson_id === lesson.id);
                                 const totalWords = partsForThisLesson.reduce((acc, p) => acc + p.words.length, 0);
                                 const progress = calculateProgress(partsForThisLesson);
@@ -388,7 +331,7 @@ export function Home() {
                         </List>
                     )}
                     <Block>
-                        <Button outline onClick={clearToLevel}>{t('common.backToMethods')}</Button>
+                        <Button outline onClick={clearAll}>{t('common.backToLevels')}</Button>
                     </Block>
                 </>
             ) : (
@@ -407,7 +350,7 @@ export function Home() {
                             <p>{t('home.noParts')}</p>
                         </Card>
                     ) : (
-                        <Block className="!px-4">
+                        <Block className="px-4!">
                             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                 {partsForLesson.map(part => {
                                     const totalCount = part.words.length;
@@ -443,7 +386,7 @@ export function Home() {
                         </Block>
                     )}
                     <Block className="mt-4">
-                        <Button outline onClick={clearToMethod}>{t('common.backToLessons')}</Button>
+                        <Button outline onClick={clearToLevel}>{t('common.backToLessons')}</Button>
                     </Block>
                 </>
             )}
