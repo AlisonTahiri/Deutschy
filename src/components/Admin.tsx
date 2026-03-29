@@ -62,9 +62,70 @@ export function Admin() {
 
     useEffect(() => {
         if (role === 'admin') {
+            const savedState = localStorage.getItem('adminPanelState');
+            if (savedState) {
+                try {
+                    const { level, method, lesson, part } = JSON.parse(savedState);
+                    if (level || method || lesson || part) {
+                        restoreState(level, method, lesson, part);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Failed to parse saved state", e);
+                }
+            }
             loadLevels();
         }
     }, [role]);
+
+    useEffect(() => {
+        if (role === 'admin') {
+            const stateToSave = {
+                level: activeLevel,
+                method: activeMethod,
+                lesson: activeLesson,
+                part: activePart
+            };
+            localStorage.setItem('adminPanelState', JSON.stringify(stateToSave));
+        }
+    }, [activeLevel, activeMethod, activeLesson, activePart, role]);
+
+    const restoreState = async (level: DbLevel | null, method: DbMethod | null, lesson: DbLesson | null, part: DbLessonPart | null) => {
+        setIsLoading(true);
+        try {
+            const promises: Promise<void>[] = [];
+            
+            promises.push(adminContentService.getLevels().then(d => setLevels(d.sort((a, b) => a.name.localeCompare(b.name)))));
+            if (level) {
+                setActiveLevel(level);
+                promises.push(adminContentService.getMethodsForLevel(level.id).then(d => setMethods(d.sort((a, b) => a.name.localeCompare(b.name)))));
+            }
+            if (method) {
+                setActiveMethod(method);
+                promises.push(adminContentService.getLessonsForMethod(method.id).then(d => setLessons(d)));
+            }
+            if (lesson) {
+                setActiveLesson(lesson);
+                promises.push(adminContentService.getPartsForLesson(lesson.id).then(d => setParts(d)));
+            }
+            if (part) {
+                setActivePart(part);
+                promises.push(adminContentService.getWordsForPart(part.id).then(d => setWords(d)));
+            }
+
+            await Promise.all(promises);
+        } catch (err: any) {
+            console.error("Failed to restore state", err);
+            setActiveLevel(null);
+            setActiveMethod(null);
+            setActiveLesson(null);
+            setActivePart(null);
+            localStorage.removeItem('adminPanelState');
+            loadLevels();
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const loadLevels = async () => {
         setIsLoading(true);
