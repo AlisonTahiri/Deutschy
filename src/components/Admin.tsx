@@ -51,6 +51,10 @@ export function Admin() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const progressIntervalRef = useRef<number | null>(null);
 
+    // Conflict State
+    const [showConflictModal, setShowConflictModal] = useState(false);
+    const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+
     // MCQ Generation State
     const [isGeneratingMCQs, setIsGeneratingMCQs] = useState(false);
     const [mcqProgressText, setMcqProgressText] = useState('');
@@ -367,13 +371,43 @@ export function Admin() {
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!activeLesson) return;
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file) {
+             if (fileInputRef.current) fileInputRef.current.value = '';
+             return;
+        }
 
         if (!settings.aiApiKey) {
             alert('Please add your Google Gemini API key in Settings first to use Image Scanning.');
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
+
+        try {
+            const existingLessonWords = await adminContentService.getWordsForLesson(activeLesson.id);
+            if (existingLessonWords.length > 0) {
+                setPendingImageFile(file);
+                setShowConflictModal(true);
+            } else {
+                processImageFile(file, true);
+            }
+        } catch (err: any) {
+             setError('Failed to check existing words: ' + err.message);
+             if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleConfirmConflict = (keepExisting: boolean) => {
+        setShowConflictModal(false);
+        if (pendingImageFile) {
+            processImageFile(pendingImageFile, keepExisting);
+        }
+        setPendingImageFile(null);
+    };
+
+    const processImageFile = async (file: File, keepExisting: boolean) => {
+        if (!activeLesson) return;
+        const currentActiveLesson = activeLesson;
+        const currentActivePart = activePart;
 
         setIsUploading(true);
         setScanProgress(0);
@@ -403,15 +437,28 @@ export function Admin() {
                     throw new Error('Could not extract any words from the image.');
                 }
 
+                if (!keepExisting) {
+                    const currentParts = await adminContentService.getPartsForLesson(currentActiveLesson.id);
+                    for (const p of currentParts) {
+                        await adminContentService.deletePart(p.id);
+                    }
+                    if (currentActivePart) setActivePart(null);
+                    setParts([]);
+                }
+
                 // 1. Get existing words in the lesson to check for duplicates
-                const existingLessonWords = await adminContentService.getWordsForLesson(activeLesson.id);
-                const existingGermanWords = new Set(existingLessonWords.map(w => w.german.trim().toLowerCase()));
+                let existingGermanWords = new Set<string>();
+                if (keepExisting) {
+                    const existingLessonWords = await adminContentService.getWordsForLesson(currentActiveLesson.id);
+                    existingGermanWords = new Set(existingLessonWords.map(w => w.german.trim().toLowerCase()));
+                }
 
                 // 2. Filter out duplicates (case-insensitive)
                 const uniqueNewWords = extractedWords.filter(w => {
                     const normalized = w.german.trim().toLowerCase();
                     if (!normalized || !w.albanian.trim()) return false;
-                    return !existingGermanWords.has(normalized);
+                    if (keepExisting && existingGermanWords.has(normalized)) return false;
+                    return true;
                 });
 
                 const duplicateCount = extractedWords.length - uniqueNewWords.length;
@@ -425,22 +472,29 @@ export function Admin() {
                 }
 
                 // 3. Distribution Logic
-                const MAX_WORDS_PER_PART = 35;
+                let maxWordsPerPart = 35;
                 
                 // Get all parts for the lesson
-                const currentLessonParts = await adminContentService.getPartsForLesson(activeLesson.id);
+                const currentLessonParts = await adminContentService.getPartsForLesson(currentActiveLesson.id);
                 const sortedParts = [...currentLessonParts].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                
+                if (sortedParts.length > 0) {
+                    const firstPartWords = await adminContentService.getWordsForPart(sortedParts[0].id);
+                    if (firstPartWords.length > 0) {
+                        maxWordsPerPart = firstPartWords.length;
+                    }
+                }
                 
                 let targetPart: DbLessonPart;
                 
-                if (activePart) {
-                    targetPart = activePart;
+                if (currentActivePart && keepExisting) {
+                    targetPart = currentActivePart;
                 } else if (sortedParts.length > 0) {
                     // Start from the last part if at lesson level
                     targetPart = sortedParts[sortedParts.length - 1];
                 } else {
                     // Create first part if none exist
-                    targetPart = await adminContentService.createPart(activeLesson.id, 'Part 1');
+                    targetPart = await adminContentService.createPart(currentActiveLesson.id, 'Part 1');
                     sortedParts.push(targetPart);
                 }
 
@@ -451,7 +505,7 @@ export function Admin() {
                 // Fill target part first
                 const currentPartWords = await adminContentService.getWordsForPart(targetPart.id);
                 const currentPartCount = currentPartWords.length;
-                const currentPartRemainingSpace = Math.max(0, MAX_WORDS_PER_PART - currentPartCount);
+                const currentPartRemainingSpace = Math.max(0, maxWordsPerPart - currentPartCount);
 
                 const firstBatch = wordsToUpload.splice(0, currentPartRemainingSpace);
                 if (firstBatch.length > 0) {
@@ -469,9 +523,9 @@ export function Admin() {
 
                 // If still have words, create new parts
                 while (wordsToUpload.length > 0) {
-                    const nextBatch = wordsToUpload.splice(0, MAX_WORDS_PER_PART);
+                    const nextBatch = wordsToUpload.splice(0, maxWordsPerPart);
                     const nextPartName = `Part ${sortedParts.length + 1}`;
-                    const newPart = await adminContentService.createPart(activeLesson.id, nextPartName);
+                    const newPart = await adminContentService.createPart(currentActiveLesson.id, nextPartName);
                     sortedParts.push(newPart);
                     partsAffected.push(newPart.name);
 
@@ -487,12 +541,12 @@ export function Admin() {
                     wordsAddedCount += nextBatch.length;
                 }
 
-                setSuccess(`Successfully added ${wordsAddedCount} words across ${partsAffected.length} parts. ${duplicateCount > 0 ? `${duplicateCount} duplicates were skipped.` : ''}`);
+                setSuccess(`Successfully added ${wordsAddedCount} words across ${partsAffected.length} parts. ${duplicateCount > 0 && keepExisting ? `${duplicateCount} duplicates were skipped.` : ''}`);
                 
                 // Refresh data
-                await loadPartsForLesson(activeLesson);
-                if (activePart) {
-                    await loadWordsForPart(activePart);
+                await loadPartsForLesson(currentActiveLesson);
+                if (currentActivePart && keepExisting) {
+                    await loadWordsForPart(currentActivePart);
                 }
 
                 setIsUploading(false);
@@ -952,6 +1006,47 @@ export function Admin() {
                                 <p className="m-0 text-(--text-secondary) max-w-[300px]">No vocabulary words added yet. Use the scan tool or add manually.</p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {showConflictModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+                    <div className={`${glassPanel} max-w-md w-full flex flex-col gap-6 animate-[slideUp_0.3s_ease-out]`}>
+                        <div className="flex flex-col gap-2">
+                            <h2 className="m-0 text-xl font-bold flex items-center gap-2">
+                                <FileText className="text-(--accent-color)" />
+                                Leksioni ka fjalë ekzistuese
+                            </h2>
+                            <p className="m-0 text-sm text-(--text-secondary)">
+                                A dëshironi t'i mbani fjalët ekzistuese të këtij leksioni, apo dëshironi t'i zëvendësoni me fjalët e reja të imazhit?
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                className={`${btnPrimary} w-full py-3! justify-start px-5!`}
+                                onClick={() => handleConfirmConflict(true)}
+                            >
+                                <Check size={18} />
+                                Po, mbaj fjalët ekzistuese
+                            </button>
+                            <button
+                                className={`${btnSecondary} w-full py-3! hover:bg-(--danger-color)/10 hover:border-(--danger-color)/30 hover:text-(--danger-color) justify-start px-5!`}
+                                onClick={() => handleConfirmConflict(false)}
+                            >
+                                <Trash2 size={18} />
+                                Jo, fshij fjalët ekzistuese
+                            </button>
+                            <button
+                                className={`${btnSubtle} w-full mt-2`}
+                                onClick={() => {
+                                    setShowConflictModal(false);
+                                    setPendingImageFile(null);
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                            >
+                                Anulo
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
