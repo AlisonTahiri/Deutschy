@@ -3,8 +3,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import { adminContentService } from '../services/db/adminContentService';
 import type { DbLevel, DbMethod, DbLesson, DbLessonPart, DbLessonWord, LearningLevel } from '../types';
-import { Plus, Trash2, Folder, FileText, List, Image as ImageIcon, Loader2, Edit2, Check, X, Play, Square } from 'lucide-react';
-import { extractWordsFromImage, generateBatchMCQ } from '../utils/ai';
+import { getGermanDisplay, getGrammarSubtitle, WORD_TYPE_COLORS } from '../types';
+import { Plus, Trash2, Folder, FileText, List, Image as ImageIcon, Loader2, Edit2, Check, X, Play, Square, RefreshCw } from 'lucide-react';
+import { extractWordsFromImage, generateBatchMCQ, rescanWordsWithAI } from '../utils/ai';
 import { supabase } from '../lib/supabase';
 
 const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
@@ -59,6 +60,10 @@ export function Admin() {
     const [isGeneratingMCQs, setIsGeneratingMCQs] = useState(false);
     const [mcqProgressText, setMcqProgressText] = useState('');
     const stopGenerationRef = useRef(false);
+
+    // Rescan State
+    const [isRescanning, setIsRescanning] = useState(false);
+    const [rescanProgress, setRescanProgress] = useState('');
 
     useEffect(() => {
         if (role === 'admin') {
@@ -507,18 +512,18 @@ export function Admin() {
                     setParts([]);
                 }
 
-                // 1. Get existing words in the lesson to check for duplicates
-                let existingGermanWords = new Set<string>();
+                // 1. Get existing base forms in the lesson to check for duplicates
+                let existingBases = new Set<string>();
                 if (keepExisting) {
                     const existingLessonWords = await adminContentService.getWordsForLesson(currentActiveLesson.id);
-                    existingGermanWords = new Set(existingLessonWords.map(w => w.german.trim().toLowerCase()));
+                    existingBases = new Set(existingLessonWords.map(w => (w.base || w.german).trim().toLowerCase()));
                 }
 
-                // 2. Filter out duplicates (case-insensitive)
+                // 2. Filter out duplicates (case-insensitive on base)
                 const uniqueNewWords = extractedWords.filter(w => {
-                    const normalized = w.german.trim().toLowerCase();
+                    const normalized = w.base.trim().toLowerCase();
                     if (!normalized || !w.albanian.trim()) return false;
-                    if (keepExisting && existingGermanWords.has(normalized)) return false;
+                    if (keepExisting && existingBases.has(normalized)) return false;
                     return true;
                 });
 
@@ -572,8 +577,18 @@ export function Admin() {
                 if (firstBatch.length > 0) {
                     await adminContentService.createWords(firstBatch.map(w => ({
                         part_id: targetPart.id,
-                        german: w.german,
+                        german: `${w.article ? w.article + ' ' : ''}${w.base}`,  // reconstruct legacy field
                         albanian: w.albanian,
+                        word_type: w.word_type,
+                        base: w.base,
+                        article: w.article ?? null,
+                        plural: w.plural ?? null,
+                        prateritum: w.prateritum ?? null,
+                        partizip: w.partizip ?? null,
+                        auxiliary: w.auxiliary ?? null,
+                        is_reflexive: w.is_reflexive ?? false,
+                        comparative: w.comparative ?? null,
+                        superlative: w.superlative ?? null,
                         mcq_sentence: null,
                         mcq_sentence_translation: null,
                         mcq_options: null,
@@ -592,8 +607,18 @@ export function Admin() {
 
                     await adminContentService.createWords(nextBatch.map(w => ({
                         part_id: newPart.id,
-                        german: w.german,
+                        german: `${w.article ? w.article + ' ' : ''}${w.base}`,
                         albanian: w.albanian,
+                        word_type: w.word_type,
+                        base: w.base,
+                        article: w.article ?? null,
+                        plural: w.plural ?? null,
+                        prateritum: w.prateritum ?? null,
+                        partizip: w.partizip ?? null,
+                        auxiliary: w.auxiliary ?? null,
+                        is_reflexive: w.is_reflexive ?? false,
+                        comparative: w.comparative ?? null,
+                        superlative: w.superlative ?? null,
                         mcq_sentence: null,
                         mcq_sentence_translation: null,
                         mcq_options: null,
@@ -623,6 +648,57 @@ export function Admin() {
             }
         };
         reader.readAsDataURL(file);
+    };
+
+    // --- AI Rescan: enrich existing words with grammar data ---
+    const handleRescanWords = async () => {
+        if (!activePart || !settings.aiApiKey || words.length === 0) return;
+        setIsRescanning(true);
+        setRescanProgress('Preparing words...');
+        setError('');
+        setSuccess('');
+
+        try {
+            // Process in batches of 15 to respect prompt length
+            const BATCH_SIZE = 15;
+            let updatedCount = 0;
+
+            for (let i = 0; i < words.length; i += BATCH_SIZE) {
+                const batch = words.slice(i, i + BATCH_SIZE);
+                setRescanProgress(`Rescanning ${i + 1}–${Math.min(i + BATCH_SIZE, words.length)} of ${words.length}...`);
+
+                const enriched = await rescanWordsWithAI(
+                    settings.aiApiKey,
+                    batch.map(w => ({ id: w.id, german: w.german, albanian: w.albanian }))
+                );
+
+                if (!enriched) continue;
+
+                for (const ew of enriched) {
+                    await adminContentService.updateWord(ew.id, {
+                        word_type: ew.word_type,
+                        base: ew.base,
+                        article: ew.article ?? null,
+                        plural: ew.plural ?? null,
+                        prateritum: ew.prateritum ?? null,
+                        partizip: ew.partizip ?? null,
+                        auxiliary: ew.auxiliary ?? null,
+                        is_reflexive: ew.is_reflexive ?? false,
+                        comparative: ew.comparative ?? null,
+                        superlative: ew.superlative ?? null,
+                    } as any);
+                    updatedCount++;
+                }
+            }
+
+            setSuccess(`Enriched ${updatedCount} words with grammar data.`);
+            await loadWordsForPart(activePart);
+        } catch (err: any) {
+            setError('Rescan failed: ' + err.message);
+        } finally {
+            setIsRescanning(false);
+            setRescanProgress('');
+        }
     };
 
     if (role !== 'admin') {
@@ -958,21 +1034,51 @@ export function Admin() {
                             </select>
                         </div>
 
-                        {words.some(w => !w.mcq_sentence) && (
-                            <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-(--border-color)">
-                                {!isGeneratingMCQs ? (
-                                    <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
-                                        <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
-                                    </button>
-                                ) : (
-                                    <button className={`${btnSecondary} w-full sm:w-auto text-(--danger-color) border-(--danger-color)`} onClick={handleStopGeneration}>
-                                        <Square size={18} /> Stop Generation
-                                    </button>
-                                )}
-                                {mcqProgressText && <span className="text-sm text-(--text-secondary)">{mcqProgressText}</span>}
-                                {!settings.aiApiKey && <span className="text-sm text-(--danger-color)">API Key missing in Settings.</span>}
-                            </div>
-                        )}
+                        {/* A word is "unenriched" if it was migrated from old format:
+                             - base contains '/' (old plural notation e.g. "die Einrichtung/en")
+                             - base starts with an article ("die/der/das ..." embedded)
+                             - it's a noun but article is not set
+                             - base is null/empty */}
+                        {(() => {
+                            const isWordUnenriched = (w: typeof words[0]) =>
+                                !w.base ||
+                                w.base.includes('/') ||
+                                /^(der|die|das)\s+/i.test(w.base) ||
+                                (w.word_type === 'noun' && !w.article);
+
+                            const unenrichedWords = words.filter(isWordUnenriched);
+                            const hasPendingMCQ = words.some(w => !w.mcq_sentence);
+
+                            return (hasPendingMCQ || unenrichedWords.length > 0) && (
+                                <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-(--border-color)">
+                                    {/* MCQ Generation */}
+                                    {hasPendingMCQ && (
+                                        !isGeneratingMCQs ? (
+                                            <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
+                                                <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
+                                            </button>
+                                        ) : (
+                                            <button className={`${btnSecondary} w-full sm:w-auto text-(--danger-color) border-(--danger-color)`} onClick={handleStopGeneration}>
+                                                <Square size={18} /> Stop Generation
+                                            </button>
+                                        )
+                                    )}
+                                    {/* Grammar Rescan */}
+                                    {unenrichedWords.length > 0 && (
+                                        <button
+                                            className={`${btnSecondary} w-full sm:w-auto`}
+                                            onClick={handleRescanWords}
+                                            disabled={isRescanning || !settings.aiApiKey}
+                                        >
+                                            {isRescanning ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+                                            {isRescanning ? rescanProgress || 'Rescanning...' : `Enrich ${unenrichedWords.length} words with AI`}
+                                        </button>
+                                    )}
+                                    {mcqProgressText && <span className="text-sm text-(--text-secondary)">{mcqProgressText}</span>}
+                                    {!settings.aiApiKey && <span className="text-sm text-(--danger-color)">API Key missing in Settings.</span>}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -985,9 +1091,10 @@ export function Admin() {
                                 <table className="w-full border-collapse text-left">
                                     <thead className="bg-(--bg-color-secondary) border-b border-(--border-color)">
                                         <tr>
+                                            <th className="px-4 py-3 font-semibold text-sm">Type</th>
                                             <th className="px-4 py-3 font-semibold text-sm">German</th>
                                             <th className="px-4 py-3 font-semibold text-sm">Albanian</th>
-                                            <th className="px-4 py-3 font-semibold text-sm">MCQ Status</th>
+                                            <th className="px-4 py-3 font-semibold text-sm">MCQ</th>
                                             <th className="px-4 py-3 w-16"></th>
                                         </tr>
                                     </thead>
@@ -1024,7 +1131,29 @@ export function Admin() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <td className="px-4 py-3 text-sm">{word.german}</td>
+                                                        {/* Type badge */}
+                                                        <td className="px-4 py-3">
+                                                            {word.word_type ? (
+                                                                <span
+                                                                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                                                                    style={{
+                                                                        color: WORD_TYPE_COLORS[word.word_type],
+                                                                        backgroundColor: `color-mix(in srgb, ${WORD_TYPE_COLORS[word.word_type]} 15%, transparent)`
+                                                                    }}
+                                                                >
+                                                                    {word.word_type === 'noun' ? 'N' : word.word_type === 'verb' ? 'V' : word.word_type === 'adjective' ? 'Adj' : 'Expr'}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-(--text-secondary) opacity-40">—</span>
+                                                            )}
+                                                        </td>
+                                                        {/* German: show structured display */}
+                                                        <td className="px-4 py-3 text-sm">
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <span className="font-medium">{word.base ? getGermanDisplay(word) : word.german}</span>
+                                                                {(() => { const sub = getGrammarSubtitle(word); return sub ? <span className="text-xs text-(--text-secondary)">{sub}</span> : null; })()}
+                                                            </div>
+                                                        </td>
                                                         <td className="px-4 py-3 text-sm text-(--text-secondary)">{word.albanian}</td>
                                                     </>
                                                 )}

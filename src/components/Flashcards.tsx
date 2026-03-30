@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
+import { getGermanDisplay, getGrammarSubtitle, WORD_TYPE_COLORS } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
 import { SpeakButton } from './SpeakButton';
@@ -137,13 +138,50 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
 
                         {languageMode === 'german' && (
                             <div className="absolute top-4 left-4">
-                                <SpeakButton text={currentWord.german} size={18} />
+                                <SpeakButton text={getGermanDisplay(currentWord)} size={18} />
                             </div>
                         )}
 
-                        <h2 className="text-4xl text-center mb-4">
-                            {languageMode === 'german' ? currentWord.german : currentWord.albanian}
-                        </h2>
+                        {/* Word type badge */}
+                        {currentWord.word_type && (
+                            <div
+                                className="absolute top-4 right-10"
+                                style={{
+                                    fontSize: '0.6rem',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.08em',
+                                    textTransform: 'uppercase',
+                                    color: WORD_TYPE_COLORS[currentWord.word_type],
+                                    opacity: 0.7,
+                                }}
+                            >
+                                {currentWord.word_type === 'noun' ? 'N' :
+                                 currentWord.word_type === 'verb' ? 'V' :
+                                 currentWord.word_type === 'adjective' ? 'Adj' : 'Expr'}
+                            </div>
+                        )}
+
+                        {languageMode === 'german' ? (
+                            <div className="flex flex-col items-center gap-1 mb-4">
+                                {/* Article (for nouns) shown small above */}
+                                {currentWord.word_type === 'noun' && currentWord.article && (
+                                    <span className="text-lg font-normal" style={{ color: WORD_TYPE_COLORS.noun, opacity: 0.85 }}>
+                                        {currentWord.article}
+                                    </span>
+                                )}
+                                <h2 className="text-4xl text-center m-0">
+                                    {currentWord.base || currentWord.german}
+                                </h2>
+                                {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
+                                {(() => { const sub = getGrammarSubtitle(currentWord); return sub ? (
+                                    <span className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>{sub}</span>
+                                ) : null; })()}
+                            </div>
+                        ) : (
+                            <h2 className="text-4xl text-center mb-4">
+                                {currentWord.albanian}
+                            </h2>
+                        )}
 
                         <motion.div
                             style={{ overflow: 'hidden' }}
@@ -151,7 +189,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                             animate={{ height: showTranslation ? 'auto' : 0, opacity: showTranslation ? 1 : 0 }}
                         >
                             <h3 className="text-2xl text-center font-normal" style={{ color: 'var(--accent-color)' }}>
-                                {languageMode === 'german' ? currentWord.albanian : currentWord.german}
+                                {languageMode === 'german' ? currentWord.albanian : getGermanDisplay(currentWord)}
                             </h3>
                         </motion.div>
 

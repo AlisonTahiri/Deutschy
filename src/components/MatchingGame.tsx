@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
+import { getGermanDisplay } from '../types';
 import { Timer, Trophy, RefreshCcw, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGermanSpeech } from '../hooks/useGermanSpeech';
@@ -77,7 +78,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
         const leftArr: CardSlot[] = slideWords.map((w): CardSlot => ({
             id: `de-${w.id}-${Date.now()}-${Math.random()}`,
             wordId: w.id,
-            text: w.german,
+            text: getGermanDisplay(w),  // "das Buch" for nouns, "sich gehen" for reflexive, etc.
             type: 'german',
             status: 'idle',
             isMatched: false,

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
+import { getGermanDisplay, WORD_TYPE_COLORS } from '../types';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import { SpeakButton } from './SpeakButton';
 
@@ -45,10 +46,14 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
     if (!currentWord) return null;
 
     const getTargetText = () => {
+        // Use base if available (just the core word, no article)
+        if (currentWord.base) return currentWord.base.trim();
+        // Legacy fallback: strip article prefix and slash notation
         let text = currentWord.german.trim();
-        if (text.includes('/')) {
-            text = text.split('/')[0].trim();
-        }
+        if (text.includes('/')) text = text.split('/')[0].trim();
+        // Strip leading article if present
+        const articleMatch = text.match(/^(?:der|die|das)\s+(.+)$/i);
+        if (articleMatch) return articleMatch[1].trim();
         return text;
     };
 
@@ -208,8 +213,12 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                             <div className="flex flex-col gap-2">
                                 <h3 style={{ color: 'var(--danger-color)' }}>{t('writing.incorrect')}</h3>
                                 <div className="flex items-center gap-2 justify-center">
-                                    <p className="m-0">{t('writing.correctTranslationIs')} <strong style={{ color: 'var(--accent-color)' }}>{currentWord.german}</strong></p>
-                                    <SpeakButton text={currentWord.german} size={16} />
+                                    {/* Show article + base for nouns, full display for others */}
+                                    {currentWord.word_type === 'noun' && currentWord.article && (
+                                        <span style={{ color: WORD_TYPE_COLORS.noun, fontWeight: 600 }}>{currentWord.article}</span>
+                                    )}
+                                    <p className="m-0">{t('writing.correctTranslationIs')} <strong style={{ color: 'var(--accent-color)' }}>{getTargetText()}</strong></p>
+                                    <SpeakButton text={getGermanDisplay(currentWord)} size={16} />
                                 </div>
                             </div>
                         )}
