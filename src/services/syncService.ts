@@ -70,6 +70,18 @@ export const syncService = {
                         id: w.id,
                         german: w.german,
                         albanian: w.albanian,
+                        // Grammar fields
+                        word_type: w.word_type ?? undefined,
+                        base: w.base ?? undefined,
+                        article: w.article ?? undefined,
+                        plural: w.plural ?? undefined,
+                        prateritum: w.prateritum ?? undefined,
+                        partizip: w.partizip ?? undefined,
+                        auxiliary: w.auxiliary ?? undefined,
+                        is_reflexive: w.is_reflexive ?? undefined,
+                        comparative: w.comparative ?? undefined,
+                        superlative: w.superlative ?? undefined,
+                        // MCQ
                         mcq: w.mcq_sentence ? {
                             sentence: w.mcq_sentence,
                             sentenceTranslation: w.mcq_sentence_translation || '',

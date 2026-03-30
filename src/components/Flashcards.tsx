@@ -163,14 +163,17 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
 
                         {languageMode === 'german' ? (
                             <div className="flex flex-col items-center gap-1 mb-4">
-                                {/* Article (for nouns) shown small above */}
-                                {currentWord.word_type === 'noun' && currentWord.article && (
-                                    <span className="text-lg font-normal" style={{ color: WORD_TYPE_COLORS.noun, opacity: 0.85 }}>
-                                        {currentWord.article}
-                                    </span>
-                                )}
-                                <h2 className="text-4xl text-center m-0">
-                                    {currentWord.base || currentWord.german}
+                                <h2 className="text-4xl text-center m-0 flex items-center justify-center gap-3">
+                                    {/* Article (for nouns) or reflexive (for verbs) */}
+                                    {currentWord.word_type === 'noun' && currentWord.article && (
+                                        <span style={{ color: WORD_TYPE_COLORS.noun, opacity: 0.85 }}>
+                                            {currentWord.article}
+                                        </span>
+                                    )}
+                                    {currentWord.word_type === 'verb' && currentWord.is_reflexive && (
+                                        <span style={{ color: WORD_TYPE_COLORS.verb, opacity: 0.85 }}>sich</span>
+                                    )}
+                                    <span>{currentWord.base || currentWord.german}</span>
                                 </h2>
                                 {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
                                 {(() => { const sub = getGrammarSubtitle(currentWord); return sub ? (
