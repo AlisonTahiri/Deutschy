@@ -45,7 +45,16 @@
     "containsInfo": "Përmban {{total}} fjalë në total në {{count}} pjesë.",
     "lessonParts": "Pjesët e Mësimit",
     "noParts": "Nuk ka pjesë të disponueshme për këtë mësim.",
-    "mastered": "zotëruar"
+    "mastered": "zotëruar",
+    "totalXP": "XP Totale",
+    "streak": "Ditë Radhazi",
+    "streakDays": "{{count}} ditë",
+    "todayWords": "Sot",
+    "todayWordsCount": "{{count}} fjalë",
+    "know": "Njoh",
+    "trying": "Po Provoj",
+    "newWords": "Të Reja",
+    "total": "Totale"
   },
   "matchingGame": {
     "title": "Loja e Përputhjes",
@@ -207,7 +216,7 @@
     "wordsLeft": "{{count}} fjalë të mbetura",
     "modes": {
       "flashcards": "Kartat e Kujtesës",
-      "flashcardsDesc": "Rrëshqitni djathtas nëse e dini. (Zhbllokon Përputhjen)",
+      "flashcardsDesc": "Mëso fjalët në të dyja drejtimet (GJE ↔ SHQ).",
       "matchingGame": "Loja e Përputhjes",
       "matchingGameDesc": "Zhbllokohet duke kaluar Kartat.",
       "multipleChoice": "Zgjedhje e Shumëfishtë",
@@ -224,6 +233,34 @@
       "recognition": "Njohje",
       "production": "Prodhim",
       "current": "Faza {{current}}: {{mode}}."
+    },
+    "flashcardsTitle": "Kartat e Kujtesës",
+    "flashcardsHint": "Mëso fjalët e reja. Mund të ndryshosh gjuhën (DE ↔ SQ) në çdo kohë me butonin sipër.",
+    "onboarding": {
+      "title": "Mirë se vini te Kartat! 👋",
+      "text": "Këtu mund të mësosh fjalët e reja. Këshillë: Për të shënuar një fjalë si 'Të mësuar' plotësisht dhe për ta shtuar te progresi yt, duhet ta gjesh saktë nga Shqipja në Gjermanisht. Ndrysho gjuhën kur të jesh gati!",
+      "gotIt": "E kuptova, vazhdojmë!"
+    },
+    "postLesson": {
+      "greatJob": "Punë e shkëlqyer! 🎉",
+      "partComplete": "Ke kaluar të gjitha kartat e kësaj pjese!",
+      "xpEarned": "+{{xp}} XP",
+      "reviewAgain": "Rishiko Përsëri",
+      "reviewAgainDesc": "Rinis kartat nga fillimi",
+      "nextPart": "Vazhdo {{part}}",
+      "nextPartDesc": "Kalo te pjesa tjetër",
+      "practiceAlToDe": "Praktiko SHQ → GJE",
+      "practiceAlToDeDesc": "Mësoji fjalët përgjithmonë",
+      "playGames": "Praktiko duke Luajtur",
+      "playGamesDesc": "Të gjitha lojërat janë të zhbllokuara!"
+    },
+    "congrats": {
+      "title": "Mësimi u Kompletua! 🏆",
+      "subtitle": "Ke mbaruar të gjitha pjesët e këtij mësimi!",
+      "xpEarned": "+{{xp}} XP të fituara",
+      "repeatLesson": "Përserit {{part}}",
+      "goHome": "Kthehu në Ekranin Kryesor",
+      "nextLesson": "Vazhdo Mësimin Tjetër"
     }
   }
 }

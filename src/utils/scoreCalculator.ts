@@ -1,42 +1,52 @@
 import type { ExerciseType } from '../types';
 
 /**
- * Calculates the new confidence score for a word based on the activity result.
- * @param currentScore The current confidence score (0 to 5)
- * @param isCorrect Whether the user answered correctly
- * @param activityType The type of exercise
- * @param usedHint Whether the user used a hint (treated as a penalty)
- * @returns The new confidence score (0 to 5)
+ * Confidence score is binary for flashcards:
+ *   0 = not yet learned (pass 2 not completed for this word)
+ *   1 = learned (got ✓ in the AL→DE pass)
+ *
+ * Games do NOT affect confidence score at all — they only give XP.
+ */
+export const CARD_MAX_SCORE = 1;
+export const CARD_LEARNED_THRESHOLD = 1;
+
+/**
+ * XP awarded per correct answer per activity type.
+ * Writing is hardest → most XP. Flashcards give a small reward for effort.
+ */
+export const XP_PER_ACTIVITY: Record<ExerciseType, number> = {
+    'flashcards': 2,
+    'matching-game': 3,
+    'multiple-choice': 4,
+    'writing': 7,
+    'mixed': 5,
+};
+
+/**
+ * Calculates the new confidence score for a word.
+ * ONLY flashcard correct answers in Pass 2 will ever change this.
+ * All other activities return currentScore unchanged.
  */
 export const calculateScoreUpdate = (
     currentScore: number,
     isCorrect: boolean,
     activityType: ExerciseType,
+): number => {
+    if (activityType !== 'flashcards') return currentScore; // games → no score change
+    if (!isCorrect) return currentScore;                    // wrong → no change, no penalty
+    return Math.min(CARD_MAX_SCORE, currentScore + 1);     // ✓ → 0 becomes 1 (learned)
+};
+
+/**
+ * Calculates XP earned for a single word interaction.
+ * @returns XP to award (0 if wrong)
+ */
+export const calculateXP = (
+    isCorrect: boolean,
+    activityType: ExerciseType,
     usedHint: boolean = false
 ): number => {
-    let newScore = currentScore;
-
-    if (!isCorrect || usedHint) {
-        // No penalty for mistakes anymore, just return current score
-        return currentScore;
-    } else {
-        // Reward for correct answers based on difficulty
-        switch (activityType) {
-            case 'flashcards':
-            case 'matching-game':
-            case 'multiple-choice':
-                // Cap at 4 for these modes
-                newScore = Math.min(4, currentScore + 1);
-                break;
-            case 'writing':
-            case 'mixed':
-                // Typing/production exercises give +2 since they are harder
-                newScore = Math.min(5, currentScore + 2);
-                break;
-            default:
-                newScore = Math.min(5, currentScore + 1);
-        }
-    }
-
-    return newScore;
+    if (!isCorrect) return 0;
+    const base = XP_PER_ACTIVITY[activityType] ?? 2;
+    return usedHint ? Math.floor(base / 2) : base;
 };

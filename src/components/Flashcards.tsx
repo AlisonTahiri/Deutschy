@@ -10,12 +10,14 @@ interface FlashcardsProps {
     words: ActiveWordPair[];
     initialIndex?: number;
     initialWordIds?: string[];
+    /** Force the starting language direction for this pass */
+    initialLanguageMode?: 'german' | 'albanian';
     onProgress?: (index: number, wordIds: string[]) => void;
-    onResult: (wordId: string, learned: boolean) => void;
-    onComplete: () => void;
+    onResult: (wordId: string, learned: boolean, languageMode: 'german' | 'albanian') => void;
+    onComplete: (completedLanguageMode: 'german' | 'albanian') => void;
 }
 
-export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress, onResult, onComplete }: FlashcardsProps) {
+export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLanguageMode, onProgress, onResult, onComplete }: FlashcardsProps) {
     const { t } = useTranslation();
     const [queue, setQueue] = useState<ActiveWordPair[]>(() => {
         if (initialWordIds && initialWordIds.length > 0) {
@@ -32,7 +34,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
     const [showTranslation, setShowTranslation] = useState(false);
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
     const [history, setHistory] = useState<{ index: number, pushedToQueue: boolean }[]>([]);
-    const [languageMode, setLanguageMode] = useState<'german' | 'albanian'>('german');
+    const [languageMode, setLanguageMode] = useState<'german' | 'albanian'>(initialLanguageMode ?? 'german');
 
     const currentWord = queue[currentIndex];
 
@@ -45,7 +47,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
         if (!currentWord) return;
         setDirection(learned ? 'right' : 'left');
         setTimeout(() => {
-            onResult(currentWord.id, learned);
+            onResult(currentWord.id, learned, languageMode);
             let nextQueue = [...queue];
             const pushedToQueue = !learned;
             if (pushedToQueue) nextQueue.push(currentWord);
@@ -60,7 +62,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                 onProgress(nextIndex, nextQueue.map(w => w.id));
             }
 
-            if (nextIndex >= nextQueue.length) onComplete();
+            if (nextIndex >= nextQueue.length) onComplete(languageMode);
         }, 300);
     };
 
@@ -98,12 +100,12 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, onProgress
                 <div className="flex flex-row justify-between items-center mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     <span>{t('flashcards.cardCount', { current: currentIndex + 1, total: queue.length })}</span>
                     <button
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg border text-xs cursor-pointer transition-colors"
-                        style={{ padding: '0.25rem 0.5rem', backgroundColor: 'transparent', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-[1.05] active:scale-95 shadow-sm"
+                        style={{ backgroundColor: 'var(--bg-accent-subtle)', borderColor: 'var(--accent-color)', color: 'var(--accent-color)' }}
                         onClick={() => setLanguageMode(prev => prev === 'german' ? 'albanian' : 'german')}
                     >
-                        <ArrowRightLeft size={14} />
-                        {languageMode === 'german' ? 'DE → AL' : 'AL → DE'}
+                        <ArrowRightLeft size={14} strokeWidth={2.5} />
+                        {languageMode === 'german' ? 'DE → SQ' : 'SQ → DE'}
                     </button>
                 </div>
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>

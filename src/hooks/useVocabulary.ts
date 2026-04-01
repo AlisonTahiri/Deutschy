@@ -30,7 +30,8 @@ export function useVocabulary() {
                             ...w,
                             status: rec ? rec.status : 'learning',
                             failCount: rec ? rec.fail_count : 0,
-                            confidenceScore: rec ? rec.confidence_score : 0
+                            confidenceScore: rec ? rec.confidence_score : 0,
+                            attemptsCount: rec ? rec.attempts_count : 0
                         };
                     });
                     return { ...lesson, words: activeWords };
@@ -39,7 +40,7 @@ export function useVocabulary() {
                 // If no user, just map defaults
                 activeLessons = rawLessons.map(lesson => ({
                     ...lesson,
-                    words: lesson.words.map(w => ({ ...w, status: 'learning', failCount: 0, confidenceScore: 0 }))
+                    words: lesson.words.map(w => ({ ...w, status: 'learning', failCount: 0, confidenceScore: 0, attemptsCount: 0 }))
                 }));
             }
 
@@ -71,7 +72,7 @@ export function useVocabulary() {
             const { words, ...staticLessonData } = lesson;
             const staticLesson: LocalLesson = {
                 ...staticLessonData,
-                words: words.map(({ status, failCount, confidenceScore, ...w }) => w)
+                words: words.map(({ status, failCount, confidenceScore, attemptsCount, ...w }) => w)
             };
             await dbService.saveLesson(staticLesson);
         } catch (err) {
@@ -90,7 +91,8 @@ export function useVocabulary() {
                 albanian: w.albanian,
                 status: 'learning',
                 failCount: 0,
-                confidenceScore: 0
+                confidenceScore: 0,
+                attemptsCount: 0
             }))
         };
         setLessons([...lessons, newLesson]);
@@ -147,7 +149,8 @@ export function useVocabulary() {
                     ...w, 
                     status: newStatus, 
                     failCount: newFailCount,
-                    confidenceScore: learned ? 5 : w.confidenceScore // Force 5 if explicitly marked learned
+                    confidenceScore: learned ? 5 : w.confidenceScore,
+                    attemptsCount: (w.attemptsCount || 0) + 1
                 };
             })
         };
@@ -205,7 +208,7 @@ export function useVocabulary() {
 
         const updated = {
             ...lessons[idx],
-            words: lessons[idx].words.map(w => ({ ...w, status: 'learning' as const, failCount: 0, confidenceScore: 0 }))
+            words: lessons[idx].words.map(w => ({ ...w, status: 'learning' as const, failCount: 0, confidenceScore: 0, attemptsCount: 0 }))
         };
         const next = [...lessons];
         next[idx] = updated;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
-import type { ExerciseType } from '../types';
+import type { ExerciseType, ActiveWordPair } from '../types';
 import { Flashcards } from './Flashcards';
 import { MultipleChoice } from './MultipleChoice';
 import { Writing } from './Writing';
@@ -10,74 +10,131 @@ import { Mixed } from './Mixed';
 import { MatchingGame } from './MatchingGame';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
-import { useLearningFlow } from '../hooks/useLearningFlow';
-import { useProgressManager } from '../hooks/useProgressManager';
-import { dbService } from '../services/db/provider';
+import { useProgressManager, getTotalXP, awardFlashcardXP } from '../hooks/useProgressManager';
 import { syncService } from '../services/syncService';
-import { ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { XP_PER_ACTIVITY } from '../utils/scoreCalculator';
+import {
+    ArrowLeft, Layers, PenTool, MessageSquare, Shuffle, Grid,
+    RefreshCw, ChevronRight, Gamepad2, Trophy, Home, RotateCcw,
+    CheckCircle2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg transition-all duration-300';
-const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
+const glass = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl shadow-lg transition-all duration-300';
+const btnSec = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
+const btnPri = 'inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm cursor-pointer transition-all duration-200 text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]';
+
+/**
+ * Two-pass learning flow:
+ *   pass1  → DE→AL  — review only, XP for effort, NO score change in DB
+ *   pass2  → AL→DE  — every ✓ marks the word as "learned" (score 0→1)
+ *
+ * After pass2: PostLessonScreen with 3 options.
+ * If no next part: CongratsScreen.
+ * From PostLesson → game-grid: all games unlocked, XP only.
+ */
+type ContainerMode =
+    | 'flashcards'       // Unified DE↔AL
+    | 'post-lesson'      // Completion screen
+    | 'congrats'         // Lesson fully done (no next part)
+    | 'game-grid'        // All games, unlocked
+    | 'multiple-choice'
+    | 'writing'
+    | 'mixed'
+    | 'matching-game';
 
 export function ExerciseContainer() {
     const { t } = useTranslation();
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
-    const { lessons, isLoading, resetLessonProgress } = useVocabulary();
+    const { lessons, isLoading } = useVocabulary();
     const { role, user } = useAuth();
     const { updateWordScore } = useProgressManager();
-    useLastActivity(); // Tracks activity automatically inside the hook logic
+    useLastActivity();
 
     const lesson = lessons.find(l => l.id === lessonId);
-    const [exerciseMode, setExerciseMode] = useState<ExerciseType | null>(null);
-    const [lastWordIndex, setLastWordIndex] = useState(0);
-    const [restoredWordIds, setRestoredWordIds] = useState<string[] | undefined>(undefined);
-    const [isRestoring, setIsRestoring] = useState(true);
-    
-    const wordsToPractice = lesson ? lesson.words : [];
-    const { currentStage, isFullyMastered, allowedActivities } = useLearningFlow(wordsToPractice);
+    const wordsToPractice: ActiveWordPair[] = lesson ? (lesson.words as ActiveWordPair[]) : [];
 
-    // Load Session State on Mount
+    // ── Always start at flashcards ─────────────────────────────────────────────
+    const [mode, setMode] = useState<ContainerMode>('flashcards');
+    const [sessionXP, setSessionXP] = useState(0);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [completedDirection, setCompletedDirection] = useState<'german' | 'albanian' | null>(null);
+
     useEffect(() => {
-        const loadSession = async () => {
-            if (!lessonId) return;
-            try {
-                const state = await dbService.getSessionState();
-                if (state && state.current_lesson_part_id === lessonId) {
-                    if (state.exercise_mode) setExerciseMode(state.exercise_mode);
-                    if (state.last_word_index) setLastWordIndex(state.last_word_index);
-                    if (state.word_ids) setRestoredWordIds(state.word_ids);
-                }
-            } catch (err) {
-                console.error("Failed to load session state", err);
-            } finally {
-                setIsRestoring(false);
-            }
-        };
-        loadSession();
-    }, [lessonId]);
+        if (mode === 'flashcards' && user && !user.user_metadata?.has_onboarded_flashcards) {
+            setShowOnboarding(true);
+        }
+    }, [mode, user]);
 
-    // Save Session State
-    const saveProgress = (mode: ExerciseType | null, index: number, wordIds?: string[]) => {
-        if (!lessonId) return;
-        dbService.saveSessionState({
-            id: 'current',
-            current_lesson_part_id: lessonId,
-            current_stage: currentStage,
-            last_word_index: index,
-            exercise_mode: mode,
-            word_ids: wordIds || restoredWordIds
-        }).catch(console.error);
+    const handleOnboardingDismiss = async () => {
+        setShowOnboarding(false);
+        if (user) {
+            await supabase.auth.updateUser({ data: { has_onboarded_flashcards: true } });
+        }
     };
 
-    // Auto-save stage/lesson changes
-    useEffect(() => {
-        if (lessonId && !isRestoring) {
-            saveProgress(exerciseMode, lastWordIndex);
-        }
-    }, [lessonId, currentStage, exerciseMode]);
+    // ── Find next part in same lesson (sorted numerically) ───────────────
+    const siblings = lesson?.lesson_id
+        ? lessons
+            .filter(l => l.lesson_id === lesson.lesson_id)
+            .sort((a, b) =>
+                (a.part_name || '').localeCompare(b.part_name || '', undefined, { numeric: true, sensitivity: 'base' })
+            )
+        : [];
+    const currentIdx = siblings.findIndex(p => p.id === lessonId);
+    const nextPart = currentIdx >= 0 && currentIdx < siblings.length - 1 ? siblings[currentIdx + 1] : null;
 
     const onExit = () => navigate('/');
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Result handlers
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Unified Flashcards result.
+     * DE->AL: Effort XP.
+     * AL->DE: Updates DB as learned if correct.
+     */
+    const handleFlashcardsResult = async (wordId: string, learned: boolean, languageMode: 'german' | 'albanian') => {
+        if (languageMode === 'german') {
+            if (learned) {
+                awardFlashcardXP(true);
+                setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
+            }
+        } else {
+            // AL -> DE counts strictly towards mastery
+            await updateWordScore(wordId, learned, 'flashcards');
+            if (learned) setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
+        }
+    };
+
+    /**
+     * Game result — XP only, score unchanged (calculateScoreUpdate returns currentScore for non-flashcards).
+     */
+    const handleGameResult = async (wordId: string, learned: boolean) => {
+        const type = mode as Exclude<ContainerMode, 'flashcards' | 'post-lesson' | 'congrats' | 'game-grid'>;
+        await updateWordScore(wordId, learned, type as ExerciseType);
+        if (learned) setSessionXP(prev => prev + (XP_PER_ACTIVITY[type as ExerciseType] ?? 2));
+    };
+
+    // ── Transition handlers ───────────────────────────────────────────────
+
+    const handleFlashcardsComplete = (completedLanguageMode: 'german' | 'albanian') => {
+        if (user?.id) syncService.pushPendingProgress(user.id).catch(console.error);
+        setCompletedDirection(completedLanguageMode);
+        setMode('post-lesson');
+    };
+
+    const handleGameComplete = () => {
+        if (user?.id) syncService.pushPendingProgress(user.id).catch(console.error);
+        setMode('game-grid');
+    };
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Guard: loading
+    // ════════════════════════════════════════════════════════════════════════
 
     if (isLoading) {
         return (
@@ -91,7 +148,7 @@ export function ExerciseContainer() {
         return (
             <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
                 <h2>{t('exercise.lessonNotFound')}</h2>
-                <button className={btnSecondary} onClick={onExit}>{t('common.goBack')}</button>
+                <button className={btnSec} onClick={onExit}>{t('common.goBack')}</button>
             </div>
         );
     }
@@ -99,100 +156,330 @@ export function ExerciseContainer() {
     const hasMCQs = lesson.words.some(w => !!w.mcq);
     const canDoQuiz = role === 'admin' || (!!lesson.isSupabaseSynced && hasMCQs);
 
-    const handleWordResult = async (wordId: string, learned: boolean) => {
-        if (!exerciseMode) return;
-        await updateWordScore(wordId, learned, exerciseMode, false);
-    };
+    // ── Shared header ─────────────────────────────────────────────────────
+    const renderHeader = (subtitle: string, onBack?: () => void) => (
+        <div className="flex flex-row items-center gap-3 mb-4">
+            <button className={`${btnSec} p-2!`} onClick={onBack ?? onExit}>
+                <ArrowLeft size={20} />
+            </button>
+            <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+                    {lesson.lesson_name || lesson.name}
+                </span>
+                <h3 className="m-0 text-base font-bold truncate">{lesson.part_name || lesson.name}</h3>
+            </div>
+            {/* Pass indicator badge */}
+            <span className="text-xs px-2 py-1 rounded-full font-semibold shrink-0"
+                style={{ background: 'var(--bg-accent-subtle)', color: 'var(--text-secondary)' }}>
+                {subtitle}
+            </span>
+        </div>
+    );
 
-    const handleExerciseComplete = () => {
-        setExerciseMode(null);
-        setLastWordIndex(0);
-        setRestoredWordIds(undefined);
-        saveProgress(null, 0);
-        if (user?.id) {
-            syncService.pushPendingProgress(user.id).catch(console.error);
-        }
-    };
+    // ── Pass hint strip ───────────────────────────────────────────────────
+    const renderPassHint = (hint: string, icon: React.ReactNode) => (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-xs font-medium"
+            style={{ background: 'var(--bg-accent-subtle)', color: 'var(--text-secondary)' }}>
+            {icon}
+            <span>{hint}</span>
+        </div>
+    );
 
-    if (!exerciseMode) {
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER: FLASHCARDS (unified)
+    // ════════════════════════════════════════════════════════════════════════
+    if (mode === 'flashcards') {
         return (
-            <div className="flex flex-col gap-8 px-4 py-6 w-full max-w-4xl mx-auto">
-                <div className="flex flex-row items-center gap-4 mb-4">
-                    <button className={`${btnSecondary} p-2!`} onClick={onExit}>
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2 className="m-0">{lesson.name}</h2>
+            <div className="flex flex-col px-4 py-4 w-full max-w-4xl mx-auto" style={{ height: '100%', display: 'flex' }}>
+                {renderHeader(t('exercise.flashcardsTitle'))}
+                {renderPassHint(t('exercise.flashcardsHint'), <CheckCircle2 size={14} style={{ color: 'var(--success-color)' }} />)}
+                <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Flashcards
+                        words={wordsToPractice}
+                        initialLanguageMode="german"
+                        onResult={handleFlashcardsResult}
+                        onComplete={handleFlashcardsComplete}
+                    />
                 </div>
-
-                {isFullyMastered && (
-                    <div
-                        className={`${glassPanel} text-center flex flex-col items-center justify-center gap-2`}
-                        style={{ padding: '1.5rem', borderColor: 'var(--success-color)', backgroundColor: 'var(--bg-accent-subtle)' }}
-                    >
-                        <h3 className="m-0" style={{ color: 'var(--success-color)' }}>{t('exercise.allMastered')}</h3>
-                        <p className="m-0" style={{ color: 'var(--text-secondary)' }}>{t('exercise.practiceAgain')}</p>
-                        <button className={`${btnSecondary} mt-2`} onClick={() => resetLessonProgress(lesson.id)}>
-                            {t('exercise.resetProgress')}
-                        </button>
+                {showOnboarding && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="bg-(--bg-card) p-6 rounded-3xl max-w-md w-full shadow-2xl border border-(--border-card)"
+                        >
+                            <h3 className="text-xl font-bold mb-3">{t('exercise.onboarding.title')}</h3>
+                            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                {t('exercise.onboarding.text')}
+                            </p>
+                            <button
+                                className={`${btnPri} w-full`}
+                                onClick={handleOnboardingDismiss}
+                            >
+                                {t('exercise.onboarding.gotIt')}
+                            </button>
+                        </motion.div>
                     </div>
                 )}
+            </div>
+        );
+    }
 
-                <p className="text-center" style={{ color: 'var(--text-secondary)' }}>
-                    {isFullyMastered ? t('exercise.practiceAgain') : t('exercise.stages.current', { current: currentStage, mode: currentStage === 1 ? t('exercise.stages.discovery') : currentStage === 2 ? t('exercise.stages.recognition') : t('exercise.stages.production') })} {t('exercise.chooseActivity')}
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER: POST-LESSON
+    // ════════════════════════════════════════════════════════════════════════
+    if (mode === 'post-lesson') {
+        return (
+            <div className="flex flex-col px-4 py-4 w-full max-w-xl mx-auto gap-5">
+                {renderHeader('✓')}
+                <AnimatePresence>
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                        className="flex flex-col items-center gap-3 text-center pt-2"
+                    >
+                        <div className="text-6xl">🎉</div>
+                        <h2 className="m-0 text-2xl font-bold">{t('exercise.postLesson.greatJob')}</h2>
+                        <p className="m-0 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            {t('exercise.postLesson.partComplete')}
+                        </p>
+                        {sessionXP > 0 && (
+                            <span className="px-4 py-1.5 rounded-full text-sm font-bold"
+                                style={{ background: 'var(--bg-accent-subtle)', color: 'var(--accent-color)' }}>
+                                ⚡ +{sessionXP} XP
+                            </span>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+
+                <div className="flex flex-col gap-3 w-full mt-1">
+                    {/* Review again → restart from pass1 */}
+                    <motion.button
+                        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
+                        className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
+                        style={{ padding: '1.25rem 1.5rem' }}
+                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                    >
+                        <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--bg-accent-subtle)' }}>
+                            <RefreshCw size={22} color="var(--accent-color)" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-base">{t('exercise.postLesson.reviewAgain')}</span>
+                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                {t('exercise.postLesson.reviewAgainDesc')}
+                            </span>
+                        </div>
+                    </motion.button>
+
+                    {/* Prompt to mark strictly as learned if they just did DE->AL */}
+                    {completedDirection === 'german' && (
+                        <motion.button
+                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
+                            className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
+                            style={{ padding: '1.25rem 1.5rem' }}
+                            onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                        >
+                            <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--success-color)' }}>
+                                <CheckCircle2 size={22} color="white" />
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-base">{t('exercise.postLesson.practiceAlToDe')}</span>
+                                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                    {t('exercise.postLesson.practiceAlToDeDesc', '✔ Mëso përgjithmonë')}
+                                </span>
+                            </div>
+                        </motion.button>
+                    )}
+
+                    {/* Continue to next part OR show congrats */}
+                    {nextPart ? (
+                        <motion.button
+                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}
+                            className={`${btnPri} w-full flex-row justify-start gap-4`}
+                            style={{ background: 'var(--accent-color)', padding: '1rem 1.5rem', borderRadius: '1rem' }}
+                            onClick={() => navigate(`/exercise/${nextPart.id}`)}
+                        >
+                            <ChevronRight size={20} />
+                            <div className="flex flex-col items-start gap-0.5">
+                                <span className="font-bold text-base leading-tight">
+                                    {t('exercise.postLesson.nextPart', { part: nextPart.part_name || nextPart.name })}
+                                </span>
+                                <span className="text-xs opacity-80">{t('exercise.postLesson.nextPartDesc')}</span>
+                            </div>
+                        </motion.button>
+                    ) : (
+                        <motion.button
+                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}
+                            className={`${btnPri} w-full`}
+                            style={{ background: 'var(--success-color)', padding: '1rem 1.5rem', borderRadius: '1rem' }}
+                            onClick={() => setMode('congrats')}
+                        >
+                            <Trophy size={20} />
+                            <span className="font-bold">{t('exercise.congrats.title')}</span>
+                        </motion.button>
+                    )}
+
+                    {/* Practice with games */}
+                    <motion.button
+                        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.26 }}
+                        className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
+                        style={{ padding: '1.25rem 1.5rem', borderColor: 'var(--warning-color)' }}
+                        onClick={() => setMode('game-grid')}
+                    >
+                        <div className="rounded-xl p-3 shrink-0"
+                            style={{ background: 'color-mix(in srgb, var(--warning-color) 15%, transparent)' }}>
+                            <Gamepad2 size={22} color="var(--warning-color)" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-base">{t('exercise.postLesson.playGames')}</span>
+                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                {t('exercise.postLesson.playGamesDesc')}
+                            </span>
+                        </div>
+                    </motion.button>
+                </div>
+            </div>
+        );
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER: CONGRATS (lesson fully done)
+    // ════════════════════════════════════════════════════════════════════════
+    if (mode === 'congrats') {
+        return (
+            <div className="flex flex-col px-4 py-4 w-full max-w-xl mx-auto gap-5">
+                {renderHeader('🏆')}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 240, damping: 20 }}
+                    className="flex flex-col items-center gap-4 text-center py-4"
+                >
+                    <div className="text-7xl">🏆</div>
+                    <h2 className="m-0 text-2xl font-bold">{t('exercise.congrats.title')}</h2>
+                    <p className="m-0 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        {lesson.lesson_name || lesson.name} — {t('exercise.congrats.subtitle')}
+                    </p>
+                    <div className="flex gap-3 flex-wrap justify-center mt-1">
+                        <span className="px-4 py-2 rounded-full text-sm font-bold"
+                            style={{ background: 'var(--bg-accent-subtle)', color: 'var(--accent-color)' }}>
+                            ⚡ +{sessionXP} XP
+                        </span>
+                        <span className="px-4 py-2 rounded-full text-sm font-bold"
+                            style={{ background: 'var(--bg-accent-subtle)', color: 'var(--text-secondary)' }}>
+                            {getTotalXP().toLocaleString()} XP total
+                        </span>
+                    </div>
+                </motion.div>
+
+                <div className="flex flex-col gap-3 w-full">
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+                        className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
+                        style={{ padding: '1.25rem 1.5rem' }}
+                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                    >
+                        <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--bg-accent-subtle)' }}>
+                            <RotateCcw size={22} color="var(--accent-color)" />
+                        </div>
+                        <span className="font-bold text-base">
+                            {t('exercise.congrats.repeatLesson', { part: lesson.part_name || lesson.name })}
+                        </span>
+                    </motion.button>
+
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                        className={`${btnPri} w-full`}
+                        style={{ background: 'var(--accent-color)', padding: '1rem 1.5rem', borderRadius: '1rem' }}
+                        onClick={onExit}
+                    >
+                        <Home size={20} />
+                        <span>{t('exercise.congrats.goHome')}</span>
+                    </motion.button>
+
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+                        className={`${glass} flex flex-row items-center justify-center gap-3 cursor-pointer hover:scale-[1.01]`}
+                        style={{ padding: '1rem 1.5rem', borderColor: 'var(--success-color)' }}
+                        onClick={onExit}
+                    >
+                        <ChevronRight size={20} color="var(--success-color)" />
+                        <span className="font-bold text-base" style={{ color: 'var(--success-color)' }}>
+                            {t('exercise.congrats.nextLesson')}
+                        </span>
+                    </motion.button>
+                </div>
+            </div>
+        );
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER: GAME GRID
+    // ════════════════════════════════════════════════════════════════════════
+    if (mode === 'game-grid') {
+        return (
+            <div className="flex flex-col gap-5 px-4 py-4 w-full max-w-4xl mx-auto">
+                {renderHeader(t('exercise.postLesson.playGames'), () => setMode('post-lesson'))}
+                <p className="text-center text-sm m-0" style={{ color: 'var(--text-secondary)' }}>
+                    {t('exercise.postLesson.playGamesDesc')}
                 </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('flashcards') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
-                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => allowedActivities.includes('flashcards') && setExerciseMode('flashcards')}
+                        className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
                     >
                         <Layers size={32} color="var(--accent-color)" />
-                        <h3>{t('exercise.modes.flashcards')}</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.flashcardsDesc')}</span>
+                        <h3 className="m-0">{t('exercise.modes.flashcards')}</h3>
+                        <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                            +{XP_PER_ACTIVITY['flashcards']} XP/{t('home.words')}
+                        </span>
                     </button>
 
                     <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('matching-game') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
-                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => allowedActivities.includes('matching-game') && setExerciseMode('matching-game')}
+                        className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                        onClick={() => setMode('matching-game')}
                     >
                         <Grid size={32} color="var(--accent-color)" />
-                        <h3>{t('exercise.modes.matchingGame')}</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.matchingGameDesc')}</span>
+                        <h3 className="m-0">{t('exercise.modes.matchingGame')}</h3>
+                        <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                            +{XP_PER_ACTIVITY['matching-game']} XP/{t('home.words')}
+                        </span>
                     </button>
 
                     {canDoQuiz && (
                         <button
-                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('multiple-choice') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
-                            style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                            onClick={() => allowedActivities.includes('multiple-choice') && setExerciseMode('multiple-choice')}
+                            className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                            onClick={() => setMode('multiple-choice')}
                         >
                             <MessageSquare size={32} color="var(--success-color)" />
-                            <h3>{t('exercise.modes.multipleChoice')}</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.multipleChoiceDesc')}</span>
+                            <h3 className="m-0">{t('exercise.modes.multipleChoice')}</h3>
+                            <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                                +{XP_PER_ACTIVITY['multiple-choice']} XP/{t('home.words')}
+                            </span>
                         </button>
                     )}
 
                     <button
-                        className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('writing') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
-                        style={{ padding: '2rem 1rem', height: '100%', borderColor: 'var(--border-color)' }}
-                        onClick={() => allowedActivities.includes('writing') && setExerciseMode('writing')}
+                        className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                        onClick={() => setMode('writing')}
                     >
                         <PenTool size={32} color="var(--warning-color)" />
-                        <h3>{t('exercise.modes.writing')}</h3>
-                        <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.writingDesc')}</span>
+                        <h3 className="m-0">{t('exercise.modes.writing')}</h3>
+                        <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                            +{XP_PER_ACTIVITY['writing']} XP/{t('home.words')} ⭐
+                        </span>
                     </button>
 
                     {canDoQuiz && (
                         <button
-                            className={`${glassPanel} flex flex-col items-center justify-center gap-2 cursor-pointer transition-transform ${allowedActivities.includes('mixed') ? 'hover:scale-[1.02]' : 'opacity-50 grayscale'}`}
-                            style={{ padding: '2rem 1rem', height: '100%', backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))' }}
-                            onClick={() => allowedActivities.includes('mixed') && setExerciseMode('mixed')}
+                            className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                            style={{ backgroundImage: 'linear-gradient(45deg, rgba(88,166,255,0.05), rgba(46,160,67,0.05))' }}
+                            onClick={() => setMode('mixed')}
                         >
                             <Shuffle size={32} color="var(--text-primary)" />
-                            <h3>{t('exercise.modes.mixed')}</h3>
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{t('exercise.modes.mixedDesc')}</span>
+                            <h3 className="m-0">{t('exercise.modes.mixed')}</h3>
+                            <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                                +{XP_PER_ACTIVITY['mixed']} XP/{t('home.words')}
+                            </span>
                         </button>
                     )}
                 </div>
@@ -200,72 +487,50 @@ export function ExerciseContainer() {
         );
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // RENDER: INDIVIDUAL GAME
+    // ════════════════════════════════════════════════════════════════════════
     return (
         <div className="flex flex-col px-4 py-4 w-full max-w-4xl mx-auto" style={{ height: '100%', display: 'flex' }}>
             <div className="flex flex-row items-center gap-2 flex-wrap mb-4">
-                <button className={`${btnSecondary} p-[0.4rem]!`} onClick={() => setExerciseMode(null)}>
+                <button className={`${btnSec} p-[0.4rem]!`} onClick={() => setMode('game-grid')}>
                     <ArrowLeft size={20} />
                 </button>
                 <h3 className="m-0 flex-1 text-xl">
-                    {exerciseMode === 'flashcards' && t('exercise.modes.flashcards')}
-                    {exerciseMode === 'multiple-choice' && t('exercise.modes.multipleChoice')}
-                    {exerciseMode === 'writing' && t('exercise.modes.writingPractice')}
-                    {exerciseMode === 'mixed' && t('exercise.modes.mixedPractice')}
-                    {exerciseMode === 'matching-game' && t('exercise.modes.matchingGame')}
+                    {mode === 'multiple-choice' && t('exercise.modes.multipleChoice')}
+                    {mode === 'writing' && t('exercise.modes.writingPractice')}
+                    {mode === 'mixed' && t('exercise.modes.mixedPractice')}
+                    {mode === 'matching-game' && t('exercise.modes.matchingGame')}
                 </h3>
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {t('exercise.wordsLeft', { count: wordsToPractice.length })}
+                <span className="text-xs px-2 py-1 rounded-full font-semibold"
+                    style={{ background: 'var(--bg-accent-subtle)', color: 'var(--accent-color)' }}>
+                    +{XP_PER_ACTIVITY[mode as ExerciseType] ?? 2} XP/{t('home.words')}
                 </span>
             </div>
 
             <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                {exerciseMode === 'flashcards' && (
-                    <Flashcards 
-                        words={wordsToPractice} 
-                        initialIndex={lastWordIndex}
-                        initialWordIds={restoredWordIds}
-                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('flashcards', idx, ids); }}
-                        onResult={handleWordResult} 
-                        onComplete={handleExerciseComplete} 
+                {mode === 'multiple-choice' && (
+                    <MultipleChoice
+                        words={wordsToPractice} initialIndex={0} initialWordIds={undefined}
+                        onProgress={() => {}} onResult={handleGameResult} onComplete={handleGameComplete}
                     />
                 )}
-                {exerciseMode === 'multiple-choice' && (
-                    <MultipleChoice 
-                        words={wordsToPractice} 
-                        initialIndex={lastWordIndex}
-                        initialWordIds={restoredWordIds}
-                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('multiple-choice', idx, ids); }}
-                        onResult={handleWordResult} 
-                        onComplete={handleExerciseComplete} 
+                {mode === 'writing' && (
+                    <Writing
+                        words={wordsToPractice} initialIndex={0} initialWordIds={undefined}
+                        onProgress={() => {}} onResult={handleGameResult} onComplete={handleGameComplete}
                     />
                 )}
-                {exerciseMode === 'writing' && (
-                    <Writing 
-                        words={wordsToPractice} 
-                        initialIndex={lastWordIndex}
-                        initialWordIds={restoredWordIds}
-                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('writing', idx, ids); }}
-                        onResult={handleWordResult} 
-                        onComplete={handleExerciseComplete} 
+                {mode === 'mixed' && (
+                    <Mixed
+                        words={wordsToPractice} initialIndex={0} initialWordIds={undefined}
+                        onProgress={() => {}} onResult={handleGameResult} onComplete={handleGameComplete}
                     />
                 )}
-                {exerciseMode === 'mixed' && (
-                    <Mixed 
-                        words={wordsToPractice} 
-                        initialIndex={lastWordIndex}
-                        initialWordIds={restoredWordIds}
-                        onProgress={(idx: number, ids: string[]) => { setLastWordIndex(idx); if (ids) setRestoredWordIds(ids); saveProgress('mixed', idx, ids); }}
-                        onResult={handleWordResult} 
-                        onComplete={handleExerciseComplete} 
-                    />
-                )}
-                {exerciseMode === 'matching-game' && (
-                    <MatchingGame 
-                        words={wordsToPractice} 
-                        initialSlideIndex={lastWordIndex}
-                        onProgress={(idx: number) => { setLastWordIndex(idx); saveProgress('matching-game', idx); }}
-                        onResult={handleWordResult} 
-                        onComplete={handleExerciseComplete} 
+                {mode === 'matching-game' && (
+                    <MatchingGame
+                        words={wordsToPractice} initialSlideIndex={0}
+                        onProgress={() => {}} onResult={handleGameResult} onComplete={handleGameComplete}
                     />
                 )}
             </div>

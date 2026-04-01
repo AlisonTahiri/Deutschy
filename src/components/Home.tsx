@@ -4,8 +4,9 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight, Award, BookOpen, Star, TrendingUp } from 'lucide-react';
+import { Play, ChevronRight, Award, BookOpen, Star, TrendingUp, Zap, Flame } from 'lucide-react';
 import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
+import { getTotalXP, getStreak } from '../hooks/useProgressManager';
 import {
     Block,
     BlockTitle,
@@ -115,25 +116,28 @@ export function Home() {
     const clearAll = () => setViewState({ levelId: null, lessonId: null });
     const clearToLevel = () => setViewState(prev => ({ ...prev, lessonId: null }));
 
-    // Helper to calculate progress based on confidence scores
+    // Progress = % of words that are "learned" (score >= 1, i.e. passed both flashcard passes)
     const calculateProgress = (parts: ActiveLesson[]) => {
-        let totalScore = 0;
+        let learnedCount = 0;
         let totalWords = 0;
         parts.forEach(p => {
             p.words.forEach((w: ActiveWordPair) => {
-                totalScore += w.confidenceScore || 0;
+                if (w.status === 'learned' || (w.confidenceScore || 0) >= 1) learnedCount++;
                 totalWords++;
             });
         });
-        return totalWords === 0 ? 0 : totalScore / (totalWords * 5);
+        return totalWords === 0 ? 0 : learnedCount / totalWords;
     };
 
     const dashboardMetrics = useMemo(() => {
         const words = allParts.flatMap(p => p.words);
-        const learned = words.filter(w => w.status === 'learned' || w.confidenceScore === 5).length;
         const total = words.length;
-        const overallMastery = calculateProgress(allParts);
-        const introduced = words.filter(w => (w.confidenceScore || 0) > 0 || (w.failCount || 0) > 0).length;
+        // ✅ Know = status is 'learned'
+        const know = words.filter(w => w.status === 'learned' || (w.confidenceScore || 0) >= 1).length;
+        // 📖 Trying = has progress but not yet learned
+        const trying = words.filter(w => (w.status === 'learning' || !w.status) && (w.attemptsCount || 0) > 0 && (w.confidenceScore || 0) < 1).length;
+        // 🆕 New = no attempts yet
+        const newWords = words.filter(w => !w.status && (w.attemptsCount || 0) === 0 && (w.confidenceScore || 0) === 0).length;
 
         // Current lesson progress if applicable
         let currentLessonName = '';
@@ -152,7 +156,7 @@ export function Home() {
             }
         }
 
-        return { learned, total, overallMastery, introduced, currentLessonName, currentLessonProgress };
+        return { know, trying, newWords, total, currentLessonName, currentLessonProgress };
     }, [allParts, lastActivityPath, lessonsMap]);
 
     if (isLoading) {
@@ -190,30 +194,55 @@ export function Home() {
                     <TrendingUp className="text-(--accent-color)" size={20} />
                     <h2 className="m-0 text-lg font-bold">{t('home.yourProgress', { defaultValue: 'Progresi Juaj' })}</h2>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    {/* ✅ Know */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl border border-(--border-card)"
+                        style={{ background: 'color-mix(in srgb, var(--success-color) 12%, var(--bg-card))' }}>
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Star size={12} /> {t('home.mastery')}
+                            <Award size={12} color="var(--success-color)" /> {t('home.know')}
                         </span>
-                        <span className="text-xl font-bold">{Math.round(dashboardMetrics.overallMastery * 100)}%</span>
+                        <span className="text-xl font-bold" style={{ color: 'var(--success-color)' }}>
+                            {dashboardMetrics.know}
+                        </span>
                     </div>
-                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                    {/* 📖 Trying */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Award size={12} /> {t('home.learned')}
+                            <BookOpen size={12} /> {t('home.trying')}
                         </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.learned} / {dashboardMetrics.total}</span>
+                        <span className="text-xl font-bold">{dashboardMetrics.trying}</span>
                     </div>
-                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                    {/* 🆕 New */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <BookOpen size={12} /> {t('home.introduced')}
+                            <Star size={12} /> {t('home.newWords')}
                         </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.introduced}</span>
+                        <span className="text-xl font-bold">{dashboardMetrics.newWords}</span>
                     </div>
-                    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                    {/* ⚡ XP */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
                         <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Play size={12} /> {t('home.inReview')}
+                            <Zap size={12} /> {t('home.totalXP')}
                         </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.introduced - dashboardMetrics.learned}</span>
+                        <span className="text-xl font-bold" style={{ color: 'var(--accent-color)' }}>
+                            {getTotalXP().toLocaleString()}
+                        </span>
+                    </div>
+                    {/* 🔥 Streak */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <Flame size={12} /> {t('home.streak')}
+                        </span>
+                        <span className="text-xl font-bold" style={{ color: 'var(--warning-color)' }}>
+                            {getStreak().count > 0 ? `🔥${getStreak().count}` : '—'}
+                        </span>
+                    </div>
+                    {/* 📊 Total */}
+                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
+                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
+                            <Play size={12} /> {t('home.total')}
+                        </span>
+                        <span className="text-xl font-bold">{dashboardMetrics.total}</span>
                     </div>
                 </div>
 
@@ -225,7 +254,9 @@ export function Home() {
                         <div className="flex justify-between items-center mb-2">
                             <div className="flex flex-col">
                                 <span className="text-sm font-semibold">{t('home.activeLesson')}: {dashboardMetrics.currentLessonName}</span>
-                                <span className="text-xs text-(--accent-color) mt-1 font-bold">{Math.round(dashboardMetrics.currentLessonProgress * 100)}% {t('home.masteryLabel')}</span>
+                                <span className="text-xs mt-1 font-bold" style={{ color: 'var(--success-color)' }}>
+                                    {dashboardMetrics.know} {t('home.know').toLowerCase()} · {Math.round(dashboardMetrics.currentLessonProgress * 100)}% {t('home.masteryLabel')}
+                                </span>
                             </div>
                             <Button 
                                 small 

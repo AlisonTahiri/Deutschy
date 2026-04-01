@@ -99,6 +99,7 @@ export interface ActiveWordPair extends WordPair {
   status: 'learning' | 'learned';
   failCount: number;
   confidenceScore: number;
+  attemptsCount: number;
 }
 
 export interface UserWordProgress {
