@@ -235,7 +235,6 @@
       "current": "Faza {{current}}: {{mode}}."
     },
     "flashcardsTitle": "Kartat e Kujtesës",
-    "flashcardsHint": "Mëso fjalët e reja. Mund të ndryshosh gjuhën (DE ↔ SQ) në çdo kohë me butonin sipër.",
     "onboarding": {
       "title": "Mirë se vini te Kartat! 👋",
       "text": "Këtu mund të mësosh fjalët e reja. Këshillë: Për të shënuar një fjalë si 'Të mësuar' plotësisht dhe për ta shtuar te progresi yt, duhet ta gjesh saktë nga Shqipja në Gjermanisht. Ndrysho gjuhën kur të jesh gati!",
@@ -251,8 +250,7 @@
       "nextPartDesc": "Kalo te pjesa tjetër",
       "practiceAlToDe": "Praktiko SHQ → GJE",
       "practiceAlToDeDesc": "Mësoji fjalët përgjithmonë",
-      "playGames": "Praktiko duke Luajtur",
-      "playGamesDesc": "Të gjitha lojërat janë të zhbllokuara!"
+      "playGames": "Praktiko duke Luajtur"
     },
     "congrats": {
       "title": "Mësimi u Kompletua! 🏆",

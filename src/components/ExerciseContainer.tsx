@@ -56,11 +56,55 @@ export function ExerciseContainer() {
     const lesson = lessons.find(l => l.id === lessonId);
     const wordsToPractice: ActiveWordPair[] = lesson ? (lesson.words as ActiveWordPair[]) : [];
 
-    // ── Always start at flashcards ─────────────────────────────────────────────
-    const [mode, setMode] = useState<ContainerMode>('flashcards');
-    const [sessionXP, setSessionXP] = useState(0);
+    // ── Session Persistence ─────────────────────────────────────────────
+    const getSavedSession = () => {
+        try {
+            const saved = localStorage.getItem(`session_${lessonId}`);
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return null;
+    };
+
+    const savedSession = getSavedSession();
+    const [mode, setMode] = useState<ContainerMode>(savedSession?.mode || 'flashcards');
+    const [sessionXP, setSessionXP] = useState<number>(savedSession?.sessionXP || 0);
+    const [completedDirection, setCompletedDirection] = useState<'german' | 'albanian' | null>(savedSession?.completedDirection || null);
+
+    useEffect(() => {
+        if (!lessonId) return;
+        localStorage.setItem(`session_${lessonId}`, JSON.stringify({ mode, sessionXP, completedDirection }));
+    }, [lessonId, mode, sessionXP, completedDirection]);
+
     const [showOnboarding, setShowOnboarding] = useState(false);
-    const [completedDirection, setCompletedDirection] = useState<'german' | 'albanian' | null>(null);
+    // ── Flashcards Persistence ───────────────────────────────────────────
+    const [flashcardsIndex, setFlashcardsIndex] = useState(() => {
+        const saved = localStorage.getItem(`flashcards_${lessonId}`);
+        if (saved) {
+            try { return JSON.parse(saved).index; } catch {}
+        }
+        return 0;
+    });
+
+    const [flashcardsQueue, setFlashcardsQueue] = useState<string[]>(() => {
+        const saved = localStorage.getItem(`flashcards_${lessonId}`);
+        if (saved) {
+            try { return JSON.parse(saved).wordIds; } catch {}
+        }
+        return [];
+    });
+
+    const handleFlashcardProgress = (index: number, wordIds: string[]) => {
+        if (!lessonId) return;
+        setFlashcardsIndex(index);
+        setFlashcardsQueue(wordIds);
+        localStorage.setItem(`flashcards_${lessonId}`, JSON.stringify({ index, wordIds }));
+    };
+
+    const clearFlashcardPersistence = () => {
+        if (lessonId) localStorage.removeItem(`flashcards_${lessonId}`);
+        setFlashcardsIndex(0);
+        setFlashcardsQueue([]);
+    };
 
     useEffect(() => {
         if (mode === 'flashcards' && user && !user.user_metadata?.has_onboarded_flashcards) {
@@ -125,6 +169,7 @@ export function ExerciseContainer() {
         if (user?.id) syncService.pushPendingProgress(user.id).catch(console.error);
         setCompletedDirection(completedLanguageMode);
         setMode('post-lesson');
+        clearFlashcardPersistence();
     };
 
     const handleGameComplete = () => {
@@ -176,14 +221,6 @@ export function ExerciseContainer() {
         </div>
     );
 
-    // ── Pass hint strip ───────────────────────────────────────────────────
-    const renderPassHint = (hint: string, icon: React.ReactNode) => (
-        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-xs font-medium"
-            style={{ background: 'var(--bg-accent-subtle)', color: 'var(--text-secondary)' }}>
-            {icon}
-            <span>{hint}</span>
-        </div>
-    );
 
     // ════════════════════════════════════════════════════════════════════════
     // RENDER: FLASHCARDS (unified)
@@ -192,11 +229,14 @@ export function ExerciseContainer() {
         return (
             <div className="flex flex-col px-4 py-4 w-full max-w-4xl mx-auto" style={{ height: '100%', display: 'flex' }}>
                 {renderHeader(t('exercise.flashcardsTitle'))}
-                {renderPassHint(t('exercise.flashcardsHint'), <CheckCircle2 size={14} style={{ color: 'var(--success-color)' }} />)}
                 <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <Flashcards
+                        key={lessonId}
                         words={wordsToPractice}
+                        initialIndex={flashcardsIndex}
+                        initialWordIds={flashcardsQueue}
                         initialLanguageMode="german"
+                        onProgress={handleFlashcardProgress}
                         onResult={handleFlashcardsResult}
                         onComplete={handleFlashcardsComplete}
                     />
@@ -258,7 +298,11 @@ export function ExerciseContainer() {
                         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                         className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
                         style={{ padding: '1.25rem 1.5rem' }}
-                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                        onClick={() => { 
+                            clearFlashcardPersistence();
+                            setMode('flashcards'); 
+                            setSessionXP(0); 
+                        }}
                     >
                         <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--bg-accent-subtle)' }}>
                             <RefreshCw size={22} color="var(--accent-color)" />
@@ -277,7 +321,11 @@ export function ExerciseContainer() {
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
                             className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
                             style={{ padding: '1.25rem 1.5rem' }}
-                            onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                            onClick={() => { 
+                            clearFlashcardPersistence();
+                            setMode('flashcards'); 
+                            setSessionXP(0); 
+                        }}
                         >
                             <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--success-color)' }}>
                                 <CheckCircle2 size={22} color="white" />
@@ -332,9 +380,6 @@ export function ExerciseContainer() {
                         </div>
                         <div className="flex flex-col gap-0.5">
                             <span className="font-bold text-base">{t('exercise.postLesson.playGames')}</span>
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                {t('exercise.postLesson.playGamesDesc')}
-                            </span>
                         </div>
                     </motion.button>
                 </div>
@@ -376,7 +421,11 @@ export function ExerciseContainer() {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
                         className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
                         style={{ padding: '1.25rem 1.5rem' }}
-                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                        onClick={() => { 
+                            clearFlashcardPersistence();
+                            setMode('flashcards'); 
+                            setSessionXP(0); 
+                        }}
                     >
                         <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--bg-accent-subtle)' }}>
                             <RotateCcw size={22} color="var(--accent-color)" />
@@ -419,13 +468,14 @@ export function ExerciseContainer() {
         return (
             <div className="flex flex-col gap-5 px-4 py-4 w-full max-w-4xl mx-auto">
                 {renderHeader(t('exercise.postLesson.playGames'), () => setMode('post-lesson'))}
-                <p className="text-center text-sm m-0" style={{ color: 'var(--text-secondary)' }}>
-                    {t('exercise.postLesson.playGamesDesc')}
-                </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     <button
                         className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
-                        onClick={() => { setMode('flashcards'); setSessionXP(0); }}
+                        onClick={() => { 
+                            clearFlashcardPersistence();
+                            setMode('flashcards'); 
+                            setSessionXP(0); 
+                        }}
                     >
                         <Layers size={32} color="var(--accent-color)" />
                         <h3 className="m-0">{t('exercise.modes.flashcards')}</h3>

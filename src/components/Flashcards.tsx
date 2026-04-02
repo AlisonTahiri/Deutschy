@@ -163,39 +163,65 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                             </div>
                         )}
 
-                        {languageMode === 'german' ? (
-                            <div className="flex flex-col items-center gap-1 mb-4">
-                                <h2 className="text-4xl text-center m-0 flex items-center justify-center gap-3">
-                                    {/* Article (for nouns) or reflexive (for verbs) */}
-                                    {currentWord.word_type === 'noun' && currentWord.article && (
-                                        <span style={{ color: WORD_TYPE_COLORS.noun, opacity: 0.85 }}>
-                                            {currentWord.article}
-                                        </span>
-                                    )}
-                                    {currentWord.word_type === 'verb' && currentWord.is_reflexive && (
-                                        <span style={{ color: WORD_TYPE_COLORS.verb, opacity: 0.85 }}>sich</span>
-                                    )}
-                                    <span>{currentWord.base || currentWord.german}</span>
+                        {(() => {
+                            const mainWord = languageMode === 'german' ? (currentWord.base || currentWord.german) : currentWord.albanian;
+                            const wordLen = mainWord.length;
+                            const fontSize = wordLen > 20 ? 'text-xl' : wordLen > 15 ? 'text-2xl' : wordLen > 12 ? 'text-3xl' : 'text-4xl';
+                            const lang = languageMode === 'german' ? 'de' : 'sq';
+
+                            return languageMode === 'german' ? (
+                                <div className="flex flex-col items-center gap-1 mb-4 w-full px-2">
+                                    <h2 
+                                        lang={lang}
+                                        className={`${fontSize} text-center m-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-1`}
+                                        style={{ hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                                    >
+                                        {/* Article (for nouns) or reflexive (for verbs) */}
+                                        {currentWord.word_type === 'noun' && currentWord.article && (
+                                            <span style={{ color: WORD_TYPE_COLORS.noun, opacity: 0.85 }}>
+                                                {currentWord.article}
+                                            </span>
+                                        )}
+                                        {currentWord.word_type === 'verb' && currentWord.is_reflexive && (
+                                            <span style={{ color: WORD_TYPE_COLORS.verb, opacity: 0.85 }}>sich</span>
+                                        )}
+                                        <span className="break-all">{currentWord.base || currentWord.german}</span>
+                                    </h2>
+                                    {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
+                                    {(() => { const sub = getGrammarSubtitle(currentWord); return sub ? (
+                                        <span className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>{sub}</span>
+                                    ) : null; })()}
+                                </div>
+                            ) : (
+                                <h2 
+                                    lang="sq"
+                                    className={`${fontSize} text-center mb-4 px-2`}
+                                    style={{ hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                                >
+                                    {currentWord.albanian}
                                 </h2>
-                                {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
-                                {(() => { const sub = getGrammarSubtitle(currentWord); return sub ? (
-                                    <span className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>{sub}</span>
-                                ) : null; })()}
-                            </div>
-                        ) : (
-                            <h2 className="text-4xl text-center mb-4">
-                                {currentWord.albanian}
-                            </h2>
-                        )}
+                            );
+                        })()}
 
                         <motion.div
-                            style={{ overflow: 'hidden' }}
+                            style={{ overflow: 'hidden', width: '100%' }}
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: showTranslation ? 'auto' : 0, opacity: showTranslation ? 1 : 0 }}
                         >
-                            <h3 className="text-2xl text-center font-normal" style={{ color: 'var(--accent-color)' }}>
-                                {languageMode === 'german' ? currentWord.albanian : getGermanDisplay(currentWord)}
-                            </h3>
+                            {(() => {
+                                const trans = languageMode === 'german' ? currentWord.albanian : getGermanDisplay(currentWord);
+                                const transFontSize = trans.length > 20 ? 'text-lg' : trans.length > 15 ? 'text-xl' : 'text-2xl';
+                                const transLang = languageMode === 'german' ? 'sq' : 'de';
+                                return (
+                                    <h3 
+                                        lang={transLang}
+                                        className={`${transFontSize} text-center font-normal px-2`} 
+                                        style={{ color: 'var(--accent-color)', hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                                    >
+                                        {trans}
+                                    </h3>
+                                );
+                            })()}
                         </motion.div>
 
                         {!showTranslation && (

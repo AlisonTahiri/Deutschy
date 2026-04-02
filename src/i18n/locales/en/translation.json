@@ -234,7 +234,6 @@
       "current": "Stage {{current}}: {{mode}}."
     },
     "flashcardsTitle": "Flashcards",
-    "flashcardsHint": "Learn new words. You can switch the language (DE ↔ EN) anytime with the button above.",
     "onboarding": {
       "title": "Welcome to Flashcards! 👋",
       "text": "Here you can learn new words. Tip: To mark a word as 'Learned' and add it to your progress, you must answer it correctly from Albanian to German. Switch the language when you're ready!",
@@ -250,8 +249,7 @@
       "nextPartDesc": "Move on to the next part",
       "practiceAlToDe": "Practice SQ → DE",
       "practiceAlToDeDesc": "Mark words as learned",
-      "playGames": "Practice with Games",
-      "playGamesDesc": "All games are unlocked!"
+      "playGames": "Practice with Games"
     },
     "congrats": {
       "title": "Lesson Complete! 🏆",
