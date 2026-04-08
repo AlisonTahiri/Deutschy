@@ -74,7 +74,7 @@ export function Layout({ children }: LayoutProps) {
                     centerTitle={settings.konstaTheme === 'ios'}
                 /> */}
 
-                <div className="pb-16 "> {/* Padding for Tabbar */}
+                <div className="pb-16 pt-4 px-4"> {/* Padding for layout and Tabbar */}
                     {children}
                 </div>
 

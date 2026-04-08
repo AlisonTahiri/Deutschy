@@ -51,6 +51,8 @@ export function Admin() {
     const [scanProgress, setScanProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const progressIntervalRef = useRef<number | null>(null);
+    const editInputRef1 = useRef<HTMLInputElement>(null);
+    const editInputRef2 = useRef<HTMLInputElement>(null);
 
     // Conflict State
     const [showConflictModal, setShowConflictModal] = useState(false);
@@ -64,6 +66,19 @@ export function Admin() {
     // Rescan State
     const [isRescanning, setIsRescanning] = useState(false);
     const [rescanProgress, setRescanProgress] = useState('');
+
+    // Search State
+    const [searchQuery, setSearchQuery] = useState(() => {
+        if (role !== 'admin') return '';
+        const saved = localStorage.getItem('adminPanelState');
+        return saved ? (JSON.parse(saved).searchQuery || '') : '';
+    });
+    const [searchResults, setSearchResults] = useState<any[]>(() => {
+        if (role !== 'admin') return [];
+        const saved = localStorage.getItem('adminPanelState');
+        return saved ? (JSON.parse(saved).searchResults || []) : [];
+    });
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         if (role === 'admin') {
@@ -89,11 +104,13 @@ export function Admin() {
                 level: activeLevel,
                 method: activeMethod,
                 lesson: activeLesson,
-                part: activePart
+                part: activePart,
+                searchQuery,
+                searchResults
             };
             localStorage.setItem('adminPanelState', JSON.stringify(stateToSave));
         }
-    }, [activeLevel, activeMethod, activeLesson, activePart, role]);
+    }, [activeLevel, activeMethod, activeLesson, activePart, searchQuery, searchResults, role]);
 
     const restoreState = async (level: DbLevel | null, method: DbMethod | null, lesson: DbLesson | null, part: DbLessonPart | null) => {
         setIsLoading(true);
@@ -437,10 +454,54 @@ export function Admin() {
         try {
             await adminContentService.updateWord(id, updatePayload);
             setEditingId(null);
+            
+            // Immediately update search results if we're in search mode
+            if (searchResults.length > 0) {
+                setSearchResults(prev => prev.map(w => w.id === id ? { ...w, ...updatePayload } : w));
+            }
+            
             if (activePart) loadWordsForPart(activePart);
         } catch (err: any) {
             setError('Failed to update: ' + err.message);
         }
+    };
+
+    const insertChar = (char: string, ref: React.RefObject<HTMLInputElement | null>, value: string, setter: (v: string) => void) => {
+        if (!ref.current) return;
+        const start = ref.current.selectionStart || 0;
+        const end = ref.current.selectionEnd || 0;
+        const newValue = value.substring(0, start) + char + value.substring(end);
+        setter(newValue);
+        
+        // Restore focus and position
+        setTimeout(() => {
+            if (ref.current) {
+                ref.current.focus();
+                ref.current.setSelectionRange(start + 1, start + 1);
+            }
+        }, 10);
+    };
+
+    const SpecialChars = ({ type, inputRef, value, setter }: { type: 'de' | 'sq', inputRef: React.RefObject<HTMLInputElement | null>, value: string, setter: (v: string) => void }) => {
+        const chars = type === 'de' ? ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'] : ['ë', 'ç', 'Ë', 'Ç'];
+        return (
+            <div className="flex gap-1 mt-1">
+                {chars.map(c => (
+                    <button
+                        key={c}
+                        type="button"
+                        className="px-2 py-1 text-xs font-bold rounded-md bg-(--bg-accent-subtle) hover:bg-(--accent-color) hover:text-white transition-colors"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            insertChar(c, inputRef, value, setter);
+                        }}
+                    >
+                        {c}
+                    </button>
+                ))}
+            </div>
+        );
     };
 
 
@@ -711,6 +772,31 @@ export function Admin() {
         }
     };
 
+    const handleGlobalSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        setError('');
+        try {
+            const results = await adminContentService.searchWordsGlobally(searchQuery.trim());
+            setSearchResults(results);
+            // Clear location context when searching globally
+            setActiveLevel(null);
+            setActiveMethod(null);
+            setActiveLesson(null);
+            setActivePart(null);
+        } catch (err: any) {
+            setError('Search failed: ' + err.message);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSearchResults([]);
+        loadLevels();
+    };
+
     if (role !== 'admin') {
         return (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
@@ -729,6 +815,36 @@ export function Admin() {
 
             {error && <div className="text-(--danger-color) p-3 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{error}</div>}
             {success && <div className="text-(--success-color) p-3 bg-(--success-color)/10 border border-(--success-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{success}</div>}
+
+            {/* NEW: Global Search Box */}
+            <div className={`${glassPanel} flex flex-col sm:flex-row gap-3 items-center p-4!`}>
+                <div className="relative flex-1 w-full">
+                    <input
+                        type="text"
+                        className={inputField}
+                        placeholder="Kërko fjalë gjermanisht ose shqip..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleGlobalSearch()}
+                    />
+                    {searchQuery && (
+                        <button 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-secondary) hover:text-(--text-primary)"
+                            onClick={clearSearch}
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
+                </div>
+                <button 
+                    className={`${btnPrimary} w-full sm:w-auto shrink-0`} 
+                    onClick={handleGlobalSearch}
+                    disabled={isSearching || !searchQuery.trim()}
+                >
+                    {isSearching ? <Loader2 className="animate-spin" size={18} /> : <RefreshCw size={18} />}
+                    Kërko
+                </button>
+            </div>
 
             {/* Breadcrumb Navigation */}
             {(activeLevel || activeMethod || activeLesson || activePart) && (
@@ -1115,6 +1231,7 @@ export function Admin() {
                                                     <>
                                                         <td className="px-4 py-3">
                                                             <input
+                                                                ref={editInputRef1}
                                                                 autoFocus
                                                                 type="text"
                                                                 className={`${inputField} p-2! text-sm!`}
@@ -1125,9 +1242,11 @@ export function Admin() {
                                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                                 }}
                                                             />
+                                                            <SpecialChars type="de" inputRef={editInputRef1} value={editValue1} setter={setEditValue1} />
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <input
+                                                                ref={editInputRef2}
                                                                 type="text"
                                                                 className={`${inputField} p-2! text-sm!`}
                                                                 value={editValue2}
@@ -1137,6 +1256,7 @@ export function Admin() {
                                                                     if (e.key === 'Escape') handleCancelEdit(e as any);
                                                                 }}
                                                             />
+                                                            <SpecialChars type="sq" inputRef={editInputRef2} value={editValue2} setter={setEditValue2} />
                                                         </td>
                                                     </>
                                                 ) : (
@@ -1247,6 +1367,90 @@ export function Admin() {
                                 Anulo
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* VIEW: SEARCH RESULTS */}
+            {searchResults.length > 0 && !activeLevel && !activePart && !isLoading && (
+                <div className="flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out]">
+                    <div className="flex justify-between items-end">
+                        <h2 className="m-0 text-xl font-bold flex items-center gap-2">
+                            <List className="text-(--accent-color)" /> Search Results ({searchResults.length})
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {searchResults.map(word => (
+                            <div key={word.id} className={`${glassPanel} flex flex-col gap-4 p-5!`}>
+                                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                                    <div className="flex-1">
+                                        {editingId === word.id ? (
+                                            <div className="flex flex-col gap-3">
+                                                <input
+                                                    ref={editInputRef1}
+                                                    type="text"
+                                                    className={inputField}
+                                                    value={editValue1}
+                                                    onChange={(e) => setEditValue1(e.target.value)}
+                                                    placeholder="German"
+                                                    autoFocus
+                                                />
+                                                <SpecialChars type="de" inputRef={editInputRef1} value={editValue1} setter={setEditValue1} />
+                                                <input
+                                                    ref={editInputRef2}
+                                                    type="text"
+                                                    className={inputField}
+                                                    value={editValue2}
+                                                    onChange={(e) => setEditValue2(e.target.value)}
+                                                    placeholder="Albanian"
+                                                />
+                                                <SpecialChars type="sq" inputRef={editInputRef2} value={editValue2} setter={setEditValue2} />
+                                                <div className="flex gap-2">
+                                                    <button className={btnPrimary} onClick={() => handleSaveWord(word.id)}>
+                                                        <Check size={16} /> Save
+                                                    </button>
+                                                    <button className={btnSecondary} onClick={handleCancelEdit}>
+                                                        <X size={16} /> Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg font-bold text-(--accent-color)">{word.german}</span>
+                                                    <span className="text-sm text-(--text-secondary)">— {word.albanian}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-(--text-secondary)">
+                                                    <span className="px-2 py-0.5 rounded-md bg-(--bg-accent-subtle)">
+                                                        {word.lesson_parts?.lessons?.name || 'Unknown Lesson'}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded-md bg-(--bg-accent-subtle)">
+                                                        {word.lesson_parts?.name || 'Unknown Part'}
+                                                    </span>
+                                                    {word.word_type && (
+                                                        <span className="px-2 py-0.5 rounded-md font-bold uppercase" style={{ color: WORD_TYPE_COLORS[word.word_type as keyof typeof WORD_TYPE_COLORS] || 'inherit', backgroundColor: `${WORD_TYPE_COLORS[word.word_type as keyof typeof WORD_TYPE_COLORS]}15` }}>
+                                                            {word.word_type}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {!editingId && (
+                                        <div className="flex gap-2 shrink-0 h-fit">
+                                            <button className={btnSubtle} onClick={() => handleStartEdit(word.id, word.german, word.albanian)}>
+                                                <Edit2 size={16} /> Edit
+                                            </button>
+                                            <button className={`${btnSubtle} text-(--danger-color) hover:bg-(--danger-color)/10`} onClick={() => handleDeleteWord(word.id).then(() => setSearchResults(prev => prev.filter(w => w.id !== word.id)))}>
+                                                <Trash2 size={16} /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
