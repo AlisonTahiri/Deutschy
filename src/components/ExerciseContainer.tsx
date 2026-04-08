@@ -10,7 +10,7 @@ import { Mixed } from './Mixed';
 import { MatchingGame } from './MatchingGame';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
-import { useProgressManager, getTotalXP, awardFlashcardXP } from '../hooks/useProgressManager';
+import { useProgressManager, getTotalXP } from '../hooks/useProgressManager';
 import { syncService } from '../services/syncService';
 import { supabase } from '../lib/supabase';
 import { XP_PER_ACTIVITY } from '../utils/scoreCalculator';
