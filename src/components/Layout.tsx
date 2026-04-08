@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BookOpen, Settings as SettingsIcon, Home, ShieldCheck } from 'lucide-react';
+import { BookOpen, Settings as SettingsIcon, Home, ShieldCheck, Gamepad2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
@@ -35,6 +35,7 @@ export function Layout({ children }: LayoutProps) {
     }, []);
 
     const isHome = location.pathname === '/' || location.pathname.startsWith('/exercise/');
+    const isGames = location.pathname === '/games';
     const isAdmin = location.pathname === '/admin';
     const isSettings = location.pathname === '/settings';
 
@@ -59,6 +60,7 @@ export function Layout({ children }: LayoutProps) {
     // Page title logic
     const getTitle = () => {
         if (isHome) return 'Dardha';
+        if (isGames) return t('home.games', { defaultValue: 'Lojërat' });
         if (isAdmin) return t('layout.adminPanel');
         if (isSettings) return t('layout.settings');
         return 'Dardha';
@@ -82,6 +84,12 @@ export function Layout({ children }: LayoutProps) {
                         onClick={handleHomeClick}
                         label={t('layout.home')}
                         icon={<Icon ios={<Home size={24} />} material={<Home size={24} />} />}
+                    />
+                    <TabbarLink
+                        active={isGames}
+                        onClick={() => navigate('/games')}
+                        label={t('home.games', { defaultValue: 'Lojërat' })}
+                        icon={<Icon ios={<Gamepad2 size={24} />} material={<Gamepad2 size={24} />} />}
                     />
                     {role === 'admin' && (
                         <TabbarLink
@@ -119,6 +127,13 @@ export function Layout({ children }: LayoutProps) {
                         onClick={handleHomeClick}
                         media={<Home size={18} />}
                         className={isHome ? 'bg-(--bg-accent-subtle)' : ''}
+                    />
+                    <MenuListItem
+                        active={isGames}
+                        title={t('home.games', { defaultValue: 'Lojërat' })}
+                        onClick={() => navigate('/games')}
+                        media={<Gamepad2 size={18} />}
+                        className={isGames ? 'bg-(--bg-accent-subtle)' : ''}
                     />
                     {role === 'admin' && (
                         <MenuListItem

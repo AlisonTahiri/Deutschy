@@ -423,9 +423,19 @@ export function Admin() {
 
     const handleSaveWord = async (id: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
-        if (!editValue1.trim() || !editValue2.trim()) return;
+        let germanText = editValue1.trim();
+        let albanianText = editValue2.trim();
+        if (!germanText || !albanianText) return;
+        
+        const updatePayload: any = { german: germanText, albanian: albanianText };
+        
+        if (germanText.toLowerCase().startsWith('sich ')) {
+            updatePayload.is_reflexive = true;
+            updatePayload.base = germanText.substring(5).trim();
+        }
+
         try {
-            await adminContentService.updateWord(id, { german: editValue1.trim(), albanian: editValue2.trim() });
+            await adminContentService.updateWord(id, updatePayload);
             setEditingId(null);
             if (activePart) loadWordsForPart(activePart);
         } catch (err: any) {

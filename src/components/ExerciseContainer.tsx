@@ -93,18 +93,51 @@ export function ExerciseContainer() {
         return [];
     });
 
-    const handleFlashcardProgress = (index: number, wordIds: string[]) => {
+    const [flashcardsDirection, setFlashcardsDirection] = useState<'german' | 'albanian'>(() => {
+        const saved = localStorage.getItem(`flashcards_${lessonId}`);
+        if (saved) {
+            try { return JSON.parse(saved).languageMode || 'german'; } catch {}
+        }
+        return 'german';
+    });
+
+    const handleFlashcardProgress = (index: number, wordIds: string[], languageMode: 'german' | 'albanian') => {
         if (!lessonId) return;
         setFlashcardsIndex(index);
         setFlashcardsQueue(wordIds);
-        localStorage.setItem(`flashcards_${lessonId}`, JSON.stringify({ index, wordIds }));
+        setFlashcardsDirection(languageMode);
+        localStorage.setItem(`flashcards_${lessonId}`, JSON.stringify({ index, wordIds, languageMode }));
     };
 
-    const clearFlashcardPersistence = () => {
+    const clearFlashcardPersistence = (direction?: 'german' | 'albanian') => {
         if (lessonId) localStorage.removeItem(`flashcards_${lessonId}`);
         setFlashcardsIndex(0);
         setFlashcardsQueue([]);
+        if (direction) {
+            setFlashcardsDirection(direction);
+        } else {
+            setFlashcardsDirection('german');
+        }
     };
+    
+    // When lessonId changes, ensure state is reloaded or defaulted so it doesn't linger incorrectly
+    useEffect(() => {
+        const savedSession = getSavedSession();
+        setMode(savedSession?.mode || 'flashcards');
+        setSessionXP(savedSession?.sessionXP || 0);
+        setCompletedDirection(savedSession?.completedDirection || null);
+
+        const savedFlashcards = (() => {
+            try {
+                const saved = localStorage.getItem(`flashcards_${lessonId}`);
+                if (saved) return JSON.parse(saved);
+            } catch {}
+            return null;
+        })();
+        setFlashcardsIndex(savedFlashcards?.index || 0);
+        setFlashcardsQueue(savedFlashcards?.wordIds || []);
+        setFlashcardsDirection(savedFlashcards?.languageMode || 'german');
+    }, [lessonId]);
 
     useEffect(() => {
         if (mode === 'flashcards' && user && !user.user_metadata?.has_onboarded_flashcards) {
@@ -142,15 +175,11 @@ export function ExerciseContainer() {
      * AL->DE: Updates DB as learned if correct.
      */
     const handleFlashcardsResult = async (wordId: string, learned: boolean, languageMode: 'german' | 'albanian') => {
-        if (languageMode === 'german') {
-            if (learned) {
-                awardFlashcardXP(true);
-                setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
-            }
-        } else {
-            // AL -> DE counts strictly towards mastery
-            await updateWordScore(wordId, learned, 'flashcards');
-            if (learned) setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
+        // Unconditionally update score so 50/50 split registers
+        await updateWordScore(wordId, learned, 'flashcards', false, languageMode);
+        
+        if (learned) {
+            setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
         }
     };
 
@@ -235,7 +264,7 @@ export function ExerciseContainer() {
                         words={wordsToPractice}
                         initialIndex={flashcardsIndex}
                         initialWordIds={flashcardsQueue}
-                        initialLanguageMode="german"
+                        initialLanguageMode={flashcardsDirection}
                         onProgress={handleFlashcardProgress}
                         onResult={handleFlashcardsResult}
                         onComplete={handleFlashcardsComplete}
@@ -322,10 +351,10 @@ export function ExerciseContainer() {
                             className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
                             style={{ padding: '1.25rem 1.5rem' }}
                             onClick={() => { 
-                            clearFlashcardPersistence();
-                            setMode('flashcards'); 
-                            setSessionXP(0); 
-                        }}
+                                clearFlashcardPersistence('albanian');
+                                setMode('flashcards'); 
+                                setSessionXP(0); 
+                            }}
                         >
                             <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--success-color)' }}>
                                 <CheckCircle2 size={22} color="white" />

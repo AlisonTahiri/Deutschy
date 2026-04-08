@@ -1,7 +1,7 @@
 import { useSettings } from '../hooks/useSettings';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
-import { useState } from 'react';
+
 import {
     Block,
     BlockTitle,
@@ -10,7 +10,6 @@ import {
     Toggle,
     Radio,
     ListInput,
-    Button,
 } from 'konsta/react';
 import { LogOut } from 'lucide-react';
 
@@ -18,25 +17,11 @@ export function Settings() {
     const { t } = useTranslation();
     const { settings, isLoading, updateApiKey, updateTheme, updateKonstaTheme, updateColorTheme } = useSettings();
     const { session, role, signOut } = useAuth();
-    const [isPurchasing, setIsPurchasing] = useState(false);
-    const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
 
     const userEmail = session?.user?.email || session?.user?.user_metadata?.email || session?.user?.user_metadata?.name || 'User';
 
-    const testPurchase = async () => {
-        setIsPurchasing(true);
-        setPurchaseError(null);
-        try {
-            console.log('[RevenueCat Debug] Web environment detected. Mocking successful purchase for B2...');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            alert('Web Test: Mock purchase successful for B2!');
-        } catch (error: any) {
-            console.error('[RevenueCat Debug] Purchase failed:', error);
-            if (!error.userCancelled) setPurchaseError(error.message || 'Purchase failed');
-        } finally {
-            setIsPurchasing(false);
-        }
-    };
+
 
     if (isLoading) {
         return (
@@ -146,26 +131,7 @@ export function Settings() {
                 </>
             )}
 
-            {role === 'member' && (
-                <>
-                    <BlockTitle>{t('settings.developerTesting')}</BlockTitle>
-                    <Block strong inset>
-                        <p className="mb-4 text-sm text-(--text-secondary)">
-                            {t('settings.triggerTestPurchase')}
-                        </p>
-                        <Button
-                            large
-                            onClick={testPurchase}
-                            disabled={isPurchasing}
-                        >
-                            {isPurchasing ? t('settings.processing') : t('settings.testPurchaseFlow')}
-                        </Button>
-                        {purchaseError && (
-                            <p className="mt-2 text-sm text-(--danger-color)">{purchaseError}</p>
-                        )}
-                    </Block>
-                </>
-            )}
+
         </>
     );
 }

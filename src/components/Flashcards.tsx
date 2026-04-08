@@ -12,7 +12,7 @@ interface FlashcardsProps {
     initialWordIds?: string[];
     /** Force the starting language direction for this pass */
     initialLanguageMode?: 'german' | 'albanian';
-    onProgress?: (index: number, wordIds: string[]) => void;
+    onProgress?: (index: number, wordIds: string[], languageMode: 'german' | 'albanian') => void;
     onResult: (wordId: string, learned: boolean, languageMode: 'german' | 'albanian') => void;
     onComplete: (completedLanguageMode: 'german' | 'albanian') => void;
 }
@@ -59,7 +59,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
             setDirection(null);
             
             if (onProgress) {
-                onProgress(nextIndex, nextQueue.map(w => w.id));
+                onProgress(nextIndex, nextQueue.map(w => w.id), languageMode);
             }
 
             if (nextIndex >= nextQueue.length) onComplete(languageMode);
@@ -76,7 +76,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
         setShowTranslation(false);
         setDirection(null);
         if (onProgress) {
-            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id));
+            onProgress(nextIndex, nextQueue.map((w: ActiveWordPair) => w.id), languageMode);
         }
     };
 
@@ -102,7 +102,11 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                     <button
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-[1.05] active:scale-95 shadow-sm"
                         style={{ backgroundColor: 'var(--bg-accent-subtle)', borderColor: 'var(--accent-color)', color: 'var(--accent-color)' }}
-                        onClick={() => setLanguageMode(prev => prev === 'german' ? 'albanian' : 'german')}
+                        onClick={() => {
+                            const newMode = languageMode === 'german' ? 'albanian' : 'german';
+                            setLanguageMode(newMode);
+                            if (onProgress) onProgress(currentIndex, queue.map(w => w.id), newMode);
+                        }}
                     >
                         <ArrowRightLeft size={14} strokeWidth={2.5} />
                         {languageMode === 'german' ? 'DE → SQ' : 'SQ → DE'}

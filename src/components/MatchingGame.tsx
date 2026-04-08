@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveWordPair } from '../types';
 import { getGermanDisplay } from '../types';
-import { Timer, Trophy, RefreshCcw, Volume2, VolumeX } from 'lucide-react';
+import { Trophy, RefreshCcw, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGermanSpeech } from '../hooks/useGermanSpeech';
 
@@ -36,7 +36,6 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
     const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
     const [selectedRightId, setSelectedRightId] = useState<string | null>(null);
     const [score, setScore] = useState(0);
-    const [time, setTime] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
     const [isProcessingMatch, setIsProcessingMatch] = useState(false);
     const [isGameStarted, setIsGameStarted] = useState(false);
@@ -67,7 +66,6 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
         setSlides(chunked);
         setCurrentSlideIndex(initialSlideIndex);
         setScore(0);
-        setTime(0);
         setIsGameOver(false);
         setIsProcessingMatch(false);
         setIsGameStarted(true);
@@ -115,15 +113,6 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
             setIsGameStarted(true);
         }
     }, [initGame, words]);
-
-    // Timer
-    useEffect(() => {
-        if (isGameOver) return;
-        const interval = setInterval(() => {
-            setTime(t => t + 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [isGameOver]);
 
     // Transition to next slide check
     useEffect(() => {
@@ -219,12 +208,6 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
         }
     }, [selectedLeftId, selectedRightId]);
 
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
     if (isGameOver) {
         return (
             <div className="flex flex-col items-center justify-center gap-6 animate-[fadeIn_0.4s_ease-out] w-full max-w-md mx-auto py-10">
@@ -235,14 +218,10 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                     <h2 className="text-3xl font-bold">{t('matchingGame.success')}</h2>
                     <p style={{ color: 'var(--text-secondary)' }}>{t('matchingGame.successSub')}</p>
                     
-                    <div className="grid grid-cols-2 gap-4 w-full mt-4">
+                    <div className="grid grid-cols-1 gap-4 w-full mt-4">
                         <div className="p-4 rounded-2xl bg-(--bg-color) border border-(--border-color)">
                             <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>{t('common.score')}</div>
                             <div className="text-2xl font-bold text-(--accent-color)">{score}</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-(--bg-color) border border-(--border-color)">
-                            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-secondary)' }}>{t('common.time')}</div>
-                            <div className="text-2xl font-bold">{formatTime(time)}</div>
                         </div>
                     </div>
 
@@ -322,7 +301,7 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
     return (
         <div className="flex flex-col items-center  justify-between gap-4 w-full max-w-2xl mx-auto px-2">
             {/* Header / Stats */}
-            <div className="flex justify-between items-center px-4">
+            <div className="flex justify-between items-center px-4 w-full">
                 <div className="flex items-center gap-2">
                     <Trophy size={18} color="var(--warning-color)" />
                     <span className="font-bold text-base">{score}</span>
@@ -341,10 +320,6 @@ export function MatchingGame({ words, initialSlideIndex = 0, onProgress, onResul
                     >
                         {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                     </button>
-                    <div className="flex items-center gap-2">
-                        <Timer size={18} style={{ color: 'var(--text-secondary)' }} />
-                        <span className="font-mono text-base">{formatTime(time)}</span>
-                    </div>
                 </div>
             </div>
 

@@ -11,6 +11,7 @@ import { useAuth } from './hooks/useAuth';
 import { Auth } from './components/Auth';
 import { SocialLoginService } from './services/auth/SocialLoginService';
 import { Admin } from './components/Admin';
+import { Games } from './components/Games';
 import { useSubscription } from './hooks/useSubscription';
 import { Paywall } from './components/Paywall';
 import { Onboarding } from './components/Onboarding';
@@ -92,6 +93,7 @@ function App() {
           />
           <Route path="/settings" element={<Settings />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/games" element={<Games />} />
           <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
           {/* Fallback to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -46,15 +46,22 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
     if (!currentWord) return null;
 
     const getTargetText = () => {
-        // Use base if available (just the core word, no article)
         if (currentWord.base) return currentWord.base.trim();
-        // Legacy fallback: strip article prefix and slash notation
         let text = currentWord.german.trim();
         if (text.includes('/')) text = text.split('/')[0].trim();
-        // Strip leading article if present
         const articleMatch = text.match(/^(?:der|die|das)\s+(.+)$/i);
         if (articleMatch) return articleMatch[1].trim();
         return text;
+    };
+
+    const getArticle = () => {
+        if (currentWord.word_type === 'noun' && currentWord.article) return currentWord.article;
+        if (!currentWord.base) {
+            let text = currentWord.german.trim();
+            const articleMatch = text.match(/^(der|die|das)\s+/i);
+            if (articleMatch) return articleMatch[1].toLowerCase();
+        }
+        return null;
     };
 
     const handleHint = () => {
@@ -127,7 +134,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
 
     return (
-        <div className="flex flex-col items-center justify-center gap-8" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem' }}>
+        <div className="flex flex-col items-center justify-start pt-4 sm:justify-center gap-8" style={{ flex: 1, width: '100%', maxWidth: '500px', margin: '0 auto', padding: '0 0.5rem' }}>
 
             {/* Progress */}
             <div className="w-full mb-4">
@@ -139,7 +146,7 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                 </div>
             </div>
 
-            <div className={`${glassPanel} w-full flex flex-col gap-4 text-center p-5`}>
+            <div className={`${glassPanel} w-full flex flex-col gap-4 text-center p-5`} style={{ minHeight: '420px', justifyContent: 'center' }}>
                 <h2 className="text-3xl mb-2 font-normal" style={{ color: 'var(--accent-color)' }}>
                     {currentWord.albanian}
                 </h2>
@@ -180,20 +187,27 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                         </div>
                     )}
 
-                    <input
-                        ref={inputRef}
-                        className="w-full px-4 py-3 rounded-xl border text-xl text-center min-h-12 outline-none transition-all duration-200 focus:ring-2"
-                        style={{
-                            fontSize: '1.25rem',
-                            backgroundColor: 'var(--bg-color)',
-                            borderColor: isSubmitted ? (isCorrect ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--border-color)',
-                            color: 'var(--text-primary)',
-                        }}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        disabled={isSubmitted}
-                        autoComplete="off"
-                    />
+                    <div className="flex flex-row items-center gap-2">
+                        {getArticle() && (
+                            <span className="text-xl font-bold" style={{ color: 'var(--accent-color)', opacity: 0.8 }}>
+                                {getArticle()}
+                            </span>
+                        )}
+                        <input
+                            ref={inputRef}
+                            className="flex-1 px-4 py-3 rounded-xl border text-xl text-center min-h-12 outline-none transition-all duration-200 focus:ring-2"
+                            style={{
+                                fontSize: '1.25rem',
+                                backgroundColor: 'var(--bg-color)',
+                                borderColor: isSubmitted ? (isCorrect ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--border-color)',
+                                color: 'var(--text-primary)',
+                            }}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            disabled={isSubmitted}
+                            autoComplete="off"
+                        />
+                    </div>
 
                     {!isSubmitted && (
                         <div className="flex flex-row gap-2 justify-center w-full">

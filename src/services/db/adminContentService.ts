@@ -195,5 +195,25 @@ export const adminContentService = {
             .eq('lesson_parts.lesson_id', lessonId);
         if (error) throw error;
         return data || [];
+    },
+
+    async searchWordsGlobally(query: string): Promise<any[]> {
+        const searchTerm = `%${query}%`;
+        const { data, error } = await supabase
+            .from('lesson_words')
+            .select(`
+                *,
+                lesson_parts (
+                    name,
+                    lessons (
+                        name
+                    )
+                )
+            `)
+            .or(`german.ilike.${searchTerm},albanian.ilike.${searchTerm},base.ilike.${searchTerm}`)
+            .limit(50);
+            
+        if (error) throw error;
+        return data || [];
     }
 };

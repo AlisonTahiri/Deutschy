@@ -77,7 +77,8 @@ export function useProgressManager() {
         wordId: string,
         isCorrect: boolean,
         activityType: ExerciseType,
-        usedHint: boolean = false
+        usedHint: boolean = false,
+        languageMode?: 'german' | 'albanian'
     ) => {
         if (!user?.id) return;
 
@@ -87,10 +88,29 @@ export function useProgressManager() {
             
             const currentStatus = existing?.status || 'learning';
             
-            // Logikë e thjeshtë: Nëse është 'flashcards' dhe vjen nga ExerciseContainer (AL->DE), bëhet 'learned'
-            // Lojërat e tjera momentalisht nuk e ndryshojnë statusin në 'learned' (vetëm japin XP)
-            const newStatus = (activityType === 'flashcards' && isCorrect) ? 'learned' as const : currentStatus;
-            
+            let newStatus = currentStatus;
+            let newConfidenceScore = existing?.confidence_score || 0;
+
+            if (activityType === 'flashcards' && isCorrect) {
+                if (languageMode === 'german') {
+                    // Pass 1: DE -> AL. 50% mastery, remains 'learning'
+                    if (newConfidenceScore < 0.5) {
+                        newConfidenceScore = 0.5;
+                    }
+                } else if (languageMode === 'albanian') {
+                    // Pass 2: AL -> DE. 100% mastery, becomes 'learned'
+                    newStatus = 'learned' as const;
+                    newConfidenceScore = 1.0;
+                } else {
+                    // Legacy call without languageMode (just in case), assume 100%
+                    newStatus = 'learned' as const;
+                    newConfidenceScore = 1.0;
+                }
+            } else if (newStatus === 'learned' && !isCorrect) {
+                 // Demote if they fail a learned word in flashcards later?
+                 // Usually we keep it learned, let's keep current logic.
+            }
+
             const newAttempts = (existing?.attempts_count || 0) + 1;
             const newFailCount = isCorrect ? (existing?.fail_count || 0) : (existing?.fail_count || 0) + 1;
 
@@ -102,7 +122,7 @@ export function useProgressManager() {
                 fail_count: newFailCount,
                 last_updated_at: new Date().toISOString(),
                 is_synced: false,
-                confidence_score: newStatus === 'learned' ? 1 : 0,
+                confidence_score: newConfidenceScore,
                 last_reviewed: new Date().toISOString(),
                 attempts_count: newAttempts
             };

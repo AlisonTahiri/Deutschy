@@ -4,9 +4,9 @@ import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight, Award, BookOpen, Star, TrendingUp, Zap, Flame } from 'lucide-react';
+import { Play, ChevronRight, Award, BookOpen, TrendingUp, Zap, Flame, RotateCcw, BarChart2 } from 'lucide-react';
 import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
-import { getTotalXP, getStreak } from '../hooks/useProgressManager';
+import { getStreak, getTodayXP } from '../hooks/useProgressManager';
 import {
     Block,
     BlockTitle,
@@ -17,6 +17,8 @@ import {
     Button,
     Preloader,
 } from 'konsta/react';
+import { MetricCard } from './MetricCard';
+
 
 const PERSISTENCE_KEY = 'dardha_home_view_state';
 
@@ -33,9 +35,21 @@ export function Home() {
     const { getLastActivity } = useLastActivity();
     const lastActivityPath = getLastActivity();
 
-    const userName = session?.user?.user_metadata?.first_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'User';
+    const rawUserName = session?.user?.user_metadata?.first_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'User';
+    const userName = rawUserName.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+    
     const avatarUrl = session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture;
-    const userInitials = userName.substring(0, 2).toUpperCase();
+    
+    const rawFullName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || rawUserName;
+    const fullName = rawFullName.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+
+    const userInitials = (() => {
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return fullName.substring(0, 2).toUpperCase();
+    })();
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -116,28 +130,30 @@ export function Home() {
     const clearAll = () => setViewState({ levelId: null, lessonId: null });
     const clearToLevel = () => setViewState(prev => ({ ...prev, lessonId: null }));
 
-    // Progress = % of words that are "learned" (score >= 1, i.e. passed both flashcard passes)
     const calculateProgress = (parts: ActiveLesson[]) => {
-        let learnedCount = 0;
+        let learnedScore = 0;
         let totalWords = 0;
         parts.forEach(p => {
             p.words.forEach((w: ActiveWordPair) => {
-                if (w.status === 'learned' || (w.confidenceScore || 0) >= 1) learnedCount++;
+                let score = w.confidenceScore || 0;
+                if (w.status === 'learned') score = 1.0;
+                learnedScore += Math.min(1.0, score);
                 totalWords++;
             });
         });
-        return totalWords === 0 ? 0 : learnedCount / totalWords;
+        return totalWords === 0 ? 0 : learnedScore / totalWords;
     };
 
     const dashboardMetrics = useMemo(() => {
         const words = allParts.flatMap(p => p.words);
         const total = words.length;
-        // ✅ Know = status is 'learned'
+        // ✅ Know = status is 'learned' or confidence >= 1
         const know = words.filter(w => w.status === 'learned' || (w.confidenceScore || 0) >= 1).length;
         // 📖 Trying = has progress but not yet learned
-        const trying = words.filter(w => (w.status === 'learning' || !w.status) && (w.attemptsCount || 0) > 0 && (w.confidenceScore || 0) < 1).length;
-        // 🆕 New = no attempts yet
-        const newWords = words.filter(w => !w.status && (w.attemptsCount || 0) === 0 && (w.confidenceScore || 0) === 0).length;
+        const trying = words.filter(w => (w.attemptsCount || 0) > 0 && (w.confidenceScore || 0) < 1).length;
+        // 📈 Avg confidence = mean confidence score across all words (as %)
+        const totalConfidence = words.reduce((acc, w) => acc + Math.min(1, w.confidenceScore || 0), 0);
+        const avgConfidence = total > 0 ? Math.round((totalConfidence / total) * 100) : 0;
 
         // Current lesson progress if applicable
         let currentLessonName = '';
@@ -156,7 +172,7 @@ export function Home() {
             }
         }
 
-        return { know, trying, newWords, total, currentLessonName, currentLessonProgress };
+        return { know, trying, avgConfidence, total, currentLessonName, currentLessonProgress };
     }, [allParts, lastActivityPath, lessonsMap]);
 
     if (isLoading) {
@@ -181,7 +197,21 @@ export function Home() {
                     className="w-12 h-12 rounded-full overflow-hidden border-2 border-(--border-color) bg-(--accent-color)/10 flex items-center justify-center cursor-pointer text-(--accent-color) font-bold text-lg"
                 >
                     {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent && !parent.querySelector('.avatar-initials')) {
+                                    const span = document.createElement('span');
+                                    span.className = 'avatar-initials';
+                                    span.textContent = userInitials;
+                                    parent.appendChild(span);
+                                }
+                            }}
+                        />
                     ) : (
                         userInitials
                     )}
@@ -195,61 +225,53 @@ export function Home() {
                     <h2 className="m-0 text-lg font-bold">{t('home.yourProgress', { defaultValue: 'Progresi Juaj' })}</h2>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {/* ✅ Know */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl border border-(--border-card)"
-                        style={{ background: 'color-mix(in srgb, var(--success-color) 12%, var(--bg-card))' }}>
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Award size={12} color="var(--success-color)" /> {t('home.know')}
-                        </span>
-                        <span className="text-xl font-bold" style={{ color: 'var(--success-color)' }}>
-                            {dashboardMetrics.know}
-                        </span>
-                    </div>
-                    {/* 📖 Trying */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <BookOpen size={12} /> {t('home.trying')}
-                        </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.trying}</span>
-                    </div>
-                    {/* 🆕 New */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Star size={12} /> {t('home.newWords')}
-                        </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.newWords}</span>
-                    </div>
-                    {/* ⚡ XP */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Zap size={12} /> {t('home.totalXP')}
-                        </span>
-                        <span className="text-xl font-bold" style={{ color: 'var(--accent-color)' }}>
-                            {getTotalXP().toLocaleString()}
-                        </span>
-                    </div>
-                    {/* 🔥 Streak */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Flame size={12} /> {t('home.streak')}
-                        </span>
-                        <span className="text-xl font-bold" style={{ color: 'var(--warning-color)' }}>
-                            {getStreak().count > 0 ? `🔥${getStreak().count}` : '—'}
-                        </span>
-                    </div>
-                    {/* 📊 Total */}
-                    <div className="col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-(--bg-accent-subtle) border border-(--border-card)">
-                        <span className="text-xs text-(--text-secondary) flex items-center gap-1">
-                            <Play size={12} /> {t('home.total')}
-                        </span>
-                        <span className="text-xl font-bold">{dashboardMetrics.total}</span>
-                    </div>
+                    <MetricCard
+                        icon={<Award size={12} color="var(--success-color)" />}
+                        label={t('home.know')}
+                        value={dashboardMetrics.know}
+                        accentColor="var(--success-color)"
+                        bgStyle={{ background: 'color-mix(in srgb, var(--success-color) 12%, var(--bg-card))' }}
+                        tooltip="🏆 Fjalë të zotëruara plotësisht. I keni mësuar mirë nga të dyja anët."
+                    />
+                    <MetricCard
+                        icon={<BookOpen size={12} />}
+                        label={t('home.trying')}
+                        value={dashboardMetrics.trying}
+                        tooltip="📚 Fjalë në rrjedhje — i keni nisur por s'i keni zotëruar ende."
+                    />
+                    <MetricCard
+                        icon={<BarChart2 size={12} />}
+                        label="% Mesatar"
+                        value={`${dashboardMetrics.avgConfidence}%`}
+                        accentColor={dashboardMetrics.avgConfidence > 50 ? 'var(--success-color)' : undefined}
+                        tooltip="📈 Niveli mesatar i të gjitha fjalëve (0–100%). Synoni të kaloni 80%."
+                    />
+                    <MetricCard
+                        icon={<Zap size={12} />}
+                        label="XP Sot"
+                        value={getTodayXP() > 0 ? `+${getTodayXP()}` : '—'}
+                        accentColor="var(--accent-color)"
+                        tooltip="⚡ Pikë XP të fituara sot. Praktikoni çdo ditë për të mbajtur rrjedhjen."
+                    />
+                    <MetricCard
+                        icon={<Flame size={12} />}
+                        label={t('home.streak')}
+                        value={getStreak().count > 0 ? `🔥${getStreak().count}` : '—'}
+                        accentColor="var(--warning-color)"
+                        tooltip="🔥 Ditë radhazi që keni mësuar. Mos e thyeni serinë!"
+                    />
+                    <MetricCard
+                        icon={<Play size={12} />}
+                        label={t('home.total')}
+                        value={dashboardMetrics.total}
+                        tooltip="📊 Numri total i fjalëve në të gjitha kurset."
+                    />
                 </div>
 
                 {dashboardMetrics.currentLessonName && lastActivityPath && (
                     <div 
                         className="mt-6 p-4 rounded-2xl bg-(--accent-color)/5 border border-(--accent-color)/20 cursor-pointer active:scale-[0.98] transition-all"
-                        onClick={() => navigate(lastActivityPath)}
+                        onClick={() => lastActivityPath && navigate(lastActivityPath)}
                     >
                         <div className="flex justify-between items-center mb-2">
                             <div className="flex flex-col">
@@ -264,7 +286,7 @@ export function Home() {
                                 className="w-auto px-3"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(lastActivityPath);
+                                    if (lastActivityPath) navigate(lastActivityPath);
                                 }}
                             >
                                 <Play size={14} className="mr-1" /> {t('common.resume')}
@@ -398,7 +420,13 @@ export function Home() {
                                                         disabled={totalCount === 0}
                                                         className="w-auto px-4"
                                                     >
-                                                        <Play size={16} className="mr-1" /> {t('common.start')}
+                                                        {progress === 0 ? (
+                                                            <><Play size={16} className="mr-1" /> {t('common.start')}</>
+                                                        ) : progress >= 1 ? (
+                                                            <><RotateCcw size={16} className="mr-1" /> {t('common.tryAgain', { defaultValue: 'Rishiko' })}</>
+                                                        ) : (
+                                                            <><Play size={16} className="mr-1" /> {t('common.resume')}</>
+                                                        )}
                                                     </Button>
                                                 </div>
                                                 <div>
