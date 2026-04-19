@@ -1,0 +1,5 @@
+export const glassPanel = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-6 shadow-lg';
+export const btnPrimary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-(--accent-color) text-white border-0 cursor-pointer transition-all duration-200 hover:bg-(--accent-hover) disabled:opacity-50';
+export const btnSecondary = 'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/30';
+export const btnSubtle = 'inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs border-0 cursor-pointer transition-all duration-200 bg-transparent text-(--text-secondary) hover:bg-(--bg-accent-subtle) hover:text-(--text-primary)';
+export const inputField = 'w-full px-4 py-3 rounded-xl border border-(--border-color) bg-(--bg-color) text-(--text-primary) outline-none focus:ring-2 focus:ring-(--accent-color) transition-all';

@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Layout } from './components/Layout';
-import { Home } from './components/Home';
-import { Settings } from './components/Settings';
-import { ExerciseContainer } from './components/ExerciseContainer';
-import { BackgroundMCQGenerator } from './components/BackgroundMCQGenerator';
-import { dbService } from './services/db/provider';
-import { useAuth } from './hooks/useAuth';
-import { Auth } from './components/Auth';
-import { SocialLoginService } from './services/auth/SocialLoginService';
-import { Admin } from './components/Admin';
-import { Games } from './components/Games';
-import { useSubscription } from './hooks/useSubscription';
-import { Paywall } from './components/Paywall';
-import { Onboarding } from './components/Onboarding';
-import { useSyncManager } from './hooks/useSyncManager';
-import { StorageKeys } from './utils/storage';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Layout } from "./components/Layout";
+import { Home } from "./components/Home";
+import { Settings } from "./components/Settings";
+import { ExerciseContainer } from "./components/ExerciseContainer";
+import { BackgroundMCQGenerator } from "./components/BackgroundMCQGenerator";
+import { dbService } from "./services/db/provider";
+import { useAuth } from "./hooks/useAuth";
+import { Auth } from "./components/Auth";
+import { SocialLoginService } from "./services/auth/SocialLoginService";
+import { Admin } from "./components/Admin";
+import { Games } from "./components/Games";
+import { useSubscription } from "./hooks/useSubscription";
+import { Paywall } from "./components/Paywall";
+import { Onboarding } from "./components/Onboarding";
+import { useSyncManager } from "./hooks/useSyncManager";
+import { StorageKeys } from "./utils/storage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function App() {
   const { t } = useTranslation();
   const [isDbReady, setIsDbReady] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState(() =>
-    localStorage.getItem(StorageKeys.onboardingDone) === 'true'
+  const [onboardingDone, setOnboardingDone] = useState(
+    () => localStorage.getItem(StorageKeys.onboardingDone) === "true",
   );
   const { session, role, isLoading: authLoading } = useAuth();
 
@@ -49,7 +49,7 @@ function App() {
   // Auto-complete onboarding if session exists
   useEffect(() => {
     if (session && !onboardingDone) {
-      localStorage.setItem(StorageKeys.onboardingDone, 'true');
+      localStorage.setItem(StorageKeys.onboardingDone, "true");
       setOnboardingDone(true);
     }
   }, [session, onboardingDone]);
@@ -58,8 +58,10 @@ function App() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[var(--bg-color)] text-[var(--text-primary)]">
         <div className="w-10 h-10 border-4 border-[var(--border-color)] border-t-[var(--accent-color)] rounded-full animate-spin"></div>
-        <h2 className="m-0 text-xl font-semibold">{t('app.initializing')}</h2>
-        <p className="m-0 text-[var(--text-secondary)]">{t('app.waitMoment')}</p>
+        <h2 className="m-0 text-xl font-semibold">{t("app.initializing")}</h2>
+        <p className="m-0 text-[var(--text-secondary)]">
+          {t("app.waitMoment")}
+        </p>
       </div>
     );
   }
@@ -69,7 +71,7 @@ function App() {
       return (
         <Onboarding
           onComplete={() => {
-            localStorage.setItem(StorageKeys.onboardingDone, 'true');
+            localStorage.setItem(StorageKeys.onboardingDone, "true");
             setOnboardingDone(true);
           }}
         />
@@ -87,7 +89,7 @@ function App() {
             <Route
               path="/"
               element={
-                role === 'member' && !activeLevelId && !isChecking ? (
+                role === "member" && !activeLevelId && !isChecking ? (
                   <Paywall onPurchaseSuccess={checkSubscription} />
                 ) : (
                   <Home />
