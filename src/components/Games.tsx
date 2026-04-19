@@ -18,18 +18,18 @@ interface GameState {
 }
 
 const getPersistedState = (game: string, lessonId: string | null) => {
-    const key = `dardha_game_${game}_${lessonId || 'all'}`;
+    const key = `deutschy_game_${game}_${lessonId || 'all'}`;
     const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) as GameState : null;
 };
 
 const setPersistedState = (game: string, lessonId: string | null, index: number, wordIds: string[]) => {
-    const key = `dardha_game_${game}_${lessonId || 'all'}`;
+    const key = `deutschy_game_${game}_${lessonId || 'all'}`;
     localStorage.setItem(key, JSON.stringify({ index, wordIds }));
 };
 
 const clearPersistedState = (game: string, lessonId: string | null) => {
-    const key = `dardha_game_${game}_${lessonId || 'all'}`;
+    const key = `deutschy_game_${game}_${lessonId || 'all'}`;
     localStorage.removeItem(key);
 };
 
@@ -38,7 +38,7 @@ export function Games() {
     const { lessons, isLoading } = useVocabulary();
 
     // Read what the active level and lesson is from Home dashboard persistence
-    const PERSISTENCE_KEY = 'dardha_home_view_state';
+    const PERSISTENCE_KEY = 'deutschy_home_view_state';
     const [viewState] = useState<{ levelId: string | null; lessonId: string | null }>(() => {
         const saved = localStorage.getItem(PERSISTENCE_KEY);
         return saved ? JSON.parse(saved) : { levelId: null, lessonId: null };

@@ -20,7 +20,7 @@ import {
 import { MetricCard } from './MetricCard';
 
 
-const PERSISTENCE_KEY = 'dardha_home_view_state';
+const PERSISTENCE_KEY = 'deutschy_home_view_state';
 
 interface ViewState {
     levelId: string | null;

@@ -21,7 +21,7 @@ function App() {
   const { t } = useTranslation();
   const [isDbReady, setIsDbReady] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(() =>
-    localStorage.getItem('dardha_onboarding_done') === 'true'
+    localStorage.getItem('deutschy_onboarding_done') === 'true'
   );
   const { session, role, isLoading: authLoading } = useAuth();
 
@@ -47,7 +47,7 @@ function App() {
   // Auto-complete onboarding if session exists
   useEffect(() => {
     if (session && !onboardingDone) {
-      localStorage.setItem('dardha_onboarding_done', 'true');
+      localStorage.setItem('deutschy_onboarding_done', 'true');
       setOnboardingDone(true);
     }
   }, [session, onboardingDone]);
@@ -67,7 +67,7 @@ function App() {
       return (
         <Onboarding
           onComplete={() => {
-            localStorage.setItem('dardha_onboarding_done', 'true');
+            localStorage.setItem('deutschy_onboarding_done', 'true');
             setOnboardingDone(true);
           }}
         />

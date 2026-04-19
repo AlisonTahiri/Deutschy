@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Dardha',
-        short_name: 'Dardha',
+        name: 'Deutschy',
+        short_name: 'Deutschy',
         description: 'Learn German words offline and track your progress.',
         theme_color: '#ffffff',
         icons: [

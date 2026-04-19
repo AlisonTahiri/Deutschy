@@ -6,10 +6,10 @@ import { useAuth } from './useAuth';
 
 // ─── Streak helpers (calendar-day based, stored in localStorage) ───────────
 
-const STREAK_KEY = 'dardha_streak';
-const XP_KEY = 'dardha_total_xp';
-const XP_TODAY_KEY = 'dardha_xp_today';
-const XP_TODAY_DATE_KEY = 'dardha_xp_today_date';
+const STREAK_KEY = 'deutschy_streak';
+const XP_KEY = 'deutschy_total_xp';
+const XP_TODAY_KEY = 'deutschy_xp_today';
+const XP_TODAY_DATE_KEY = 'deutschy_xp_today_date';
 
 function todayString() {
     return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"

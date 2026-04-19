@@ -42,12 +42,12 @@ export function Layout({ children }: LayoutProps) {
     // Persist home navigation state
     useEffect(() => {
         if (isHome) {
-            localStorage.setItem('dardha_last_home_url', location.pathname + location.search);
+            localStorage.setItem('deutschy_last_home_url', location.pathname + location.search);
         }
     }, [location, isHome]);
 
     const handleHomeClick = () => {
-        const lastUrl = localStorage.getItem('dardha_last_home_url');
+        const lastUrl = localStorage.getItem('deutschy_last_home_url');
         // If we're not on home/exercise and have a saved URL, go there
         // Otherwise go to root /
         if (!isHome && lastUrl) {
@@ -59,11 +59,11 @@ export function Layout({ children }: LayoutProps) {
 
     // Page title logic
     const getTitle = () => {
-        if (isHome) return 'Dardha';
+        if (isHome) return 'Deutschy';
         if (isGames) return t('home.games', { defaultValue: 'Lojërat' });
         if (isAdmin) return t('layout.adminPanel');
         if (isSettings) return t('layout.settings');
-        return 'Dardha';
+        return 'Deutschy';
     };
 
     if (isMobile) {
@@ -117,7 +117,7 @@ export function Layout({ children }: LayoutProps) {
             >
                 <div className="flex items-center gap-2 p-6 mb-2">
                     <BookOpen className="text-(--k-color-primary)" size={28} />
-                    <h2 className="text-xl font-bold m-0 text-(--text-primary)">Dardha</h2>
+                    <h2 className="text-xl font-bold m-0 text-(--text-primary)">Deutschy</h2>
                 </div>
 
                 <List className="mt-0" dividers={false}>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const STORAGE_KEY = 'dardha_last_activity';
+const STORAGE_KEY = 'deutschy_last_activity';
 
 export function useLastActivity() {
     const location = useLocation();

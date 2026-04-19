@@ -124,7 +124,7 @@
   },
   "auth": {
     "welcome": "Mirë se vini",
-    "welcomeToDardha": "Mirë se vini në Dardha",
+    "welcomeToDeutschy": "Mirë se vini në Deutschy",
     "signInDescription": "Hyni në llogarinë tuaj për të vazhduar mësimin e Gjermanishtes.",
     "continueWithGoogle": "Vazhdo me Google",
     "continueWithApple": "Vazhdo me Apple",
@@ -144,7 +144,7 @@
     "stepOf": "Hapi {{current}} nga {{total}}",
     "start": "Fillimi",
     "welcome": "Mirë se vini",
-    "welcomeToDardha": "Mirë se vini në Dardha!",
+    "welcomeToDeutschy": "Mirë se vini në Deutschy!",
     "haveAccountHeading": "A keni një llogari ekzistuese?",
     "haveAccountDesc": "A keni një llogari ekzistuese dhe po kyçeni nga një pajisje tjetër?",
     "yesHaveAccount": "Po, kam një llogari",

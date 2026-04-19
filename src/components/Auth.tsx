@@ -46,7 +46,7 @@ export function Auth() {
                             🍐
                         </div>
                         <h1 className="text-3xl font-bold leading-tight text-(--text-primary)">
-                            {t('auth.welcomeToDardha')}
+                            {t('auth.welcomeToDeutschy')}
                         </h1>
                         <p className="text-base text-(--text-secondary) px-4">
                             {t('auth.signInDescription')}

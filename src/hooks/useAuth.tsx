@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({
     signOut: async () => {},
 });
 
-const ROLE_CACHE_KEY = 'dardha_user_role';
+const ROLE_CACHE_KEY = 'deutschy_user_role';
 const SUPABASE_SESSION_KEY = 'sb-' + (import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] ?? '') + '-auth-token';
 
 /**

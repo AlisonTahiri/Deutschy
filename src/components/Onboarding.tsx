@@ -155,7 +155,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                                     <UserCircle size={48} className="text-white" />
                                 </div>
                                 <h1 className="text-3xl font-bold leading-tight text-(--text-primary)">
-                                    {t('onboarding.welcomeToDardha')}
+                                    {t('onboarding.welcomeToDeutschy')}
                                 </h1>
                                 <p className="text-base text-(--text-secondary) px-4">
                                     {t('onboarding.haveAccountDesc')}
