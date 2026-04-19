@@ -21,6 +21,42 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const VALID_MODES = new Set(['flashcards', 'post-lesson', 'congrats', 'game-grid', 'multiple-choice', 'writing', 'mixed', 'matching-game']);
+
+function parseSavedSession(lessonId: string) {
+    try {
+        const raw = localStorage.getItem(`session_${lessonId}`);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || typeof s !== 'object') return null;
+        const mode = VALID_MODES.has(s.mode) ? (s.mode as ContainerMode) : null;
+        if (!mode) return null;
+        return {
+            mode,
+            sessionXP: typeof s.sessionXP === 'number' ? s.sessionXP : 0,
+            completedDirection: (s.completedDirection === 'german' || s.completedDirection === 'albanian') ? s.completedDirection as 'german' | 'albanian' : null,
+        };
+    } catch {
+        return null;
+    }
+}
+
+function parseSavedFlashcards(lessonId: string) {
+    try {
+        const raw = localStorage.getItem(`flashcards_${lessonId}`);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || typeof s !== 'object') return null;
+        return {
+            index: typeof s.index === 'number' ? s.index : 0,
+            wordIds: Array.isArray(s.wordIds) ? s.wordIds.filter((id: unknown) => typeof id === 'string') as string[] : [],
+            languageMode: s.languageMode === 'albanian' ? 'albanian' as const : 'german' as const,
+        };
+    } catch {
+        return null;
+    }
+}
+
 const glass = 'bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl shadow-lg transition-all duration-300';
 const btnSec = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 const btnPri = 'inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm cursor-pointer transition-all duration-200 text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]';
@@ -57,18 +93,10 @@ export function ExerciseContainer() {
     const wordsToPractice: ActiveWordPair[] = lesson ? (lesson.words as ActiveWordPair[]) : [];
 
     // ── Session Persistence ─────────────────────────────────────────────
-    const getSavedSession = () => {
-        try {
-            const saved = localStorage.getItem(`session_${lessonId}`);
-            if (saved) return JSON.parse(saved);
-        } catch {}
-        return null;
-    };
-
-    const savedSession = getSavedSession();
-    const [mode, setMode] = useState<ContainerMode>(savedSession?.mode || 'flashcards');
-    const [sessionXP, setSessionXP] = useState<number>(savedSession?.sessionXP || 0);
-    const [completedDirection, setCompletedDirection] = useState<'german' | 'albanian' | null>(savedSession?.completedDirection || null);
+    const savedSession = parseSavedSession(lessonId ?? '');
+    const [mode, setMode] = useState<ContainerMode>(savedSession?.mode ?? 'flashcards');
+    const [sessionXP, setSessionXP] = useState<number>(savedSession?.sessionXP ?? 0);
+    const [completedDirection, setCompletedDirection] = useState<'german' | 'albanian' | null>(savedSession?.completedDirection ?? null);
 
     useEffect(() => {
         if (!lessonId) return;
@@ -77,29 +105,9 @@ export function ExerciseContainer() {
 
     const [showOnboarding, setShowOnboarding] = useState(false);
     // ── Flashcards Persistence ───────────────────────────────────────────
-    const [flashcardsIndex, setFlashcardsIndex] = useState(() => {
-        const saved = localStorage.getItem(`flashcards_${lessonId}`);
-        if (saved) {
-            try { return JSON.parse(saved).index; } catch {}
-        }
-        return 0;
-    });
-
-    const [flashcardsQueue, setFlashcardsQueue] = useState<string[]>(() => {
-        const saved = localStorage.getItem(`flashcards_${lessonId}`);
-        if (saved) {
-            try { return JSON.parse(saved).wordIds; } catch {}
-        }
-        return [];
-    });
-
-    const [flashcardsDirection, setFlashcardsDirection] = useState<'german' | 'albanian'>(() => {
-        const saved = localStorage.getItem(`flashcards_${lessonId}`);
-        if (saved) {
-            try { return JSON.parse(saved).languageMode || 'german'; } catch {}
-        }
-        return 'german';
-    });
+    const [flashcardsIndex, setFlashcardsIndex] = useState(() => parseSavedFlashcards(lessonId ?? '')?.index ?? 0);
+    const [flashcardsQueue, setFlashcardsQueue] = useState<string[]>(() => parseSavedFlashcards(lessonId ?? '')?.wordIds ?? []);
+    const [flashcardsDirection, setFlashcardsDirection] = useState<'german' | 'albanian'>(() => parseSavedFlashcards(lessonId ?? '')?.languageMode ?? 'german');
 
     const handleFlashcardProgress = (index: number, wordIds: string[], languageMode: 'german' | 'albanian') => {
         if (!lessonId) return;
@@ -122,21 +130,15 @@ export function ExerciseContainer() {
     
     // When lessonId changes, ensure state is reloaded or defaulted so it doesn't linger incorrectly
     useEffect(() => {
-        const savedSession = getSavedSession();
-        setMode(savedSession?.mode || 'flashcards');
-        setSessionXP(savedSession?.sessionXP || 0);
-        setCompletedDirection(savedSession?.completedDirection || null);
+        const session = parseSavedSession(lessonId ?? '');
+        setMode(session?.mode ?? 'flashcards');
+        setSessionXP(session?.sessionXP ?? 0);
+        setCompletedDirection(session?.completedDirection ?? null);
 
-        const savedFlashcards = (() => {
-            try {
-                const saved = localStorage.getItem(`flashcards_${lessonId}`);
-                if (saved) return JSON.parse(saved);
-            } catch {}
-            return null;
-        })();
-        setFlashcardsIndex(savedFlashcards?.index || 0);
-        setFlashcardsQueue(savedFlashcards?.wordIds || []);
-        setFlashcardsDirection(savedFlashcards?.languageMode || 'german');
+        const flashcards = parseSavedFlashcards(lessonId ?? '');
+        setFlashcardsIndex(flashcards?.index ?? 0);
+        setFlashcardsQueue(flashcards?.wordIds ?? []);
+        setFlashcardsDirection(flashcards?.languageMode ?? 'german');
     }, [lessonId]);
 
     useEffect(() => {

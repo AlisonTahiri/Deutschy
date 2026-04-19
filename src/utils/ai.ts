@@ -1,5 +1,33 @@
 import type { WordType } from '../types';
 
+const AI_TIMEOUT_MS = 30_000;
+const MAX_RETRIES = 2;
+
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+    try {
+        return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            if (attempt < MAX_RETRIES) {
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            }
+        }
+    }
+    throw lastErr;
+}
+
 export interface MCQResponse {
     wordId?: string; // We'll add this when batching
     sentence: string; // The German sentence with _____ replacing the target word
@@ -42,40 +70,36 @@ Return ONLY a valid JSON ARRAY of objects, with no markdown formatting or extra 
 `;
 
     try {
-        if (apiKey.startsWith('sk-')) {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-4o-mini',
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.7
-                })
-            });
-            const data = await res.json();
-            const content = data.choices[0].message.content.trim();
-            const cleaned = content.replace(/^```json/g, '').replace(/```$/g, '').trim();
-            return JSON.parse(cleaned) as (MCQResponse & { wordId: string })[];
-
-        } else {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        responseMimeType: "application/json"
-                    }
-                })
-            });
-            const data = await res.json();
-            const text = data.candidates[0].content.parts[0].text;
-            return JSON.parse(text) as (MCQResponse & { wordId: string })[];
-        }
+        return await withRetry(async () => {
+            if (apiKey.startsWith('sk-')) {
+                const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.7 })
+                });
+                if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
+                const data = await res.json();
+                const content = data?.choices?.[0]?.message?.content;
+                if (typeof content !== 'string') throw new Error('Unexpected OpenAI response shape');
+                const cleaned = content.trim().replace(/^```json/g, '').replace(/```$/g, '').trim();
+                const parsed = JSON.parse(cleaned);
+                if (!Array.isArray(parsed)) throw new Error('OpenAI did not return a JSON array');
+                return parsed as (MCQResponse & { wordId: string })[];
+            } else {
+                const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, responseMimeType: 'application/json' } })
+                });
+                if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (typeof text !== 'string') throw new Error('Unexpected Gemini response shape');
+                const parsed = JSON.parse(text);
+                if (!Array.isArray(parsed)) throw new Error('Gemini did not return a JSON array');
+                return parsed as (MCQResponse & { wordId: string })[];
+            }
+        });
     } catch (err) {
         console.error('Batch AI Generation Failed', err);
         return null;
@@ -160,31 +184,23 @@ Example output:
 `;
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        {
-                            inline_data: {
-                                mime_type: mimeType,
-                                data: base64Image
-                            }
-                        }
-                    ]
-                }],
-                generationConfig: {
-                    temperature: 0.2,
-                    responseMimeType: "application/json"
-                }
-            })
+        return await withRetry(async () => {
+            const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64Image } }] }],
+                    generationConfig: { temperature: 0.2, responseMimeType: 'application/json' }
+                })
+            });
+            if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (typeof text !== 'string') throw new Error('Unexpected Gemini response shape');
+            const parsed = JSON.parse(text);
+            if (!Array.isArray(parsed)) throw new Error('Gemini did not return a JSON array');
+            return parsed as ExtractedWord[];
         });
-
-        const data = await res.json();
-        const text = data.candidates[0].content.parts[0].text;
-        return JSON.parse(text) as ExtractedWord[];
     } catch (err) {
         console.error('Image AI Extraction Failed', err);
         return null;
@@ -250,21 +266,23 @@ Return ONLY a valid JSON array, no markdown, no extra text.
 `;
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.1,
-                    responseMimeType: "application/json"
-                }
-            })
+        return await withRetry(async () => {
+            const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+                })
+            });
+            if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (typeof text !== 'string') throw new Error('Unexpected Gemini response shape');
+            const parsed = JSON.parse(text);
+            if (!Array.isArray(parsed)) throw new Error('Gemini did not return a JSON array');
+            return parsed as (ExtractedWord & { id: string })[];
         });
-
-        const data = await res.json();
-        const text = data.candidates[0].content.parts[0].text;
-        return JSON.parse(text) as (ExtractedWord & { id: string })[];
     } catch (err) {
         console.error('AI Rescan Failed', err);
         return null;
