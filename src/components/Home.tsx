@@ -5,7 +5,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
 import { Play, ChevronRight, Award, BookOpen, TrendingUp, Zap, Flame, RotateCcw, BarChart2 } from 'lucide-react';
-import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
+import type { ActiveLesson, ActiveWordPair } from '../types';
+import { StorageKeys } from '../utils/storage';
 import { getStreak, getTodayXP } from '../hooks/useProgressManager';
 import {
     Block,
@@ -20,7 +21,7 @@ import {
 import { MetricCard } from './MetricCard';
 
 
-const PERSISTENCE_KEY = 'deutschy_home_view_state';
+const PERSISTENCE_KEY = StorageKeys.homeViewState;
 
 interface ViewState {
     levelId: string | null;
@@ -59,8 +60,18 @@ export function Home() {
     };
     // Persisted view state
     const [viewState, setViewState] = useState<ViewState>(() => {
-        const saved = localStorage.getItem(PERSISTENCE_KEY);
-        return saved ? JSON.parse(saved) : { levelId: null, lessonId: null };
+        try {
+            const saved = localStorage.getItem(PERSISTENCE_KEY);
+            if (!saved) return { levelId: null, lessonId: null };
+            const parsed = JSON.parse(saved);
+            if (!parsed || typeof parsed !== 'object') return { levelId: null, lessonId: null };
+            return {
+                levelId: typeof parsed.levelId === 'string' ? parsed.levelId : null,
+                lessonId: typeof parsed.lessonId === 'string' ? parsed.lessonId : null,
+            };
+        } catch {
+            return { levelId: null, lessonId: null };
+        }
     });
 
     useEffect(() => {
@@ -74,7 +85,7 @@ export function Home() {
         const uniqueLevels = new Map<string, { id: string; name: string }>();
         const uniqueMethods = new Map<string, { id: string; name: string; level_id: string }>();
         const uniqueLessons = new Map<string, { id: string; name: string; method_id: string }>();
-        const partsList: LocalLesson[] = [];
+        const partsList: ActiveLesson[] = [];
 
         lessons.forEach(l => {
             const lvlId = l.level_id || 'legacy-lvl';
@@ -95,14 +106,14 @@ export function Home() {
                 method_id: mtdId,
                 level_id: lvlId,
                 lesson_id: lsnId,
-            } as any);
+            });
         });
 
         return {
             levels: Array.from(uniqueLevels.values()).sort((a, b) => a.name.localeCompare(b.name)),
             methodsMap: uniqueMethods,
             lessonsMap: uniqueLessons,
-            allParts: partsList as unknown as ActiveLesson[],
+            allParts: partsList,
         };
     }, [lessons]);
 

@@ -16,12 +16,14 @@ import { useSubscription } from './hooks/useSubscription';
 import { Paywall } from './components/Paywall';
 import { Onboarding } from './components/Onboarding';
 import { useSyncManager } from './hooks/useSyncManager';
+import { StorageKeys } from './utils/storage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   const { t } = useTranslation();
   const [isDbReady, setIsDbReady] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(() =>
-    localStorage.getItem('deutschy_onboarding_done') === 'true'
+    localStorage.getItem(StorageKeys.onboardingDone) === 'true'
   );
   const { session, role, isLoading: authLoading } = useAuth();
 
@@ -47,7 +49,7 @@ function App() {
   // Auto-complete onboarding if session exists
   useEffect(() => {
     if (session && !onboardingDone) {
-      localStorage.setItem('deutschy_onboarding_done', 'true');
+      localStorage.setItem(StorageKeys.onboardingDone, 'true');
       setOnboardingDone(true);
     }
   }, [session, onboardingDone]);
@@ -67,7 +69,7 @@ function App() {
       return (
         <Onboarding
           onComplete={() => {
-            localStorage.setItem('deutschy_onboarding_done', 'true');
+            localStorage.setItem(StorageKeys.onboardingDone, 'true');
             setOnboardingDone(true);
           }}
         />
@@ -80,24 +82,26 @@ function App() {
     <BrowserRouter>
       <Layout>
         <BackgroundMCQGenerator />
-        <Routes>
-          <Route
-            path="/"
-            element={
-              role === 'member' && !activeLevelId && !isChecking ? (
-                <Paywall onPurchaseSuccess={checkSubscription} />
-              ) : (
-                <Home />
-              )
-            }
-          />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
-          {/* Fallback to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                role === 'member' && !activeLevelId && !isChecking ? (
+                  <Paywall onPurchaseSuccess={checkSubscription} />
+                ) : (
+                  <Home />
+                )
+              }
+            />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
+            {/* Fallback to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </Layout>
     </BrowserRouter>
   );

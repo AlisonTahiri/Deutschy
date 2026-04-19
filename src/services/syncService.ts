@@ -181,6 +181,7 @@ export const syncService = {
             
         } catch (error) {
             console.error('Failed to push pending progress to Supabase:', error);
+            throw error;
         }
     },
 

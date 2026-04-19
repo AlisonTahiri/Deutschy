@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { LocalLesson, ActiveLesson, ActiveWordPair } from '../types';
+import type { LocalLesson, ActiveLesson, ActiveWordPair, WordPair } from '../types';
+import { cleanupLessonStorage } from '../utils/storage';
 import { dbService } from '../services/db/provider';
 import { useAuth } from './useAuth';
 
@@ -101,10 +102,11 @@ export function useVocabulary() {
 
     const deleteLesson = (id: string) => {
         setLessons(lessons.filter(l => l.id !== id));
+        cleanupLessonStorage(id);
         dbService.deleteLesson(id).catch(err => console.error("Failed to delete lesson", err));
     };
 
-    const updateLesson = (id: string, name: string, words?: any[]) => {
+    const updateLesson = (id: string, name: string, words?: ActiveWordPair[]) => {
         const idx = lessons.findIndex(l => l.id === id);
         if (idx === -1) return;
 
@@ -181,7 +183,7 @@ export function useVocabulary() {
     };
 
 
-    const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: any }[]) => {
+    const updateWordMCQs = (lessonId: string, updates: { wordId: string; mcq: WordPair['mcq'] }[]) => {
         const idx = lessons.findIndex(l => l.id === lessonId);
         if (idx === -1) return;
 
