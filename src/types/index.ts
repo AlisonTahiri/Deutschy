@@ -205,3 +205,13 @@ export interface DbLessonWord {
 }
 
 export type ExerciseType = 'flashcards' | 'multiple-choice' | 'writing' | 'mixed' | 'matching-game';
+
+export type ContainerMode =
+    | 'flashcards'
+    | 'post-lesson'
+    | 'congrats'
+    | 'game-grid'
+    | 'multiple-choice'
+    | 'writing'
+    | 'mixed'
+    | 'matching-game';
