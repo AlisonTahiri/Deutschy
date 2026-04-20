@@ -1,9 +1,11 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
+import type { ContainerMode } from '../types';
 
 // Hooks
 import { useExerciseSession } from '../hooks/useExerciseSession';
@@ -28,6 +30,31 @@ export function ExerciseContainer() {
     useLastActivity();
 
     const session = useExerciseSession(lessonId, user);
+
+    // ── Back-button support via history entries ─────────────────────────
+    const prevModeRef = useRef<ContainerMode>(session.mode);
+    useEffect(() => {
+        const prev = prevModeRef.current;
+        const curr = session.mode;
+        const gameTypes: ContainerMode[] = ['multiple-choice', 'writing', 'mixed', 'matching-game', 'flashcards'];
+
+        if (prev === 'post-lesson' && curr === 'game-grid') {
+            window.history.pushState({ exerciseReturnTo: 'post-lesson' }, '');
+        } else if (prev === 'game-grid' && gameTypes.includes(curr)) {
+            window.history.pushState({ exerciseReturnTo: 'game-grid' }, '');
+        }
+        prevModeRef.current = curr;
+    }, [session.mode]);
+
+    useEffect(() => {
+        const handlePopState = (e: PopStateEvent) => {
+            const returnTo = e.state?.exerciseReturnTo as ContainerMode | undefined;
+            if (returnTo) session.setMode(returnTo);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [session.setMode]);
+    // ────────────────────────────────────────────────────────────────────
 
     const lesson = lessons.find(l => l.id === lessonId);
     const wordsToPractice: ActiveWordPair[] = lesson ? (lesson.words as ActiveWordPair[]) : [];

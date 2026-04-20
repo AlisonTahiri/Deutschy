@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { syncService } from '../services/syncService';
 import { useAuth } from './useAuth';
+import { useSettings } from '../context/SettingsContext';
 
 export const useSyncManager = () => {
     const { user } = useAuth();
+    const { settings, applyCloudSettings } = useSettings();
     const isSyncing = useRef(false);
+    const settingsRef = useRef(settings);
+    useEffect(() => { settingsRef.current = settings; }, [settings]);
 
     useEffect(() => {
         if (!user) return;
@@ -14,6 +18,8 @@ export const useSyncManager = () => {
             isSyncing.current = true;
             try {
                 await syncService.pushPendingProgress(user.id);
+                const { aiApiKey: _key, ...settingsToSync } = settingsRef.current;
+                await syncService.pushSettings(user.id, settingsToSync);
             } catch (error) {
                 console.error('Background sync failed:', error);
             } finally {
@@ -28,6 +34,9 @@ export const useSyncManager = () => {
             isSyncing.current = true;
             try {
                 await syncService.syncUserProgress(user.id);
+                await syncService.restoreXPAndStreak(user.id);
+                const cloudSettings = await syncService.fetchSettings(user.id);
+                if (cloudSettings) applyCloudSettings(cloudSettings);
             } catch (error) {
                 console.error('Initial sync failed', error);
             } finally {

@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { dbService } from './db/provider';
-import type { LocalLesson, WordPair } from '../types';
+import type { LocalLesson, WordPair, Settings } from '../types';
 
 export const syncService = {
     /**
@@ -186,23 +186,102 @@ export const syncService = {
     },
 
     /**
-     * Backs up current local progress (learned words count) to Supabase user_progress table
-     * This remains for XP calculations.
+     * Backs up current local progress (learned words count + XP + streak) to Supabase.
+     * Required columns on user_progress: total_xp int4, streak_count int4, streak_last_day text
      */
     async backupProgress(userId: string): Promise<void> {
         try {
             const allProgress = await dbService.getUserProgress(userId);
             const learnedWords = allProgress.filter(p => p.status === 'learned').length;
-            
+
+            const totalXP = parseInt(localStorage.getItem('deutschy_total_xp') || '0', 10);
+            let streakCount = 0;
+            let streakLastDay = '';
+            try {
+                const raw = localStorage.getItem('deutschy_streak');
+                if (raw) { const s = JSON.parse(raw); streakCount = s.count ?? 0; streakLastDay = s.lastDay ?? ''; }
+            } catch { /* ignore */ }
+
             await supabase
                 .from('user_progress')
                 .upsert({
                     user_id: userId,
                     words_learned: learnedWords,
-                    last_active_date: new Date().toISOString()
+                    last_active_date: new Date().toISOString(),
+                    total_xp: totalXP,
+                    streak_count: streakCount,
+                    streak_last_day: streakLastDay,
                 }, { onConflict: 'user_id' });
         } catch (error) {
             console.error('Failed to backup progress summary:', error);
         }
-    }
+    },
+
+    /**
+     * Pulls XP and streak from Supabase and seeds localStorage when the cloud value is higher.
+     * Call once on app init after syncUserProgress.
+     */
+    async restoreXPAndStreak(userId: string): Promise<void> {
+        try {
+            const { data, error } = await supabase
+                .from('user_progress')
+                .select('total_xp, streak_count, streak_last_day')
+                .eq('user_id', userId)
+                .single();
+
+            if (error || !data) return;
+
+            const localXP = parseInt(localStorage.getItem('deutschy_total_xp') || '0', 10);
+            if ((data.total_xp ?? 0) > localXP) {
+                localStorage.setItem('deutschy_total_xp', String(data.total_xp));
+            }
+
+            try {
+                const raw = localStorage.getItem('deutschy_streak');
+                const local = raw ? JSON.parse(raw) : { count: 0, lastDay: '' };
+                if ((data.streak_count ?? 0) > (local.count ?? 0)) {
+                    localStorage.setItem('deutschy_streak', JSON.stringify({
+                        count: data.streak_count,
+                        lastDay: data.streak_last_day ?? '',
+                    }));
+                }
+            } catch { /* ignore */ }
+        } catch (error) {
+            console.error('Failed to restore XP and streak:', error);
+        }
+    },
+
+    /**
+     * Pushes non-sensitive user settings (excludes aiApiKey) to profiles.settings column.
+     * Required: profiles table must have a settings jsonb column.
+     */
+    async pushSettings(userId: string, settings: Omit<Settings, 'aiApiKey'>): Promise<void> {
+        try {
+            await supabase
+                .from('profiles')
+                .update({ settings })
+                .eq('id', userId);
+        } catch (error) {
+            console.error('Failed to push settings to Supabase:', error);
+        }
+    },
+
+    /**
+     * Fetches settings from Supabase profiles.settings column.
+     */
+    async fetchSettings(userId: string): Promise<Partial<Omit<Settings, 'aiApiKey'>> | null> {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('settings')
+                .eq('id', userId)
+                .single();
+
+            if (error || !data?.settings) return null;
+            return data.settings as Partial<Omit<Settings, 'aiApiKey'>>;
+        } catch (error) {
+            console.error('Failed to fetch settings from Supabase:', error);
+            return null;
+        }
+    },
 };

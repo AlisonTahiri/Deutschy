@@ -12,6 +12,7 @@ interface SettingsContextType {
     updateTheme: (theme: 'light' | 'dark') => void;
     updateKonstaTheme: (theme: 'ios' | 'material') => void;
     updateColorTheme: (color: string) => void;
+    applyCloudSettings: (remote: Partial<Omit<Settings, 'aiApiKey'>>) => void;
 }
 
 const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -114,6 +115,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const updateTheme = (theme: 'light' | 'dark') => setSettings(s => ({ ...s, theme }));
     const updateKonstaTheme = (konstaTheme: 'ios' | 'material') => setSettings(s => ({ ...s, konstaTheme }));
     const updateColorTheme = (colorTheme: string) => setSettings(s => ({ ...s, colorTheme }));
+    const applyCloudSettings = (remote: Partial<Omit<Settings, 'aiApiKey'>>) =>
+        setSettings(s => ({ ...s, ...remote }));
 
     return (
         <SettingsContext.Provider value={{
@@ -123,7 +126,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             updateLevel,
             updateTheme,
             updateKonstaTheme,
-            updateColorTheme
+            updateColorTheme,
+            applyCloudSettings,
         }}>
             {children}
         </SettingsContext.Provider>
