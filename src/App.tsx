@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Layout } from "./components/Layout";
@@ -10,8 +10,11 @@ import { dbService } from "./services/db/provider";
 import { useAuth } from "./hooks/useAuth";
 import { Auth } from "./components/Auth";
 import { SocialLoginService } from "./services/auth/SocialLoginService";
-import { Admin } from "./components/Admin";
 import { Games } from "./components/Games";
+
+const Admin = lazy(() =>
+  import("./components/Admin").then((m) => ({ default: m.Admin }))
+);
 import { useSubscription } from "./hooks/useSubscription";
 import { Paywall } from "./components/Paywall";
 import { Onboarding } from "./components/Onboarding";
@@ -97,7 +100,7 @@ function App() {
               }
             />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
             <Route path="/games" element={<Games />} />
             <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
             {/* Fallback to home */}
