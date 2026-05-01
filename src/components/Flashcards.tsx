@@ -57,7 +57,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
             setCurrentIndex(nextIndex);
             setShowTranslation(false);
             setDirection(null);
-            
+
             if (onProgress) {
                 onProgress(nextIndex, nextQueue.map(w => w.id), languageMode);
             }
@@ -91,7 +91,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
     const progressPercent = Math.min(100, Math.round((currentIndex / queue.length) * 100));
 
     return (
-        <div className="flex flex-col h-[calc(100vh-10rem)] items-center justify-between gap-8 w-full overflow-hidden max-[500px] px-0.5" 
+        <div className="flex flex-col h-[calc(100vh-10rem)] items-center justify-between gap-8 w-full overflow-hidden max-[500px] px-0.5"
 
         >
 
@@ -162,8 +162,8 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                                 }}
                             >
                                 {currentWord.word_type === 'noun' ? 'N' :
-                                 currentWord.word_type === 'verb' ? 'V' :
-                                 currentWord.word_type === 'adjective' ? 'Adj' : 'Expr'}
+                                    currentWord.word_type === 'verb' ? 'V' :
+                                        currentWord.word_type === 'adjective' ? 'Adj' : 'Expr'}
                             </div>
                         )}
 
@@ -175,7 +175,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
 
                             return languageMode === 'german' ? (
                                 <div className="flex flex-col items-center gap-1 mb-4 w-full px-2">
-                                    <h2 
+                                    <h2
                                         lang={lang}
                                         className={`${fontSize} text-center m-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-1`}
                                         style={{ hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
@@ -192,12 +192,14 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                                         <span className="break-all">{currentWord.base || currentWord.german}</span>
                                     </h2>
                                     {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
-                                    {(() => { const sub = getGrammarSubtitle(currentWord); return sub ? (
-                                        <span className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>{sub}</span>
-                                    ) : null; })()}
+                                    {(() => {
+                                        const sub = getGrammarSubtitle(currentWord); return sub ? (
+                                            <span className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>{sub}</span>
+                                        ) : null;
+                                    })()}
                                 </div>
                             ) : (
-                                <h2 
+                                <h2
                                     lang="sq"
                                     className={`${fontSize} text-center mb-4 px-2`}
                                     style={{ hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
@@ -217,13 +219,35 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                                 const transFontSize = trans.length > 20 ? 'text-lg' : trans.length > 15 ? 'text-xl' : 'text-2xl';
                                 const transLang = languageMode === 'german' ? 'sq' : 'de';
                                 return (
-                                    <h3 
-                                        lang={transLang}
-                                        className={`${transFontSize} text-center font-normal px-2`} 
-                                        style={{ color: 'var(--accent-color)', hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
-                                    >
-                                        {trans}
-                                    </h3>
+                                    <div className="flex flex-col items-center">
+                                        <h3
+                                            lang={transLang}
+                                            className={`${transFontSize} text-center font-bold px-2`}
+                                            style={{ color: 'var(--accent-color)', hyphens: 'auto', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                                        >
+                                            {trans}
+                                        </h3>
+
+                                        {currentWord.mcq?.sentence && (
+                                            <div className="mt-4 flex flex-col gap-1.5 pt-4 border-t w-4/5 mx-auto" style={{ borderColor: 'var(--border-color)', opacity: 0.85 }}>
+                                                <p className="text-sm italic text-center px-2" style={{ color: 'var(--text-secondary)' }}>
+                                                    {currentWord.mcq.sentence.split(/_+/).map((part, index, array) => (
+                                                        <span style={{ color: 'var(--text-primary)' }} key={index}>
+                                                            {part}
+                                                            {index < array.length - 1 && (
+                                                                <span >
+                                                                    {currentWord.mcq?.correctAnswer}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    ))}
+                                                </p>
+                                                <p className="text-xs text-center px-2" style={{ color: 'var(--text-secondary)', opacity: 0.75 }}>
+                                                    {currentWord.mcq.sentenceTranslation}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })()}
                         </motion.div>
@@ -267,10 +291,10 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                 </button>
                 <div className="w-12" />
             </div>
-           { !currentIndex && <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+            {!currentIndex && <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                 {t('flashcards.swipeToLearn')}
             </p>
-}
+            }
         </div>
     );
 }
