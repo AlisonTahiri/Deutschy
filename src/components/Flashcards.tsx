@@ -136,7 +136,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                         onClick={() => setShowTranslation(!showTranslation)}
                         style={{ position: 'absolute', width: '100%', height: '100%', cursor: 'grab' }}
                         whileDrag={{ cursor: 'grabbing', scale: 1.05 }}
-                        className="bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl p-8 shadow-lg flex flex-col items-center justify-center"
+                        className="bg-(--bg-card) backdrop-blur-xl border border-(--border-card) rounded-3xl py-8 px-4 sm:p-8 shadow-lg flex flex-col items-center justify-center"
                     >
                         <div className="absolute top-4 right-4" style={{ color: 'var(--text-primary)' }} title="Tap to flip">
                             <RotateCcw size={20} />
@@ -189,7 +189,7 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                                         {currentWord.word_type === 'verb' && currentWord.is_reflexive && (
                                             <span style={{ color: WORD_TYPE_COLORS.verb, opacity: 0.85 }}>sich</span>
                                         )}
-                                        <span className="break-all">{currentWord.base || currentWord.german}</span>
+                                        <span>{currentWord.base || currentWord.german}</span>
                                     </h2>
                                     {/* Grammar subtitle: plural / Präteritum+Partizip / comparative */}
                                     {(() => {
