@@ -91,13 +91,7 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={
-                role === "member" && !activeLevelId && !isChecking ? (
-                  <Paywall onPurchaseSuccess={checkSubscription} />
-                ) : (
-                  <Home />
-                )
-              }
+              element={<Home />}
             />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
