@@ -19,16 +19,19 @@ For each word provided in the snippet/list, the AI must generate the following s
     * `options`: 4 options (1 correct, 3 incorrect distractors) in Albanian or German depending on the context.
     * `correctAnswer`: The correct option.
 
-### Step 2: User Review
-Present the generated data to the user for a quick review. Format the data cleanly, preferably in a Markdown table, so the user can easily spot any errors in translation or grammar.
+### Step 2: PDF Generation & User Review
+Do **NOT** present the generated data as a Markdown table in the chat. Instead, the AI must:
+1. Create a local Markdown file containing the structured data (using the table format shown below).
+2. Generate a PDF from this Markdown file (e.g., using `npx --yes md-to-pdf filename.md`).
+3. Provide the user with the path to the generated PDF (e.g., `A2_Lektion1_Fjalori.pdf`) so they can download and review it.
 
-*Example Review Format:*
+*Example Review Table Format (for the PDF):*
 | German (Base/Article) | Type | Grammar Info (Plural/Forms) | Albanian | MCQ Sentence |
 | :--- | :--- | :--- | :--- | :--- |
 | das Buch | Noun | Bücher | Libri | Ich lese ein interessantes Buch. |
 | gehen | Verb | ging, ist gegangen | Shkoj | Wir gehen heute ins Kino. |
 
-**CRITICAL: Stop here and wait for the user's explicit approval or requested edits before proceeding to the next step.**
+**CRITICAL: Provide the user with the path to the PDF and the SQL file. Wait for the user's explicit approval or requested edits before proceeding or considering the task complete.**
 
 ### Step 3: Database Seeding
 Once the user approves the generated data:
