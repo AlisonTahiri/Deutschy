@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { syncService } from '../services/syncService';
+import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { useSettings } from '../context/SettingsContext';
 
@@ -33,6 +34,14 @@ export const useSyncManager = () => {
             if (isSyncing.current) return;
             isSyncing.current = true;
             try {
+                // Sync all levels from Supabase to local DB
+                const { data: levels, error: levelsError } = await supabase.from('levels').select('id');
+                if (!levelsError && levels && levels.length > 0) {
+                    for (const level of levels) {
+                        await syncService.syncLevelToLocal(level.id);
+                    }
+                }
+
                 await syncService.syncUserProgress(user.id);
                 await syncService.restoreXPAndStreak(user.id);
                 const cloudSettings = await syncService.fetchSettings(user.id);
