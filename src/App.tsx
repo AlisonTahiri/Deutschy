@@ -15,8 +15,7 @@ import { Games } from "./components/Games";
 const Admin = lazy(() =>
   import("./components/Admin").then((m) => ({ default: m.Admin }))
 );
-import { useSubscription } from "./hooks/useSubscription";
-import { Paywall } from "./components/Paywall";
+
 import { Onboarding } from "./components/Onboarding";
 import { useSyncManager } from "./hooks/useSyncManager";
 import { StorageKeys } from "./utils/storage";
@@ -28,13 +27,12 @@ function App() {
   const [onboardingDone, setOnboardingDone] = useState(
     () => localStorage.getItem(StorageKeys.onboardingDone) === "true",
   );
-  const { session, role, isLoading: authLoading } = useAuth();
+  const { session, isLoading: authLoading } = useAuth();
 
   // Initialize offline sync manager
   useSyncManager();
 
-  // Initialize revenuecat and sync subscription
-  const { isChecking, activeLevelId, checkSubscription } = useSubscription();
+
 
   useEffect(() => {
     const initApp = async () => {

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 export function useSubscription() {
     const { session, role } = useAuth();
     const [isChecking, setIsChecking] = useState(false);
-    const [activeLevelId, setActiveLevelId] = useState<string | null>(null);
+
 
     const checkSubscription = async () => {
         if (!session?.user?.id || role !== 'member') return;
@@ -16,7 +16,7 @@ export function useSubscription() {
         try {
             const { data: levels, error } = await supabase.from('levels').select('id');
             if (error) throw error;
-            
+
             if (levels && levels.length > 0) {
                 // Set the first level as active by default, or you can leave it null to show level selection
                 // We'll leave it null so the user can choose the level
@@ -37,7 +37,6 @@ export function useSubscription() {
 
     return {
         isChecking,
-        activeLevelId,
         checkSubscription
     };
 }
