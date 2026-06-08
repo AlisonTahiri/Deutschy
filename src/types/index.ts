@@ -30,6 +30,8 @@ export interface WordPair {
     options: string[];
     correctAnswer: string;
   };
+  has_issues?: boolean;
+  issue_report?: string | null;
 }
 
 /** Returns the display string for the German side of a word (article + base for nouns, etc.) */
@@ -201,6 +203,8 @@ export interface DbLessonWord {
   mcq_sentence_translation: string | null;
   mcq_options: string[] | null;
   mcq_correct_answer: string | null;
+  has_issues: boolean;
+  issue_report: string | null;
   created_at: string;
 }
 

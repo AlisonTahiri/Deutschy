@@ -23,7 +23,10 @@ export function BackgroundMCQGenerator() {
                 const batch = missingMCQWords.slice(0, 10).map(w => ({
                     id: w.id,
                     german: w.german,
-                    albanian: w.albanian
+                    albanian: w.albanian,
+                    base: w.base,
+                    word_type: w.word_type,
+                    is_reflexive: w.is_reflexive,
                 }));
 
                 generateForBatch(lesson.id, batch);

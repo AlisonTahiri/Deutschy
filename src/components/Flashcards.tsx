@@ -5,6 +5,7 @@ import { getGermanDisplay, getGrammarSubtitle, WORD_TYPE_COLORS } from '../types
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Undo2, ArrowRightLeft } from 'lucide-react';
 import { SpeakButton } from './SpeakButton';
+import { ReportButton } from './ReportButton';
 
 interface FlashcardsProps {
     words: ActiveWordPair[];
@@ -143,8 +144,15 @@ export function Flashcards({ words, initialIndex = 0, initialWordIds, initialLan
                         </div>
 
                         {languageMode === 'german' && (
-                            <div className="absolute top-4 left-4">
+                            <div className="absolute top-4 left-4" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                 <SpeakButton text={getGermanDisplay(currentWord)} size={18} />
+                                <ReportButton wordId={currentWord.id} hasIssues={currentWord.has_issues} size={15} />
+                            </div>
+                        )}
+
+                        {languageMode === 'albanian' && (
+                            <div className="absolute top-4 left-4">
+                                <ReportButton wordId={currentWord.id} hasIssues={currentWord.has_issues} size={15} />
                             </div>
                         )}
 

@@ -60,7 +60,7 @@ export function useAdminAI({
             while (!stopGenerationRef.current) {
                 const { data: pendingWords, error } = await supabase
                     .from('lesson_words')
-                    .select('id, german, albanian')
+                    .select('id, german, albanian, base, word_type, is_reflexive')
                     .eq('part_id', activePart.id)
                     .is('mcq_sentence', null)
                     .limit(10);
@@ -77,7 +77,10 @@ export function useAdminAI({
                 const batchParams = pendingWords.map(p => ({
                     id: p.id,
                     german: p.german,
-                    albanian: p.albanian
+                    albanian: p.albanian,
+                    base: p.base,
+                    word_type: p.word_type,
+                    is_reflexive: p.is_reflexive,
                 }));
 
                 const mcqs = await generateBatchMCQ(settings.aiApiKey, batchParams, settings.learningLevel || 'B1');
@@ -111,6 +114,95 @@ export function useAdminAI({
     const handleStopGeneration = () => {
         stopGenerationRef.current = true;
         setMcqProgressText('Stopping after current batch...');
+    };
+
+    const handleResetAndRegenerateMCQs = async () => {
+        if (!activePart || !settings.aiApiKey) {
+            setError('Please set an AI API Key in Settings first.');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'This will DELETE all existing MCQs for this part and regenerate them from scratch. Continue?'
+        );
+        if (!confirmed) return;
+
+        setIsGeneratingMCQs(true);
+        stopGenerationRef.current = false;
+        setMcqProgressText('Clearing existing MCQs...');
+
+        try {
+            // Step 1: Clear all MCQs for this part
+            const { error: clearError } = await supabase
+                .from('lesson_words')
+                .update({
+                    mcq_sentence: null,
+                    mcq_sentence_translation: null,
+                    mcq_options: null,
+                    mcq_correct_answer: null
+                })
+                .eq('part_id', activePart.id);
+
+            if (clearError) throw clearError;
+
+            setMcqProgressText('MCQs cleared. Starting regeneration...');
+            await loadWordsForPart(activePart);
+
+            // Step 2: Regenerate — same loop as handleGenerateMCQs
+            while (!stopGenerationRef.current) {
+                const { data: pendingWords, error } = await supabase
+                    .from('lesson_words')
+                    .select('id, german, albanian, base, word_type, is_reflexive')
+                    .eq('part_id', activePart.id)
+                    .is('mcq_sentence', null)
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (!pendingWords || pendingWords.length === 0) {
+                    setMcqProgressText('All MCQs regenerated!');
+                    break;
+                }
+
+                setMcqProgressText(`Regenerating MCQs for ${pendingWords.length} words...`);
+
+                const batchParams = pendingWords.map(p => ({
+                    id: p.id,
+                    german: p.german,
+                    albanian: p.albanian,
+                    base: p.base,
+                    word_type: p.word_type,
+                    is_reflexive: p.is_reflexive,
+                }));
+
+                const mcqs = await generateBatchMCQ(settings.aiApiKey, batchParams, settings.learningLevel || 'B1');
+
+                if (mcqs && mcqs.length > 0) {
+                    setMcqProgressText(`Saving ${mcqs.length} MCQs...`);
+                    for (const mcq of mcqs) {
+                        if (stopGenerationRef.current) break;
+                        await supabase
+                            .from('lesson_words')
+                            .update({
+                                mcq_sentence: mcq.sentence,
+                                mcq_sentence_translation: mcq.sentenceTranslation,
+                                mcq_options: mcq.options,
+                                mcq_correct_answer: mcq.correctAnswer
+                            })
+                            .eq('id', mcq.wordId);
+                    }
+                    await loadWordsForPart(activePart);
+                }
+            }
+
+            setSuccess('MCQs have been reset and regenerated successfully.');
+        } catch (err: any) {
+            setError('Reset + regeneration failed: ' + err.message);
+        } finally {
+            setIsGeneratingMCQs(false);
+            stopGenerationRef.current = false;
+            setTimeout(() => setMcqProgressText(''), 3000);
+        }
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,6 +436,6 @@ export function useAdminAI({
         isGeneratingMCQs, mcqProgressText,
         isRescanning, rescanProgress,
         setPendingImageFile,
-        handleGenerateMCQs, handleStopGeneration, handleImageUpload, handleConfirmConflict, handleRescanWords
+        handleGenerateMCQs, handleStopGeneration, handleResetAndRegenerateMCQs, handleImageUpload, handleConfirmConflict, handleRescanWords
     };
 }

@@ -36,14 +36,34 @@ export interface MCQResponse {
     correctAnswer: string; // The correct option
 }
 
+export interface MCQWord {
+    id: string;
+    german: string;    // Legacy field (may contain "sich X" or "X Y" for separable verbs)
+    albanian: string;
+    base?: string | null;          // Structured base form (e.g. "vorstellen", "leben")
+    word_type?: string | null;     // "verb", "noun", "adjective", "expression"
+    is_reflexive?: boolean;        // true for reflexive verbs (sich waschen, sich vorstellen)
+}
+
 export async function generateBatchMCQ(
     apiKey: string,
-    words: { id: string; german: string; albanian: string }[],
+    words: MCQWord[],
     targetLevel: string
 ): Promise<(MCQResponse & { wordId: string })[] | null> {
     if (!apiKey || words.length === 0) return null;
 
-    const wordsList = words.map(w => `- ID: ${w.id} | German: "${w.german}" | Albanian: "${w.albanian}"`).join('\n');
+    const wordsList = words.map(w => {
+        // Use structured base if available, otherwise fall back to legacy german field
+        const displayForm = w.base || w.german;
+        const notes: string[] = [];
+        if (w.word_type === 'verb') {
+            if (w.is_reflexive) notes.push('reflexive verb — always used with "sich" (e.g. sich vorstellen)');
+            // Detect separable verbs: base form contains a space (e.g. "getrennt leben", "vorstellen" is NOT separable but "anrufen" IS)
+            // Heuristic: if german field has a space and base doesn't, it may be separable prefix info
+        }
+        const noteStr = notes.length > 0 ? ` [${notes.join('; ')}]` : '';
+        return `- ID: ${w.id} | German base form: "${displayForm}"${noteStr} | Albanian: "${w.albanian}"`;
+    }).join('\n');
 
     const prompt = `
 You are a German language teacher. Create a multiple-choice question for EACH of the following words for a student at the ${targetLevel} level.
@@ -51,11 +71,14 @@ You are a German language teacher. Create a multiple-choice question for EACH of
 Words list:
 ${wordsList}
 
-Instructions for EACH word:
-1. Create a natural German sentence suitable for a ${targetLevel} student using the target German word.
-2. Provide the full Albanian translation of this sentence.
-3. Replace the target German word in the German sentence with "_____".
-4. Provide 4 options for the missing word. One MUST be the correct word, and 3 must be plausible but incorrect alternatives (in German). VARY the position of the correct answer across different words; do not always put it first.
+CRITICAL RULES for sentence construction:
+1. Use the BASE FORM listed above (not any legacy full form). For verbs, conjugate the base form naturally for the sentence subject (e.g. "gehen" → "geht", "vorstellen" → "stellt ... vor").
+2. For REFLEXIVE verbs (marked [reflexive verb]): include the appropriate reflexive pronoun (mich/dich/sich/uns/euch) in the sentence, but put _____ only where the conjugated verb form goes. The correctAnswer must be ONLY the conjugated verb form without "sich" (e.g. "vorstelle", "stelle ... vor" → use just "vorstelle" or the conjugated form).
+3. For SEPARABLE verbs: conjugate naturally — put the prefix at the END of the clause, and put _____ where the verb stem goes. The correctAnswer must be ONLY the conjugated stem (e.g. for "anrufen": "Er _____ mich morgen an." → correctAnswer: "ruft"). Do NOT write the answer as "ruft / an" or similar split notation.
+4. For regular verbs/nouns/adjectives: replace the target word with _____ in the sentence.
+5. Create a natural German sentence, then provide its full Albanian translation.
+6. Provide 4 answer options. One MUST be the correct answer, and 3 must be plausible but incorrect alternatives. VARY the position of the correct answer across different words.
+7. The correctAnswer field must EXACTLY match one of the options.
 
 Return ONLY a valid JSON ARRAY of objects, with no markdown formatting or extra text. Each object must follow this structure exactly:
 [

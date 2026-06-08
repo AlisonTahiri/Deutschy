@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { adminContentService } from '../services/db/adminContentService';
 import type { DbLevel, DbMethod, DbLesson, DbLessonPart, DbLessonWord } from '../types';
 
@@ -9,6 +10,8 @@ export function useAdminState(role: string | null) {
     const [lessons, setLessons] = useState<DbLesson[]>([]);
     const [parts, setParts] = useState<DbLessonPart[]>([]);
     const [words, setWords] = useState<DbLessonWord[]>([]);
+    const [wordsWithIssues, setWordsWithIssues] = useState<(DbLessonWord & { lesson_parts: { name: string; lessons: { name: string } } }  )[]>([]);
+    const [isLoadingIssues, setIsLoadingIssues] = useState(false);
 
     // Selection State
     const [activeLevel, setActiveLevel] = useState<DbLevel | null>(null);
@@ -382,8 +385,47 @@ export function useAdminState(role: string | null) {
         loadLevels();
     };
 
+    const loadWordsWithIssues = async () => {
+        setIsLoadingIssues(true);
+        try {
+            const { data, error } = await supabase
+                .from('lesson_words')
+                .select(`
+                    *,
+                    lesson_parts (
+                        name,
+                        lessons ( name )
+                    )
+                `)
+                .eq('has_issues', true)
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            setWordsWithIssues((data || []) as any);
+        } catch (err: any) {
+            setError('Failed to load flagged words: ' + err.message);
+        } finally {
+            setIsLoadingIssues(false);
+        }
+    };
+
+    const unreportWord = async (wordId: string) => {
+        try {
+            const { error } = await supabase
+                .from('lesson_words')
+                .update({ has_issues: false, issue_report: null })
+                .eq('id', wordId);
+            if (error) throw error;
+            setWordsWithIssues(prev => prev.filter(w => w.id !== wordId));
+            setSuccess('Word marked as fixed.');
+            setTimeout(() => setSuccess(''), 2500);
+        } catch (err: any) {
+            setError('Failed to unreport: ' + err.message);
+        }
+    };
+
     return {
         levels, methods, lessons, parts, words,
+        wordsWithIssues, isLoadingIssues,
         activeLevel, activeMethod, activeLesson, activePart,
         setActiveLevel, setActiveMethod, setActiveLesson, setActivePart,
         isLoading, error, success, setError, setSuccess,
@@ -391,6 +433,7 @@ export function useAdminState(role: string | null) {
         newLevelName, setNewLevelName, newMethodName, setNewMethodName, newLessonName, setNewLessonName,
         searchQuery, setSearchQuery, searchResults, setSearchResults, isSearching,
         loadLevels, loadMethodsForLevel, loadLessonsForMethod, loadPartsForLesson, loadWordsForPart,
+        loadWordsWithIssues, unreportWord,
         handleCreateLevel, handleDeleteLevel, handleCreateMethod, handleDeleteMethod,
         handleCreateLesson, handleDeleteLesson, handleDeletePart, handleDeleteWord,
         handleStartEdit, handleCancelEdit, handleSaveLevel, handleSaveLesson, handleSavePart, handleSaveWord,

@@ -12,6 +12,7 @@ interface VocabularyViewProps {
     isGeneratingMCQs: boolean;
     handleGenerateMCQs: () => void;
     handleStopGeneration: () => void;
+    handleResetAndRegenerateMCQs: () => void;
     mcqProgressText: string;
     isRescanning: boolean;
     rescanProgress: string;
@@ -29,7 +30,7 @@ interface VocabularyViewProps {
 
 export function VocabularyView({
     words, settings, updateLevel,
-    isGeneratingMCQs, handleGenerateMCQs, handleStopGeneration, mcqProgressText,
+    isGeneratingMCQs, handleGenerateMCQs, handleStopGeneration, handleResetAndRegenerateMCQs, mcqProgressText,
     isRescanning, rescanProgress, handleRescanWords,
     editingId, editValue1, editValue2, setEditValue1, setEditValue2,
     handleStartEdit, handleCancelEdit, handleSaveWord, handleDeleteWord
@@ -69,18 +70,28 @@ export function VocabularyView({
                     </select>
                 </div>
 
-                {(hasPendingMCQ || unenrichedWords.length > 0) && (
+                {(hasPendingMCQ || unenrichedWords.length > 0 || words.length > 0) && (
                     <div className="flex flex-col sm:flex-row gap-3 items-center mt-2 pt-4 border-t border-(--border-color)">
-                        {hasPendingMCQ && (
-                            !isGeneratingMCQs ? (
-                                <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
-                                    <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
+                        {!isGeneratingMCQs ? (
+                            <>
+                                {hasPendingMCQ && (
+                                    <button className={`${btnPrimary} w-full sm:w-auto`} onClick={handleGenerateMCQs} disabled={!settings.aiApiKey}>
+                                        <Play size={18} /> Generate Missing MCQs ({words.filter(w => !w.mcq_sentence).length})
+                                    </button>
+                                )}
+                                <button
+                                    className={`${btnSecondary} w-full sm:w-auto text-(--warning-color) border-(--warning-color)`}
+                                    onClick={handleResetAndRegenerateMCQs}
+                                    disabled={!settings.aiApiKey || words.length === 0}
+                                    title="Delete all MCQs and regenerate from scratch with the improved prompt"
+                                >
+                                    <RefreshCw size={18} /> Reset &amp; Regenerate All MCQs
                                 </button>
-                            ) : (
-                                <button className={`${btnSecondary} w-full sm:w-auto text-(--danger-color) border-(--danger-color)`} onClick={handleStopGeneration}>
-                                    <Square size={18} /> Stop Generation
-                                </button>
-                            )
+                            </>
+                        ) : (
+                            <button className={`${btnSecondary} w-full sm:w-auto text-(--danger-color) border-(--danger-color)`} onClick={handleStopGeneration}>
+                                <Square size={18} /> Stop Generation
+                            </button>
                         )}
                         {unenrichedWords.length > 0 && (
                             <button

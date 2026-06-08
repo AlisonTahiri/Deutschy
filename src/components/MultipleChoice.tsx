@@ -4,6 +4,7 @@ import type { ActiveWordPair } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { SpeakButton } from './SpeakButton';
+import { ReportButton } from './ReportButton';
 import { useGermanSpeech } from '../hooks/useGermanSpeech';
 
 interface MultipleChoiceProps {
@@ -194,10 +195,13 @@ export function MultipleChoice({ words, initialIndex = 0, initialWordIds, onProg
                                 )}
                             </h2>
                             {activeIsSubmitted && (
-                                <SpeakButton 
-                                    text={activeQuestionData.sentence.replace(/_+/g, activeQuestionData.correctAnswer)} 
-                                    size={20}
-                                />
+                                <>
+                                    <SpeakButton 
+                                        text={activeQuestionData.sentence.replace(/_+/g, activeQuestionData.correctAnswer)} 
+                                        size={20}
+                                    />
+                                    <ReportButton wordId={activeWord.id} hasIssues={activeWord.has_issues} size={16} />
+                                </>
                             )}
                         </div>
 

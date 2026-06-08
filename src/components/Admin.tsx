@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Flag } from 'lucide-react';
 
 // Hooks
 import { useAdminState } from '../hooks/useAdminState';
@@ -13,10 +14,12 @@ import { LevelList, MethodList, LessonList, PartList } from './admin/AdminViews'
 import { ScanningView } from './admin/ScanningView';
 import { VocabularyView } from './admin/VocabularyView';
 import { SearchResultsView } from './admin/SearchResultsView';
+import { IssuesView } from './admin/IssuesView';
 
 export function Admin() {
     const { role } = useAuth();
     const { settings, updateLevel } = useSettings();
+    const [showIssues, setShowIssues] = useState(false);
 
     const state = useAdminState(role);
     
@@ -43,9 +46,35 @@ export function Admin() {
 
     return (
         <div className="animate-[fadeIn_0.4s_ease-out] flex flex-col gap-8 pb-8">
-            <div>
-                <h1 className="m-0 text-3xl font-bold">Content Administration</h1>
-                <p className="text-(--text-secondary)">Manage course structure and learning materials synchronized via Supabase.</p>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <h1 className="m-0 text-3xl font-bold">Content Administration</h1>
+                    <p className="text-(--text-secondary)">Manage course structure and learning materials synchronized via Supabase.</p>
+                </div>
+                <button
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border font-semibold text-sm cursor-pointer transition-all"
+                    style={{
+                        borderColor: showIssues || state.wordsWithIssues.length > 0 ? 'var(--danger-color)' : 'var(--border-color)',
+                        color: showIssues || state.wordsWithIssues.length > 0 ? 'var(--danger-color)' : 'var(--text-secondary)',
+                        background: showIssues ? 'color-mix(in srgb, var(--danger-color) 10%, var(--bg-card))' : 'var(--bg-card)',
+                    }}
+                    onClick={() => {
+                        setShowIssues(v => !v);
+                        if (!showIssues) state.loadWordsWithIssues();
+                    }}
+                >
+                    <Flag size={15} fill={state.wordsWithIssues.length > 0 ? 'currentColor' : 'none'} />
+                    Issues
+                    {state.wordsWithIssues.length > 0 && (
+                        <span style={{
+                            background: 'var(--danger-color)', color: '#fff',
+                            borderRadius: '99px', fontSize: '0.65rem', fontWeight: 700,
+                            padding: '1px 6px', minWidth: 18, textAlign: 'center',
+                        }}>
+                            {state.wordsWithIssues.length}
+                        </span>
+                    )}
+                </button>
             </div>
 
             {state.error && <div className="text-(--danger-color) p-3 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{state.error}</div>}
@@ -158,6 +187,7 @@ export function Admin() {
                     isGeneratingMCQs={ai.isGeneratingMCQs}
                     handleGenerateMCQs={ai.handleGenerateMCQs}
                     handleStopGeneration={ai.handleStopGeneration}
+                    handleResetAndRegenerateMCQs={ai.handleResetAndRegenerateMCQs}
                     mcqProgressText={ai.mcqProgressText}
                     isRescanning={ai.isRescanning}
                     rescanProgress={ai.rescanProgress}
@@ -188,6 +218,24 @@ export function Admin() {
                     handleCancelEdit={state.handleCancelEdit}
                     handleSaveWord={state.handleSaveWord}
                     handleDeleteWord={state.handleDeleteWord}
+                />
+            )}
+
+            {/* VIEW: ISSUES */}
+            {showIssues && (
+                <IssuesView
+                    wordsWithIssues={state.wordsWithIssues as any}
+                    isLoadingIssues={state.isLoadingIssues}
+                    loadWordsWithIssues={state.loadWordsWithIssues}
+                    unreportWord={state.unreportWord}
+                    editingId={state.editingId}
+                    editValue1={state.editValue1}
+                    editValue2={state.editValue2}
+                    setEditValue1={state.setEditValue1}
+                    setEditValue2={state.setEditValue2}
+                    handleStartEdit={state.handleStartEdit}
+                    handleCancelEdit={state.handleCancelEdit}
+                    handleSaveWord={state.handleSaveWord}
                 />
             )}
         </div>
