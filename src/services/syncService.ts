@@ -2,6 +2,10 @@ import { supabase } from '../lib/supabase';
 import { dbService } from './db/provider';
 import type { LocalLesson, WordPair, Settings } from '../types';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+
 export const syncService = {
     /**
      * Fetches all Lessons -> Lesson Parts -> Words for a specific Level
@@ -283,5 +287,72 @@ export const syncService = {
             console.error('Failed to fetch settings from Supabase:', error);
             return null;
         }
+    },
+
+    /**
+     * Fires keepalive fetch requests to save critical data when the page is about to unload
+     * (tab close, navigation, or sign-out when supabase-js client fails).
+     *
+     * Uses fetch + keepalive:true — unlike regular fetch, these requests are guaranteed
+     * to complete by the browser even after the page has navigated or closed.
+     * Also supports Authorization headers (unlike sendBeacon).
+     *
+     * NOTE: Does NOT await the fetch calls intentionally — fire-and-forget by design.
+     */
+    async flushBeforeUnload(userId: string, accessToken: string): Promise<void> {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !accessToken) return;
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${accessToken}`,
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+        };
+
+        // 1. Dërgoni progres fjalësh të pa-sinkronizuara (user_word_progress)
+        try {
+            const pending = await dbService.getPendingSyncs(userId);
+            if (pending.length > 0) {
+                const toUpsert = pending.map(({ is_synced, ...rest }) => rest);
+                fetch(`${SUPABASE_URL}/rest/v1/user_word_progress`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(toUpsert),
+                    keepalive: true,
+                }).catch(() => { /* best-effort — nuk presim përgjigje */ });
+            }
+        } catch { /* IndexedDB mund të dështojë gjatë page unload */ }
+
+        // 2. Ruani XP, streak dhe numrin e fjalëve të mësuara (user_progress)
+        try {
+            const allProgress = await dbService.getUserProgress(userId);
+            const learnedWords = allProgress.filter(p => p.status === 'learned').length;
+
+            const totalXP = parseInt(localStorage.getItem('deutschy_total_xp') || '0', 10);
+            let streakCount = 0;
+            let streakLastDay = '';
+            try {
+                const raw = localStorage.getItem('deutschy_streak');
+                if (raw) {
+                    const s = JSON.parse(raw);
+                    streakCount = s.count ?? 0;
+                    streakLastDay = s.lastDay ?? '';
+                }
+            } catch { /* ignore */ }
+
+            fetch(`${SUPABASE_URL}/rest/v1/user_progress`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    user_id: userId,
+                    words_learned: learnedWords,
+                    last_active_date: new Date().toISOString(),
+                    total_xp: totalXP,
+                    streak_count: streakCount,
+                    streak_last_day: streakLastDay,
+                }),
+                keepalive: true,
+            }).catch(() => { /* best-effort */ });
+        } catch { /* IndexedDB mund të dështojë gjatë page unload */ }
     },
 };

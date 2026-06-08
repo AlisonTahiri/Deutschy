@@ -21,7 +21,24 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const ROLE_CACHE_KEY = 'deutschy_user_role';
-const SUPABASE_SESSION_KEY = 'sb-' + (import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] ?? '') + '-auth-token';
+const PROJECT_REF = import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] ?? '';
+const SUPABASE_SESSION_KEY = 'sb-' + PROJECT_REF + '-auth-token';
+
+/**
+ * Removes any Supabase session keys that belong to a *different* project.
+ * This prevents stale tokens from a paused/replaced Supabase project
+ * from firing requests to the wrong URL and generating CORS errors.
+ */
+function cleanStaleSupabaseSessions(currentRef: string) {
+    if (!currentRef) return;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('sb-') && key.endsWith('-auth-token') && !key.includes(currentRef)) {
+            console.warn(`[Auth] Removing stale Supabase session for old project: ${key}`);
+            localStorage.removeItem(key);
+        }
+    }
+}
 
 /**
  * Reads the Supabase session synchronously from localStorage.
@@ -90,6 +107,9 @@ async function fetchProfileWithFallback(userId: string): Promise<'admin' | 'memb
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+    // Pastro session-e nga projekte të vjetra Supabase (p.sh. pas pause/riprovimit)
+    cleanStaleSupabaseSessions(PROJECT_REF);
+
     // Bootstrap synchronously from localStorage so we never block offline
     const storedSession = getStoredSession();
 
@@ -163,19 +183,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signOut = async () => {
-        if (user?.id) {
+        // Ruaj referencat para se të pastrojmë state-in
+        const currentUserId = user?.id;
+        const currentAccessToken = session?.access_token;
+
+        // 1. Sinkronizo të dhënat — provo supabase-js client fillimisht
+        if (currentUserId) {
             try {
-                await syncService.pushPendingProgress(user.id);
+                await syncService.pushPendingProgress(currentUserId);
             } catch (err) {
-                console.error("Failed to push progress before logout:", err);
+                console.warn("pushPendingProgress dështoi, provo flushBeforeUnload:", err);
+                // Fallback: keepalive fetch — funksionon edhe kur projekti kishte pause
+                if (currentAccessToken) {
+                    try {
+                        await syncService.flushBeforeUnload(currentUserId, currentAccessToken);
+                    } catch { /* best-effort */ }
+                }
             }
         }
+
+        // 2. Pastro state-in lokal menjëherë — pa pritur Supabase
+        setSession(null);
+        setUser(null);
         setRole(null);
         localStorage.removeItem(ROLE_CACHE_KEY);
-        if (user?.id) {
-            await dbService.clearUserProgress(user.id);
+
+        if (currentUserId) {
+            try {
+                await dbService.clearUserProgress(currentUserId);
+            } catch (err) {
+                console.warn("Could not clear local progress:", err);
+            }
         }
-        await supabase.auth.signOut();
+
+        // 3. Mundohu të sign out-osh nga Supabase (mund të dështojë nëse offline)
+        try {
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.warn("Supabase signOut failed, clearing session locally:", err);
+        }
+
+        // 4. Fshi manualisht të gjitha session-et Supabase nga localStorage
+        try {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                    localStorage.removeItem(key);
+                }
+            }
+        } catch { /* ignore */ }
+
+        // 5. Reload faqen për të pastruar çdo state të mbetur
+        window.location.href = '/';
     };
 
     return (

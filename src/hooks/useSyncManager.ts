@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 import { useSettings } from '../context/SettingsContext';
 
 export const useSyncManager = () => {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const { settings, applyCloudSettings } = useSettings();
     const isSyncing = useRef(false);
     const settingsRef = useRef(settings);
@@ -75,12 +75,21 @@ export const useSyncManager = () => {
             handleSync();
         }, 3 * 60 * 1000);
 
+        // 5. Kur tab-i mbyllet — dërgoni të dhënat me keepalive fetch (pagehide)
+        // Ky event aktivizohet edhe kur user-i shkon tek faqe tjetër (jo vetëm kur mbyll browser-in).
+        const handlePageHide = () => {
+            if (!user?.id || !session?.access_token) return;
+            syncService.flushBeforeUnload(user.id, session.access_token).catch(() => {});
+        };
+        document.addEventListener('pagehide', handlePageHide);
+
         return () => {
             window.removeEventListener('online', handleOnline);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('pagehide', handlePageHide);
             clearInterval(intervalId);
         };
-    }, [user]);
+    }, [user, session]);
 
     // Exposed manual trigger if components need it
     const triggerSync = async () => {
