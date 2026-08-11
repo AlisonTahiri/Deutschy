@@ -137,7 +137,23 @@
     "adminPanel": "Admin Panel",
     "settings": "Settings",
     "home": "Home",
-    "admin": "Admin"
+    "admin": "Admin",
+    "conversations": "Conversations"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "subtitle": "Practice German with everyday conversation scenarios.",
+    "messages": "messages",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "finished": "🎉 Conversation finished!",
+    "toggleTranslation": "Show/hide translations",
+    "hideLabel": "Hide {{name}}",
+    "hiddenLabel": "{{name}} hidden",
+    "speed": "Delay speed",
+    "comingSoon": "More conversations coming soon...",
+    "comingSoonDesc": "New scenarios will be added continuously."
   },
   "onboarding": {
     "stepOf": "Step {{current}} of {{total}}",

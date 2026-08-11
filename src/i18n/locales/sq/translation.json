@@ -138,7 +138,23 @@
     "adminPanel": "Panel i Administratorit",
     "settings": "Cilësimet",
     "home": "Kreu",
-    "admin": "Admin"
+    "admin": "Admin",
+    "conversations": "Bisedimet"
+  },
+  "conversations": {
+    "title": "Bisedimet",
+    "subtitle": "Praktiko gjermanishten me bashkëbisedime në situata të përditshme.",
+    "messages": "mesazhe",
+    "play": "Luaj",
+    "pause": "Ndalo",
+    "restart": "Ristarto",
+    "finished": "🎉 Bashkëbisedimi përfundoi!",
+    "toggleTranslation": "Shfaq/fshih përkthimet",
+    "hideLabel": "Fshih {{name}}",
+    "hiddenLabel": "{{name}} fshehur",
+    "speed": "Shpejtësia e vonesës",
+    "comingSoon": "Më shumë bashkëbisedime së shpejti...",
+    "comingSoonDesc": "Skenarë të rinj do shtohen vazhdimisht."
   },
   "onboarding": {
     "stepOf": "Hapi {{current}} nga {{total}}",

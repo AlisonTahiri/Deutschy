@@ -16,6 +16,10 @@ const Admin = lazy(() =>
   import("./components/Admin").then((m) => ({ default: m.Admin }))
 );
 
+const ConversationsList = lazy(() =>
+  import("./components/conversations/ConversationsList").then((m) => ({ default: m.ConversationsList }))
+);
+
 import { Onboarding } from "./components/Onboarding";
 import { useSyncManager } from "./hooks/useSyncManager";
 import { StorageKeys } from "./utils/storage";
@@ -94,6 +98,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
             <Route path="/games" element={<Games />} />
+            <Route path="/conversations" element={<Suspense fallback={null}><ConversationsList /></Suspense>} />
             <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
             {/* Fallback to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
