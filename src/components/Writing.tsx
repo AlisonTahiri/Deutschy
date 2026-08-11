@@ -187,20 +187,21 @@ export function Writing({ words, initialIndex = 0, initialWordIds, onProgress, o
                         </div>
                     )}
 
-                    <div className="flex flex-row items-center gap-2">
+                    <div className="flex flex-row items-center gap-2 w-full overflow-hidden">
                         {getArticle() && (
-                            <span className="text-xl font-bold" style={{ color: 'var(--accent-color)', opacity: 0.8 }}>
+                            <span className="text-xl font-bold shrink-0" style={{ color: 'var(--accent-color)', opacity: 0.8 }}>
                                 {getArticle()}
                             </span>
                         )}
                         <input
                             ref={inputRef}
-                            className="flex-1 px-4 py-3 rounded-xl border text-xl text-center min-h-12 outline-none transition-all duration-200 focus:ring-2"
+                            className="flex-1 min-w-0 px-4 py-3 rounded-xl border text-xl text-center min-h-12 outline-none transition-all duration-200 focus:ring-2"
                             style={{
                                 fontSize: '1.25rem',
-                                backgroundColor: 'var(--bg-color)',
+                                backgroundColor: 'var(--bg-color-secondary)',
                                 borderColor: isSubmitted ? (isCorrect ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--border-color)',
                                 color: 'var(--text-primary)',
+                                boxShadow: !isSubmitted ? '0 0 0 0px var(--accent-color)' : undefined,
                             }}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
