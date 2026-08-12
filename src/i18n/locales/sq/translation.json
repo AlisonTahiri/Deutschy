@@ -139,10 +139,10 @@
     "settings": "Cilësimet",
     "home": "Kreu",
     "admin": "Admin",
-    "conversations": "Bisedimet"
+    "conversations": "Bisedat"
   },
   "conversations": {
-    "title": "Bisedimet",
+    "title": "Bisedat",
     "subtitle": "Praktiko gjermanishten me bashkëbisedime në situata të përditshme.",
     "messages": "mesazhe",
     "play": "Luaj",

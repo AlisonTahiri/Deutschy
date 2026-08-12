@@ -27,7 +27,7 @@ export function ConversationsList() {
       <div className="mb-6">
         <div className="flex justify-between items-end border-b border-(--border-color)/10 pb-2">
           <h1 className="text-2xl font-bold m-0">
-            {t('conversations.title', { defaultValue: 'Bisedimet' })}
+            {t('conversations.title', { defaultValue: 'Bisedat' })}
           </h1>
         </div>
         <p className="text-sm mt-2 opacity-70" style={{ color: 'var(--text-secondary)' }}>

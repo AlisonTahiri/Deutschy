@@ -62,7 +62,7 @@ export function Layout({ children }: LayoutProps) {
     const getTitle = () => {
         if (isHome) return 'Deutschy';
         if (isGames) return t('home.games', { defaultValue: 'Lojërat' });
-        if (isConversations) return t('conversations.title', { defaultValue: 'Bisedimet' });
+        if (isConversations) return t('conversations.title', { defaultValue: 'Bisedat' });
         if (isAdmin) return t('layout.adminPanel');
         if (isSettings) return t('layout.settings');
         return 'Deutschy';
@@ -96,7 +96,7 @@ export function Layout({ children }: LayoutProps) {
                     <TabbarLink
                         active={isConversations}
                         onClick={() => navigate('/conversations')}
-                        label={t('conversations.title', { defaultValue: 'Bisedimet' })}
+                        label={t('conversations.title', { defaultValue: 'Bisedat' })}
                         icon={<Icon ios={<MessageCircle size={24} />} material={<MessageCircle size={24} />} />}
                     />
                     {role === 'admin' && (
@@ -145,7 +145,7 @@ export function Layout({ children }: LayoutProps) {
                     />
                     <MenuListItem
                         active={isConversations}
-                        title={t('conversations.title', { defaultValue: 'Bisedimet' })}
+                        title={t('conversations.title', { defaultValue: 'Bisedat' })}
                         onClick={() => navigate('/conversations')}
                         media={<MessageCircle size={18} />}
                         className={isConversations ? 'bg-(--bg-accent-subtle)' : ''}
