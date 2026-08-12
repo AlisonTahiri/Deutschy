@@ -11,7 +11,7 @@ import {
   Gauge,
 } from 'lucide-react';
 import type { Conversation } from '../../data/conversationData';
-import { useConversationPlayer, type SpeedMultiplier } from '../../hooks/useConversationPlayer';
+import { useConversationPlayer, type ExtraDelay } from '../../hooks/useConversationPlayer';
 import { ChatBubble } from './ChatBubble';
 
 interface ConversationPlayerProps {
@@ -26,32 +26,33 @@ export function ConversationPlayer({ conversation, onBack }: ConversationPlayerP
     isPlaying,
     showTranslations,
     hiddenSpeaker,
-    speedMultiplier,
+    extraDelay,
     revealedMessages,
     play,
     pause,
     reset,
     toggleTranslations,
     setHiddenSpeaker,
-    setSpeedMultiplier,
+    setExtraDelay,
     revealMessage,
     speakMessage,
+    seek,
   } = useConversationPlayer(conversation);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isFinished = visibleCount >= conversation.messages.length && !isPlaying;
 
-  // Auto-scroll to bottom when new messages appear
+  // Auto-scroll to bottom when new messages appear or translations toggle
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [visibleCount]);
+  }, [visibleCount, showTranslations]);
 
   // Determine which speaker is "right" (second speaker)
   const rightSpeakerId = conversation.speakers[1]?.id;
 
-  const speedOptions: SpeedMultiplier[] = [1, 1.5, 2];
+  const extraDelayOptions: ExtraDelay[] = [0, 1, 2, 3];
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] max-w-2xl mx-auto w-full animate-[fadeIn_0.3s_ease-out]">
@@ -192,25 +193,25 @@ export function ConversationPlayer({ conversation, onBack }: ConversationPlayerP
             )}
           </div>
 
-          {/* Speed control */}
+          {/* Speed control / Extra delay */}
           <button
             onClick={() => {
-              const idx = speedOptions.indexOf(speedMultiplier);
-              const next = speedOptions[(idx + 1) % speedOptions.length];
-              setSpeedMultiplier(next);
+              const idx = extraDelayOptions.indexOf(extraDelay);
+              const next = extraDelayOptions[(idx + 1) % extraDelayOptions.length];
+              setExtraDelay(next);
             }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95"
             style={{
-              backgroundColor: speedMultiplier > 1
+              backgroundColor: extraDelay !== 0
                 ? 'color-mix(in srgb, var(--warning-color) 15%, transparent)'
                 : 'color-mix(in srgb, var(--border-color) 30%, transparent)',
-              color: speedMultiplier > 1 ? 'var(--warning-color)' : 'var(--text-secondary)',
+              color: extraDelay !== 0 ? 'var(--warning-color)' : 'var(--text-secondary)',
               border: 'none',
             }}
-            title={t('conversations.speed', { defaultValue: 'Shpejtësia e vonesës' })}
+            title={t('conversations.delay', { defaultValue: 'Shto vonesë' })}
           >
             <Gauge size={15} />
-            {speedMultiplier}x
+            +{extraDelay}s
           </button>
         </div>
 
@@ -245,18 +246,17 @@ export function ConversationPlayer({ conversation, onBack }: ConversationPlayerP
 
         {/* Progress indicator */}
         <div className="flex items-center gap-2">
-          <div
-            className="flex-1 h-1 rounded-full overflow-hidden"
-            style={{ backgroundColor: 'var(--border-color)' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: `${(visibleCount / conversation.messages.length) * 100}%`,
-                backgroundColor: 'var(--accent-color)',
-              }}
-            />
-          </div>
+          <input
+            type="range"
+            min="0"
+            max={conversation.messages.length}
+            value={visibleCount}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer outline-none bg-(--border-color)"
+            style={{
+              background: `linear-gradient(to right, var(--accent-color) ${(visibleCount / conversation.messages.length) * 100}%, var(--border-color) ${(visibleCount / conversation.messages.length) * 100}%)`,
+            }}
+          />
           <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--text-secondary)' }}>
             {visibleCount}/{conversation.messages.length}
           </span>

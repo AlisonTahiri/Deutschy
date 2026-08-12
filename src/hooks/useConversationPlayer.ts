@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Conversation, ConversationMessage, SpeakerId } from '../data/conversationData';
 import { useConversationSpeech } from './useConversationSpeech';
 
-export type SpeedMultiplier = 1 | 1.5 | 2;
+export type ExtraDelay = 0 | 1 | 2 | 3;
 
 interface UseConversationPlayerReturn {
   /** Number of messages currently visible */
@@ -13,8 +13,8 @@ interface UseConversationPlayerReturn {
   showTranslations: boolean;
   /** Which speaker is hidden (null = none) */
   hiddenSpeaker: SpeakerId | null;
-  /** Speed multiplier for delays */
-  speedMultiplier: SpeedMultiplier;
+  /** Extra delay seconds added between messages */
+  extraDelay: ExtraDelay;
   /** Set of message IDs that have been individually revealed */
   revealedMessages: Set<string>;
   /** Whether speech engine is currently speaking */
@@ -26,9 +26,10 @@ interface UseConversationPlayerReturn {
   reset: () => void;
   toggleTranslations: () => void;
   setHiddenSpeaker: (speakerId: SpeakerId | null) => void;
-  setSpeedMultiplier: (speed: SpeedMultiplier) => void;
+  setExtraDelay: (delay: ExtraDelay) => void;
   revealMessage: (messageId: string) => void;
   speakMessage: (message: ConversationMessage) => void;
+  seek: (index: number) => void;
 }
 
 export function useConversationPlayer(conversation: Conversation): UseConversationPlayerReturn {
@@ -36,7 +37,7 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTranslations, setShowTranslations] = useState(false);
   const [hiddenSpeaker, setHiddenSpeaker] = useState<SpeakerId | null>(null);
-  const [speedMultiplier, setSpeedMultiplier] = useState<SpeedMultiplier>(1);
+  const [extraDelay, setExtraDelay] = useState<ExtraDelay>(0);
   const [revealedMessages, setRevealedMessages] = useState<Set<string>>(new Set());
 
   const { speak, cancel, isSpeaking } = useConversationSpeech();
@@ -46,12 +47,12 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleCountRef = useRef(0);
   const hiddenSpeakerRef = useRef<SpeakerId | null>(null);
-  const speedRef = useRef<SpeedMultiplier>(1);
+  const extraDelayRef = useRef<ExtraDelay>(0);
 
   // Keep refs in sync
   useEffect(() => { visibleCountRef.current = visibleCount; }, [visibleCount]);
   useEffect(() => { hiddenSpeakerRef.current = hiddenSpeaker; }, [hiddenSpeaker]);
-  useEffect(() => { speedRef.current = speedMultiplier; }, [speedMultiplier]);
+  useEffect(() => { extraDelayRef.current = extraDelay; }, [extraDelay]);
 
   const getSpeakerGender = useCallback((speakerId: SpeakerId): 'male' | 'female' => {
     const speaker = conversation.speakers.find(s => s.id === speakerId);
@@ -74,11 +75,8 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     const message = conversation.messages[currentIndex];
     const isHidden = hiddenSpeakerRef.current === message.speakerId;
 
-    // Calculate delay — hidden speaker messages get extra time based on multiplier
-    let delay = message.delayMs;
-    if (isHidden) {
-      delay = delay * speedRef.current;
-    }
+    // Calculate delay — default is half the original delay (0.5x), plus any user-requested extra seconds
+    let delay = (message.delayMs * 0.5) + (extraDelayRef.current * 1000);
 
     // Wait the delay
     await new Promise<void>((resolve) => {
@@ -140,8 +138,8 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     setHiddenSpeaker(speakerId);
   }, []);
 
-  const handleSetSpeedMultiplier = useCallback((speed: SpeedMultiplier) => {
-    setSpeedMultiplier(speed);
+  const handleSetExtraDelay = useCallback((delay: ExtraDelay) => {
+    setExtraDelay(delay);
   }, []);
 
   const revealMessage = useCallback((messageId: string) => {
@@ -157,6 +155,13 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     cancel();
     speak(message.soundId, message.german, gender);
   }, [cancel, speak, getSpeakerGender]);
+
+  const seek = useCallback((index: number) => {
+    pause();
+    const safeIndex = Math.max(0, Math.min(index, conversation.messages.length));
+    setVisibleCount(safeIndex);
+    visibleCountRef.current = safeIndex;
+  }, [pause, conversation.messages.length]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -174,7 +179,7 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     isPlaying,
     showTranslations,
     hiddenSpeaker,
-    speedMultiplier,
+    extraDelay,
     revealedMessages,
     isSpeaking,
     play,
@@ -182,8 +187,9 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     reset,
     toggleTranslations,
     setHiddenSpeaker: handleSetHiddenSpeaker,
-    setSpeedMultiplier: handleSetSpeedMultiplier,
+    setExtraDelay: handleSetExtraDelay,
     revealMessage,
     speakMessage,
+    seek,
   };
 }

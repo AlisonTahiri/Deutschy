@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageCircle, ChevronRight } from 'lucide-react';
 import { conversations } from '../../data/conversationData';
@@ -6,7 +6,20 @@ import { ConversationPlayer } from './ConversationPlayer';
 
 export function ConversationsList() {
   const { t } = useTranslation();
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  
+  // Persist the active conversation across tab switches
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
+    return localStorage.getItem('deutschy_last_conversation_id');
+  });
+
+  // Save to localStorage when it changes
+  useEffect(() => {
+    if (activeConversationId) {
+      localStorage.setItem('deutschy_last_conversation_id', activeConversationId);
+    } else {
+      localStorage.removeItem('deutschy_last_conversation_id');
+    }
+  }, [activeConversationId]);
 
   const activeConversation = activeConversationId
     ? conversations.find(c => c.id === activeConversationId)
