@@ -19,6 +19,8 @@ export interface ConversationMessage {
   albanian: string;
   /** Delay in ms before this message appears (simulates natural pause) */
   delayMs: number;
+  /** Audio file identifier — maps to /sounds/{soundId}.mp3 */
+  soundId: string;
 }
 
 export interface Conversation {
@@ -55,6 +57,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Hey Markus! Schön, dich wiederzusehen! Wie war dein Sommer?',
       albanian: 'Hej Markus! Sa mirë të të shoh prapë! Si ishte vera jote?',
       delayMs: 1200,
+      soundId: 'b1-cafe-sommerferien_msg-01',
     },
     {
       id: 'msg-02',
@@ -62,6 +65,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Hallo Anna! Ja, es ist lange her. Mein Sommer war wirklich toll! Ich war zwei Wochen in Kroatien.',
       albanian: 'Përshëndetje Anna! Po, ka kohë që nuk jemi parë. Vera ime ishte vërtet fantastike! Isha dy javë në Kroaci.',
       delayMs: 1800,
+      soundId: 'b1-cafe-sommerferien_msg-02',
     },
     {
       id: 'msg-03',
@@ -69,6 +73,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Oh, wie schön! Kroatien ist wunderschön. Warst du am Meer?',
       albanian: 'Oh, sa bukur! Kroacia është e mrekullueshme. Ishe në det?',
       delayMs: 1500,
+      soundId: 'b1-cafe-sommerferien_msg-03',
     },
     {
       id: 'msg-04',
@@ -76,6 +81,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ja, wir hatten ein kleines Apartment direkt am Strand in Split. Das Wasser war so klar!',
       albanian: 'Po, kishim një apartament të vogël direkt pranë plazhit në Split. Uji ishte aq i pastër!',
       delayMs: 2000,
+      soundId: 'b1-cafe-sommerferien_msg-04',
     },
     {
       id: 'msg-05',
@@ -83,6 +89,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Das klingt traumhaft. Und was hast du dort gemacht? Nur Strand oder auch Ausflüge?',
       albanian: 'Tingëllon si ëndërr. Dhe çfarë bëre atje? Vetëm plazh apo edhe ekskursione?',
       delayMs: 1800,
+      soundId: 'b1-cafe-sommerferien_msg-05',
     },
     {
       id: 'msg-06',
@@ -90,6 +97,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Wir haben viel unternommen! Wir haben die Altstadt besichtigt und sind auch mit dem Boot zu einer kleinen Insel gefahren.',
       albanian: 'Bëmë shumë gjëra! Vizituam qytetin e vjetër dhe shkuam edhe me varkë në një ishull të vogël.',
       delayMs: 2200,
+      soundId: 'b1-cafe-sommerferien_msg-06',
     },
     {
       id: 'msg-07',
@@ -97,6 +105,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Das hört sich super an! Und wie war das Essen dort?',
       albanian: 'Kjo tingëllon super! Dhe si ishte ushqimi atje?',
       delayMs: 1400,
+      soundId: 'b1-cafe-sommerferien_msg-07',
     },
     {
       id: 'msg-08',
@@ -104,6 +113,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Fantastisch! Wir haben jeden Abend frischen Fisch gegessen. Und du? Was hast du im Sommer gemacht?',
       albanian: 'Fantastik! Çdo mbrëmje hëngëm peshk të freskët. Po ti? Çfarë bëre gjatë verës?',
       delayMs: 2000,
+      soundId: 'b1-cafe-sommerferien_msg-08',
     },
     {
       id: 'msg-09',
@@ -111,6 +121,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ich bin nach Berlin gefahren, um meine Schwester zu besuchen. Sie wohnt dort seit zwei Jahren.',
       albanian: 'Shkova në Berlin për të vizituar motrën time. Ajo jeton atje prej dy vjetësh.',
       delayMs: 2000,
+      soundId: 'b1-cafe-sommerferien_msg-09',
     },
     {
       id: 'msg-10',
@@ -118,6 +129,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Cool! Berlin ist eine tolle Stadt. Wie hat es dir gefallen?',
       albanian: 'Bukur! Berlini është një qytet fantastik. Si të pëlqeu?',
       delayMs: 1500,
+      soundId: 'b1-cafe-sommerferien_msg-10',
     },
     {
       id: 'msg-11',
@@ -125,6 +137,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ich liebe Berlin! Wir waren im Museum, haben im Park gepicknickt und sind abends in ein tolles Restaurant gegangen.',
       albanian: 'E dua Berlinin! Shkuam në muze, bëmë piknik në park dhe mbrëmjeve shkuam në një restorant fantastik.',
       delayMs: 2400,
+      soundId: 'b1-cafe-sommerferien_msg-11',
     },
     {
       id: 'msg-12',
@@ -132,6 +145,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Klingt nach einem perfekten Urlaub. Hast du auch etwas Neues ausprobiert?',
       albanian: 'Duket si një pushim perfekt. A provove edhe diçka të re?',
       delayMs: 1800,
+      soundId: 'b1-cafe-sommerferien_msg-12',
     },
     {
       id: 'msg-13',
@@ -139,6 +153,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ja! Ich habe einen Kochkurs besucht. Wir haben gelernt, wie man typisches Berliner Essen kocht.',
       albanian: 'Po! Ndoqa një kurs gatimi. Mësuam si gatuhet ushqimi tipik i Berlinit.',
       delayMs: 2000,
+      soundId: 'b1-cafe-sommerferien_msg-13',
     },
     {
       id: 'msg-14',
@@ -146,6 +161,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Das ist ja cool! Was hast du gekocht?',
       albanian: 'Sa bukur! Çfarë gatove?',
       delayMs: 1200,
+      soundId: 'b1-cafe-sommerferien_msg-14',
     },
     {
       id: 'msg-15',
@@ -153,6 +169,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Currywurst und Kartoffelpuffer! Es hat wirklich Spaß gemacht.',
       albanian: 'Currywurst dhe petulla me patate! Ishte vërtet argëtuese.',
       delayMs: 1600,
+      soundId: 'b1-cafe-sommerferien_msg-15',
     },
     {
       id: 'msg-16',
@@ -160,6 +177,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ha ha, lecker! Sag mal, hast du schon Pläne für nächste Woche? Ich dachte, wir könnten zusammen ins Kino gehen.',
       albanian: 'Ha ha, e shijshme! Thuam, a ke plane për javën e ardhshme? Mendova se mund të shkojmë bashkë në kinema.',
       delayMs: 2200,
+      soundId: 'b1-cafe-sommerferien_msg-16',
     },
     {
       id: 'msg-17',
@@ -167,6 +185,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ja, gerne! Am Samstag habe ich Zeit. Welchen Film möchtest du sehen?',
       albanian: 'Po, me kënaqësi! Të shtunën kam kohë. Cilin film do të shohësh?',
       delayMs: 1800,
+      soundId: 'b1-cafe-sommerferien_msg-17',
     },
     {
       id: 'msg-18',
@@ -174,6 +193,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Es läuft ein neuer deutscher Film. Er soll sehr gut sein. Sollen wir uns um sieben Uhr vor dem Kino treffen?',
       albanian: 'Ka një film të ri gjerman. Thuhet se është shumë i mirë. A duhet të takohemi në orën shtatë para kinemase?',
       delayMs: 2400,
+      soundId: 'b1-cafe-sommerferien_msg-18',
     },
     {
       id: 'msg-19',
@@ -181,6 +201,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Perfekt! Um sieben passt mir gut. Ich freue mich schon darauf!',
       albanian: 'Perfekt! Ora shtatë më përshtatet mirë. Mezi pres!',
       delayMs: 1600,
+      soundId: 'b1-cafe-sommerferien_msg-19',
     },
     {
       id: 'msg-20',
@@ -188,6 +209,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Super, dann bis Samstag! Aber jetzt bestelle ich erstmal noch einen Kaffee. Möchtest du auch noch einen?',
       albanian: 'Super, atëherë deri të shtunën! Por tani po porosis edhe një kafe. Do edhe ti një?',
       delayMs: 2000,
+      soundId: 'b1-cafe-sommerferien_msg-20',
     },
     {
       id: 'msg-21',
@@ -195,6 +217,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
       german: 'Ja, einen Cappuccino bitte! Danke dir.',
       albanian: 'Po, një cappuccino ju lutem! Faleminderit.',
       delayMs: 1200,
+      soundId: 'b1-cafe-sommerferien_msg-21',
     },
   ],
 };

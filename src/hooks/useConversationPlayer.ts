@@ -94,7 +94,7 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
     // Speak the message (unless the speaker is hidden)
     if (!isHidden) {
       const gender = getSpeakerGender(message.speakerId);
-      await speak(message.german, gender);
+      await speak(message.soundId, message.german, gender);
     } else {
       // Small pause for hidden messages
       await new Promise<void>((resolve) => {
@@ -155,7 +155,7 @@ export function useConversationPlayer(conversation: Conversation): UseConversati
   const speakMessage = useCallback((message: ConversationMessage) => {
     const gender = getSpeakerGender(message.speakerId);
     cancel();
-    speak(message.german, gender);
+    speak(message.soundId, message.german, gender);
   }, [cancel, speak, getSpeakerGender]);
 
   // Cleanup on unmount
