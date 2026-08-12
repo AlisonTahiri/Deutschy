@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 
 /**
  * Speech hook that plays pre-generated MP3 audio files for conversations.
  * Falls back to Web Speech API when audio files are not available.
  *
- * Audio files are expected at: /sounds/{soundId}.mp3
+ * Audio files are expected in Supabase Storage bucket 'audio' at: /conversations/{soundId}.mp3
  */
 export function useConversationSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -27,7 +28,8 @@ export function useConversationSpeech() {
       }
       resolveRef.current = resolve;
 
-      const audioUrl = `/sounds/${soundId}.mp3`;
+      const { data } = supabase.storage.from('audio').getPublicUrl(`conversations/${soundId}.mp3`);
+      const audioUrl = data.publicUrl;
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
