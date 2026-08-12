@@ -226,8 +226,189 @@ const B1_CAFE_CONVERSATION: Conversation = {
 // EXPORTED CONVERSATIONS LIST
 // ═══════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════
+// B1 SCENARIO: "Ein Picknick planen"
+// Two friends plan a picnic for the weekend.
+// ═══════════════════════════════════════════════════════
+
+const B1_PICKNICK_CONVERSATION: Conversation = {
+  id: 'b1-picknick-planung',
+  title: 'Ein Picknick planen',
+  titleAlbanian: 'Planifikimi i një pikniku',
+  level: 'B1',
+  scenario: 'Zwei Freunde planen ein Picknick für das kommende Wochenende im Park.',
+  scenarioAlbanian: 'Dy miq planifikojnë një piknik për fundjavën e ardhshme në park.',
+  speakers: [
+    { id: 'anna', name: 'Anna', gender: 'female' },
+    { id: 'markus', name: 'Markus', gender: 'male' },
+  ],
+  messages: [
+    {
+      id: 'msg-01',
+      speakerId: 'anna',
+      german: 'Hallo Markus! Hast du am Wochenende schon etwas vor?',
+      albanian: 'Përshëndetje Markus! A ke ndonjë plan për fundjavën?',
+      delayMs: 1500,
+      soundId: 'b1-picknick-planung_msg-01',
+    },
+    {
+      id: 'msg-02',
+      speakerId: 'markus',
+      german: 'Hey Anna! Nein, noch nicht wirklich. Warum fragst du?',
+      albanian: 'Hej Anna! Jo, jo vërtet ende. Pse pyet?',
+      delayMs: 1400,
+      soundId: 'b1-picknick-planung_msg-02',
+    },
+    {
+      id: 'msg-03',
+      speakerId: 'anna',
+      german: 'Das Wetter soll am Samstag richtig schön werden. Hast du Lust auf ein Picknick im Park?',
+      albanian: 'Moti të shtunën pritet të jetë shumë i bukur. Ke dëshirë për një piknik në park?',
+      delayMs: 2200,
+      soundId: 'b1-picknick-planung_msg-03',
+    },
+    {
+      id: 'msg-04',
+      speakerId: 'markus',
+      german: 'Das ist eine tolle Idee! Ich war schon lange nicht mehr im Park.',
+      albanian: 'Kjo është një ide fantastike! Ka kohë që nuk kam qenë në park.',
+      delayMs: 1800,
+      soundId: 'b1-picknick-planung_msg-04',
+    },
+    {
+      id: 'msg-05',
+      speakerId: 'anna',
+      german: 'Super! Sollen wir uns so um 13 Uhr treffen?',
+      albanian: 'Super! A të takohemi rreth orës 13:00?',
+      delayMs: 1200,
+      soundId: 'b1-picknick-planung_msg-05',
+    },
+    {
+      id: 'msg-06',
+      speakerId: 'markus',
+      german: 'Ja, 13 Uhr passt perfekt. Was sollen wir zum Essen mitbringen?',
+      albanian: 'Po, ora 13 përshtatet perfekt. Çfarë duhet të sjellim për të ngrënë?',
+      delayMs: 1800,
+      soundId: 'b1-picknick-planung_msg-06',
+    },
+    {
+      id: 'msg-07',
+      speakerId: 'anna',
+      german: 'Ich kann einen Nudelsalat und etwas frisches Obst machen.',
+      albanian: 'Unë mund të bëj një sallatë me makarona dhe pak fruta të freskëta.',
+      delayMs: 1600,
+      soundId: 'b1-picknick-planung_msg-07',
+    },
+    {
+      id: 'msg-08',
+      speakerId: 'markus',
+      german: 'Klingt lecker! Dann bringe ich belegte Brötchen und etwas zu trinken mit.',
+      albanian: 'Tingëllon e shijshme! Atëherë unë do të sjell sanduiçe dhe diçka për të pirë.',
+      delayMs: 2000,
+      soundId: 'b1-picknick-planung_msg-08',
+    },
+    {
+      id: 'msg-09',
+      speakerId: 'anna',
+      german: 'Perfekt! Möchtest du lieber Wasser oder Apfelschorle?',
+      albanian: 'Perfekt! Preferon ujë apo lëng molle me gaz?',
+      delayMs: 1400,
+      soundId: 'b1-picknick-planung_msg-09',
+    },
+    {
+      id: 'msg-10',
+      speakerId: 'markus',
+      german: 'Ein bisschen Apfelschorle wäre super. Und vielleicht noch etwas Süßes?',
+      albanian: 'Pak lëng molle me gaz do ishte super. Dhe ndoshta diçka të ëmbël?',
+      delayMs: 1800,
+      soundId: 'b1-picknick-planung_msg-10',
+    },
+    {
+      id: 'msg-11',
+      speakerId: 'anna',
+      german: 'Gute Idee, ich kaufe noch Kekse oder einen kleinen Kuchen.',
+      albanian: 'Ide e mirë, unë do blej edhe biskota ose një tortë të vogël.',
+      delayMs: 1600,
+      soundId: 'b1-picknick-planung_msg-11',
+    },
+    {
+      id: 'msg-12',
+      speakerId: 'markus',
+      german: 'Soll ich auch eine große Decke mitbringen? Ich habe eine sehr bequeme.',
+      albanian: 'A duhet të sjell edhe një batanije të madhe? Kam një shumë të rehatshme.',
+      delayMs: 2000,
+      soundId: 'b1-picknick-planung_msg-12',
+    },
+    {
+      id: 'msg-13',
+      speakerId: 'anna',
+      german: 'Ja, bitte! Meine Picknickdecke ist leider ein bisschen zu klein.',
+      albanian: 'Po, të lutem! Batanija ime e piknikut është për fat të keq pak e vogël.',
+      delayMs: 1800,
+      soundId: 'b1-picknick-planung_msg-13',
+    },
+    {
+      id: 'msg-14',
+      speakerId: 'markus',
+      german: 'Kein Problem. Treffen wir uns direkt am großen Brunnen im Park?',
+      albanian: 'S\'ka problem. A takohemi direkt tek shatërvani i madh në park?',
+      delayMs: 1800,
+      soundId: 'b1-picknick-planung_msg-14',
+    },
+    {
+      id: 'msg-15',
+      speakerId: 'anna',
+      german: 'Das ist ein guter Treffpunkt. Da finden wir uns schnell.',
+      albanian: 'Ai është një vend takimi i mirë. Aty e gjejmë njëri-tjetrin shpejt.',
+      delayMs: 1400,
+      soundId: 'b1-picknick-planung_msg-15',
+    },
+    {
+      id: 'msg-16',
+      speakerId: 'markus',
+      german: 'Hoffentlich gibt es dort auch einen Platz im Schatten. Die Sonne soll sehr stark sein.',
+      albanian: 'Shpresojmë që aty të ketë edhe një vend në hije. Dielli thuhet se do të jetë shumë i fortë.',
+      delayMs: 2200,
+      soundId: 'b1-picknick-planung_msg-16',
+    },
+    {
+      id: 'msg-17',
+      speakerId: 'anna',
+      german: 'Wir finden bestimmt einen Platz unter einem großen Baum.',
+      albanian: 'Ne me siguri do të gjejmë një vend nën një pemë të madhe.',
+      delayMs: 1500,
+      soundId: 'b1-picknick-planung_msg-17',
+    },
+    {
+      id: 'msg-18',
+      speakerId: 'markus',
+      german: 'Ganz bestimmt. Ich freue mich schon sehr auf Samstag!',
+      albanian: 'Me siguri. Mezi pres të shtunën!',
+      delayMs: 1500,
+      soundId: 'b1-picknick-planung_msg-18',
+    },
+    {
+      id: 'msg-19',
+      speakerId: 'anna',
+      german: 'Ich mich auch! Dann sehen wir uns am Samstag um 13 Uhr.',
+      albanian: 'Edhe unë! Atëherë shihemi të shtunën në orën 13.',
+      delayMs: 1600,
+      soundId: 'b1-picknick-planung_msg-19',
+    },
+    {
+      id: 'msg-20',
+      speakerId: 'markus',
+      german: 'Bis dann, Anna! Mach\'s gut!',
+      albanian: 'Deri atëherë, Anna! Gjithë të mirat!',
+      delayMs: 1200,
+      soundId: 'b1-picknick-planung_msg-20',
+    },
+  ],
+};
+
 export const conversations: Conversation[] = [
   B1_CAFE_CONVERSATION,
+  B1_PICKNICK_CONVERSATION,
 ];
 
 export function getConversationById(id: string): Conversation | undefined {
