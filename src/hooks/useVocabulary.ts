@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { LocalLesson, ActiveLesson, ActiveWordPair, WordPair } from '../types';
 import { cleanupLessonStorage } from '../utils/storage';
 import { dbService } from '../services/db/provider';
@@ -7,11 +7,16 @@ import { useAuth } from './useAuth';
 export function useVocabulary() {
     const { user } = useAuth();
     const [lessons, setLessons] = useState<ActiveLesson[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const loadingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
     const loadLessons = async (background = false) => {
+        // For background refreshes, never show a loader
+        // For foreground loads, only show a loader if the fetch takes > 150ms
+        if (!background) {
+            loadingTimerRef.current = setTimeout(() => setIsLoading(true), 150);
+        }
         try {
-            if (!background) setIsLoading(true);
             if (!dbService.isInitialized()) await dbService.init();
             
             const rawLessons = await dbService.getLessons();
@@ -49,6 +54,7 @@ export function useVocabulary() {
         } catch (err) {
             console.error("Failed to load lessons from DB", err);
         } finally {
+            clearTimeout(loadingTimerRef.current);
             setIsLoading(false);
         }
     };
