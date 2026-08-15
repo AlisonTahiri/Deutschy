@@ -28,6 +28,7 @@ export interface Conversation {
   title: string;
   titleAlbanian: string;
   level: LearningLevel;
+  type: 'diskutim' | 'prezantim';
   scenario: string;
   scenarioAlbanian: string;
   speakers: Speaker[];
@@ -44,6 +45,7 @@ const B1_CAFE_CONVERSATION: Conversation = {
   title: 'Im Café nach den Sommerferien',
   titleAlbanian: 'Në kafe pas pushimeve verore',
   level: 'B1',
+  type: 'diskutim',
   scenario: 'Zwei Freunde treffen sich nach den Sommerferien in einem Café und erzählen über ihre Erlebnisse.',
   scenarioAlbanian: 'Dy miq takohen pas pushimeve verore në një kafene dhe tregojnë për përvojat e tyre.',
   speakers: [
@@ -236,6 +238,7 @@ const B1_PICKNICK_CONVERSATION: Conversation = {
   title: 'Ein Picknick planen',
   titleAlbanian: 'Planifikimi i një pikniku',
   level: 'B1',
+  type: 'diskutim',
   scenario: 'Zwei Freunde planen ein Picknick für das kommende Wochenende im Park.',
   scenarioAlbanian: 'Dy miq planifikojnë një piknik për fundjavën e ardhshme në park.',
   speakers: [
@@ -406,9 +409,110 @@ const B1_PICKNICK_CONVERSATION: Conversation = {
   ],
 };
 
+// ═══════════════════════════════════════════════════════
+// B1 SCENARIO: "Leben in der Stadt oder auf dem Land?" (Präsentation)
+// ═══════════════════════════════════════════════════════
+
+const B1_PREZANTIM_STADT_LAND: Conversation = {
+  id: 'b1-prezantim-stadt-land',
+  title: 'Leben in der Stadt oder auf dem Land?',
+  titleAlbanian: 'Jeta në qytet apo në fshat?',
+  level: 'B1',
+  type: 'prezantim',
+  scenario: 'Ein Kandidat hält eine Präsentation über das Thema "Leben in der Stadt oder auf dem Land?" und beantwortet danach Fragen.',
+  scenarioAlbanian: 'Një kandidat mban një prezantim mbi temën "Jeta në qytet apo në fshat?" dhe më pas i përgjigjet pyetjeve.',
+  speakers: [
+    { id: 'anna', name: 'Anna', gender: 'female' },
+    { id: 'prüfer', name: 'Prüfer', gender: 'male' },
+  ],
+  messages: [
+    {
+      id: 'msg-01',
+      speakerId: 'anna',
+      german: 'Guten Tag! Mein Thema heute ist „Leben in der Stadt oder auf dem Land?“. Dieses Thema ist sehr aktuell, weil viele Menschen darüber nachdenken, wo sie besser leben können.',
+      albanian: 'Mirëdita! Tema ime sot është "Jeta në qytet apo në fshat?". Kjo temë është shumë aktuale, sepse shumë njerëz mendojnë se ku mund të jetojnë më mirë.',
+      delayMs: 2000,
+      soundId: 'b1-prezantim-stadt-land_msg-01',
+    },
+    {
+      id: 'msg-02',
+      speakerId: 'anna',
+      german: 'Zuerst möchte ich über meine persönlichen Erfahrungen sprechen. Danach sage ich etwas zur Situation in meinem Heimatland und nenne Vor- und Nachteile. Zum Schluss sage ich meine Meinung.',
+      albanian: 'Së pari dua të flas për përvojat e mia personale. Më pas do të them diçka për situatën në vendlindjen time dhe do të përmend avantazhet e disavantazhet. Në fund do të jap mendimin tim.',
+      delayMs: 2500,
+      soundId: 'b1-prezantim-stadt-land_msg-02',
+    },
+    {
+      id: 'msg-03',
+      speakerId: 'anna',
+      german: 'Ich persönlich bin in einem kleinen Dorf aufgewachsen. Es war dort sehr ruhig und wir hatten viel Natur. Aber als ich angefangen habe zu studieren, bin ich in die Stadt gezogen.',
+      albanian: 'Unë personalisht jam rritur në një fshat të vogël. Atje ishte shumë qetë dhe kishim shumë natyrë. Por kur fillova të studioj, u shpërngula në qytet.',
+      delayMs: 2500,
+      soundId: 'b1-prezantim-stadt-land_msg-03',
+    },
+    {
+      id: 'msg-04',
+      speakerId: 'anna',
+      german: 'In Albanien, meinem Heimatland, ziehen heute immer mehr junge Menschen in die großen Städte wie Tirana, weil es dort mehr Arbeit und bessere Universitäten gibt. Auf dem Land leben oft nur noch ältere Leute.',
+      albanian: 'Në Shqipëri, vendlindjen time, sot gjithnjë e më shumë të rinj po shpërngulen në qytetet e mëdha si Tirana, sepse atje ka më shumë punë dhe universitete më të mira. Në fshat shpesh jetojnë vetëm të moshuarit.',
+      delayMs: 3000,
+      soundId: 'b1-prezantim-stadt-land_msg-04',
+    },
+    {
+      id: 'msg-05',
+      speakerId: 'anna',
+      german: 'Ein Vorteil vom Stadtleben ist die gute Infrastruktur. Man hat Busse, Krankenhäuser, Kinos und viele Einkaufsmöglichkeiten in der Nähe. Ein Nachteil ist jedoch der Stress, der Lärm und oft die schlechte Luft.',
+      albanian: 'Një avantazh i jetës në qytet është infrastruktura e mirë. Ke autobusë, spitale, kinema dhe shumë mundësi blerjeje pranë. Por një disavantazh është stresi, zhurma dhe shpesh ajri i keq.',
+      delayMs: 3000,
+      soundId: 'b1-prezantim-stadt-land_msg-05',
+    },
+    {
+      id: 'msg-06',
+      speakerId: 'anna',
+      german: 'Auf dem Land ist die Luft sauberer und das Leben ist entspannter. Das ist ein großer Vorteil, besonders für Familien mit Kindern. Aber ein Nachteil ist, dass man oft ein Auto braucht, um zur Arbeit zu kommen.',
+      albanian: 'Në fshat ajri është më i pastër dhe jeta është më e qetë. Ky është një avantazh i madh, veçanërisht për familjet me fëmijë. Por një disavantazh është se shpesh duhet një makinë për të shkuar në punë.',
+      delayMs: 3000,
+      soundId: 'b1-prezantim-stadt-land_msg-06',
+    },
+    {
+      id: 'msg-07',
+      speakerId: 'anna',
+      german: 'Meiner Meinung nach ist die Stadt besser für junge Leute, die Karriere machen wollen. Für Familien ist das Landleben schöner. Ich selbst möchte später, wenn ich Kinder habe, wieder aufs Land ziehen. Das war meine Präsentation. Vielen Dank fürs Zuhören!',
+      albanian: 'Për mendimin tim, qyteti është më i mirë për të rinjtë që duan të bëjnë karrierë. Për familjet jeta në fshat është më e bukur. Unë vetë, më vonë kur të kem fëmijë, dua të shpërngulem prapë në fshat. Ky ishte prezantimi im. Faleminderit që më dëgjuat!',
+      delayMs: 3500,
+      soundId: 'b1-prezantim-stadt-land_msg-07',
+    },
+    {
+      id: 'msg-08',
+      speakerId: 'prüfer',
+      german: 'Vielen Dank für Ihre Präsentation. Ich habe noch eine Frage: Sie haben gesagt, dass man auf dem Land ein Auto braucht. Denken Sie, dass die öffentlichen Verkehrsmittel dort verbessert werden sollten?',
+      albanian: 'Faleminderit shumë për prezantimin tuaj. Kam edhe një pyetje: Ju thatë se në fshat nevojitet një makinë. A mendoni se transporti publik atje duhet të përmirësohet?',
+      delayMs: 3000,
+      soundId: 'b1-prezantim-stadt-land_msg-08',
+    },
+    {
+      id: 'msg-09',
+      speakerId: 'anna',
+      german: 'Ja, absolut. Zum Beispiel fährt in meinem Dorf der Bus nur zweimal am Tag. Wenn man keinen Führerschein hat, ist man sehr isoliert. Wenn es mehr Busse gäbe, würden vielleicht auch mehr Leute auf dem Land bleiben.',
+      albanian: 'Po, absolutisht. Për shembull, në fshatin tim autobusi kalon vetëm dy herë në ditë. Nëse nuk ke patentë, je shumë i izoluar. Nëse do të kishte më shumë autobusë, ndoshta më shumë njerëz do të qëndronin në fshat.',
+      delayMs: 3000,
+      soundId: 'b1-prezantim-stadt-land_msg-09',
+    },
+    {
+      id: 'msg-10',
+      speakerId: 'prüfer',
+      german: 'Das ist ein guter Punkt. Vielen Dank für Ihre Antwort und viel Erfolg noch!',
+      albanian: 'Kjo është një pikë e mirë. Faleminderit shumë për përgjigjen tuaj dhe suksese më tej!',
+      delayMs: 2000,
+      soundId: 'b1-prezantim-stadt-land_msg-10',
+    },
+  ],
+};
+
 export const conversations: Conversation[] = [
   B1_CAFE_CONVERSATION,
   B1_PICKNICK_CONVERSATION,
+  B1_PREZANTIM_STADT_LAND,
 ];
 
 export function getConversationById(id: string): Conversation | undefined {
