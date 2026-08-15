@@ -30,9 +30,9 @@ function getModel(index: number): string {
 function loadApiKey(): string {
   const envPath = join(dirname(import.meta.dir), '.env');
   const envContent = readFileSync(envPath, 'utf-8');
-  const match = envContent.match(/^GEMINI_API_KEY_2=(.+)$/m);
+  const match = envContent.match(/^GEMINI_API_KEY=(.+)$/m);
   if (!match || !match[1].trim()) {
-    console.error('❌ GEMINI_API_KEY_2 not found in .env');
+    console.error('❌ GEMINI_API_KEY not found in .env');
     process.exit(1);
   }
   return match[1].trim();
@@ -106,8 +106,8 @@ async function main() {
   const apiKey = loadApiKey();
   mkdirSync(SOUNDS_DIR, { recursive: true });
 
-  // Get only the picnic conversation
-  const conv = conversations.find(c => c.id === 'b1-picknick-planung');
+  // Get only the presentation conversation
+  const conv = conversations.find(c => c.id === 'b1-prezantim-stadt-land');
   if (!conv) {
     console.error('Conversation not found');
     return;
