@@ -160,13 +160,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(newSession?.user ?? null);
 
             if (newSession?.user) {
-                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-                    setIsLoading(true);
+                if (event === 'SIGNED_IN') {
+                    // Genuine sign-in: only show loader if we don't have a cached role
+                    const cachedRole = localStorage.getItem(ROLE_CACHE_KEY) as 'admin' | 'member' | null;
+                    if (!cachedRole) setIsLoading(true);
                     fetchProfileWithFallback(newSession.user.id).then((r) => {
                         if (mounted) {
                             setRole(r);
                             setIsLoading(false);
                         }
+                    });
+                } else if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                    // Tab refocus or token refresh: update role in background, never show loader
+                    fetchProfileWithFallback(newSession.user.id).then((r) => {
+                        if (mounted) setRole(r);
                     });
                 }
             } else {
