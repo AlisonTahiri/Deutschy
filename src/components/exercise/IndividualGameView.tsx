@@ -7,8 +7,7 @@ import { Writing } from '../Writing';
 import { Mixed } from '../Mixed';
 import { MatchingGame } from '../MatchingGame';
 import { WordListModal, WordListButton } from './WordListModal';
-import { XP_PER_ACTIVITY } from '../../utils/scoreCalculator';
-import type { LocalLesson, ExerciseType, ActiveWordPair } from '../../types';
+import type { LocalLesson, ActiveWordPair } from '../../types';
 
 import type { useExerciseSession } from '../../hooks/useExerciseSession';
 
@@ -39,10 +38,6 @@ export function IndividualGameView({ session, lesson, wordsToPractice }: Individ
                     {session.mode === 'matching-game' && t('exercise.modes.matchingGame')}
                 </h3>
                 <WordListButton onClick={() => setShowWordList(true)} />
-                <span className="text-xs px-2 py-1 rounded-full font-semibold"
-                    style={{ background: 'var(--bg-accent-subtle)', color: 'var(--accent-color)' }}>
-                    +{XP_PER_ACTIVITY[session.mode as ExerciseType] ?? 2} XP/{t('home.words')}
-                </span>
             </div>
 
             <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
