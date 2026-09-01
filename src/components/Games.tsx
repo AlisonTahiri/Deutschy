@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVocabulary } from '../hooks/useVocabulary';
 import { ArrowLeft, BrainCircuit, Type, FileQuestion, Zap, Flame, BarChart2 } from 'lucide-react';
@@ -7,10 +7,10 @@ import type { ActiveWordPair, ExerciseType } from '../types';
 import { Block, Preloader } from 'konsta/react';
 import { MetricCard } from './MetricCard';
 
-// Reuse game components
-import { MatchingGame } from './MatchingGame';
-import { MultipleChoice } from './MultipleChoice';
-import { Writing } from './Writing';
+// Lazy load heavy game components
+const MatchingGame = lazy(() => import('./MatchingGame').then(m => ({ default: m.MatchingGame })));
+const MultipleChoice = lazy(() => import('./MultipleChoice').then(m => ({ default: m.MultipleChoice })));
+const Writing = lazy(() => import('./Writing').then(m => ({ default: m.Writing })));
 
 interface GameState {
     index: number;
@@ -405,35 +405,42 @@ export function Games() {
             </div>
             
             <div className="flex-1 relative">
-                {activeGame === 'matching-game' && (
-                    <MatchingGame 
-                        words={gameWords} 
-                        initialSlideIndex={matchingState?.index || 0}
-                        onProgress={(idx) => setPersistedState('matching', selectedLessonId, idx, gameWords.map(w => w.id))}
-                        onResult={handleResult} 
-                        onComplete={() => handleExitGame(true)} 
-                    />
-                )}
-                {activeGame === 'multiple-choice' && (
-                    <MultipleChoice 
-                        words={gameWords} 
-                        initialIndex={mcqState?.index || 0}
-                        initialWordIds={mcqState?.wordIds}
-                        onProgress={(idx, ids) => setPersistedState('mcq', selectedLessonId, idx, ids)}
-                        onResult={handleResult} 
-                        onComplete={() => handleExitGame(true)} 
-                    />
-                )}
-                {activeGame === 'writing' && (
-                    <Writing 
-                        words={gameWords} 
-                        initialIndex={writingState?.index || 0}
-                        initialWordIds={writingState?.wordIds}
-                        onProgress={(idx, ids) => setPersistedState('writing', selectedLessonId, idx, ids)}
-                        onResult={handleResult} 
-                        onComplete={() => handleExitGame(true)} 
-                    />
-                )}
+                <Suspense fallback={
+                    <Block className="text-center py-20 flex flex-col items-center gap-4">
+                        <Preloader className="w-8 h-8" />
+                        <span className="text-sm text-(--text-secondary)">{t('app.initializing')}</span>
+                    </Block>
+                }>
+                    {activeGame === 'matching-game' && (
+                        <MatchingGame 
+                            words={gameWords} 
+                            initialSlideIndex={matchingState?.index || 0}
+                            onProgress={(idx) => setPersistedState('matching', selectedLessonId, idx, gameWords.map(w => w.id))}
+                            onResult={handleResult} 
+                            onComplete={() => handleExitGame(true)} 
+                        />
+                    )}
+                    {activeGame === 'multiple-choice' && (
+                        <MultipleChoice 
+                            words={gameWords} 
+                            initialIndex={mcqState?.index || 0}
+                            initialWordIds={mcqState?.wordIds}
+                            onProgress={(idx, ids) => setPersistedState('mcq', selectedLessonId, idx, ids)}
+                            onResult={handleResult} 
+                            onComplete={() => handleExitGame(true)} 
+                        />
+                    )}
+                    {activeGame === 'writing' && (
+                        <Writing 
+                            words={gameWords} 
+                            initialIndex={writingState?.index || 0}
+                            initialWordIds={writingState?.wordIds}
+                            onProgress={(idx, ids) => setPersistedState('writing', selectedLessonId, idx, ids)}
+                            onResult={handleResult} 
+                            onComplete={() => handleExitGame(true)} 
+                        />
+                    )}
+                </Suspense>
             </div>
         </div>
     );

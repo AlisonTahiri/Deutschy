@@ -52,7 +52,10 @@ export const useSyncManager = () => {
                 isSyncing.current = false;
             }
         };
-        initSync();
+        // Delay initial sync by 3 seconds to let the UI load from local Dexie DB first
+        const initTimeout = setTimeout(() => {
+            initSync();
+        }, 3000);
 
         // 2. On network restored
         const handleOnline = () => {
@@ -87,6 +90,7 @@ export const useSyncManager = () => {
             window.removeEventListener('online', handleOnline);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             document.removeEventListener('pagehide', handlePageHide);
+            clearTimeout(initTimeout);
             clearInterval(intervalId);
         };
     }, [user, session]);

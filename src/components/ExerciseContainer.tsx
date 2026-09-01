@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
@@ -10,11 +10,11 @@ import type { ContainerMode } from '../types';
 // Hooks
 import { useExerciseSession } from '../hooks/useExerciseSession';
 
-// Components
-import { PostLessonView } from './exercise/PostLessonView';
-import { CongratsView } from './exercise/CongratsView';
-import { GameGridView } from './exercise/GameGridView';
-import { IndividualGameView } from './exercise/IndividualGameView';
+// Lazy components
+const PostLessonView = lazy(() => import('./exercise/PostLessonView').then(m => ({ default: m.PostLessonView })));
+const CongratsView = lazy(() => import('./exercise/CongratsView').then(m => ({ default: m.CongratsView })));
+const GameGridView = lazy(() => import('./exercise/GameGridView').then(m => ({ default: m.GameGridView })));
+const IndividualGameView = lazy(() => import('./exercise/IndividualGameView').then(m => ({ default: m.IndividualGameView })));
 
 import type { ActiveWordPair } from '../types';
 
@@ -94,8 +94,15 @@ export function ExerciseContainer() {
 
     // ── View Logic ──────────────────────────────────────────────────────
 
+    const FallbackLoader = () => (
+        <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: '50vh' }}>
+            <p>{t('exercise.loadingLesson')}</p>
+        </div>
+    );
+
+    let ContentView;
     if (session.mode === 'post-lesson') {
-        return (
+        ContentView = (
             <PostLessonView 
                 lesson={lesson}
                 sessionXP={session.sessionXP}
@@ -107,10 +114,8 @@ export function ExerciseContainer() {
                 onExit={onExit}
             />
         );
-    }
-
-    if (session.mode === 'congrats') {
-        return (
+    } else if (session.mode === 'congrats') {
+        ContentView = (
             <CongratsView 
                 lesson={lesson}
                 sessionXP={session.sessionXP}
@@ -120,10 +125,8 @@ export function ExerciseContainer() {
                 onExit={onExit}
             />
         );
-    }
-
-    if (session.mode === 'game-grid') {
-        return (
+    } else if (session.mode === 'game-grid') {
+        ContentView = (
             <GameGridView 
                 lesson={lesson}
                 canDoQuiz={canDoQuiz}
@@ -132,11 +135,8 @@ export function ExerciseContainer() {
                 clearFlashcardPersistence={session.clearFlashcardPersistence}
             />
         );
-    }
-
-    // Default: Individual Game (Flashcards, Writing, etc.)
-    return (
-        <>
+    } else {
+        ContentView = (
             <IndividualGameView 
                 mode={session.mode}
                 lesson={lesson}
@@ -151,7 +151,12 @@ export function ExerciseContainer() {
                 handleGameComplete={session.handleGameComplete}
                 setMode={session.setMode}
             />
+        );
+    }
 
+    return (
+        <Suspense fallback={<FallbackLoader />}>
+            {ContentView}
             {session.showOnboarding && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <motion.div
@@ -172,6 +177,6 @@ export function ExerciseContainer() {
                     </motion.div>
                 </div>
             )}
-        </>
+        </Suspense>
     );
 }
