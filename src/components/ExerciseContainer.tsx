@@ -138,18 +138,9 @@ export function ExerciseContainer() {
     } else {
         ContentView = (
             <IndividualGameView 
-                mode={session.mode}
+                session={session}
                 lesson={lesson}
                 wordsToPractice={wordsToPractice}
-                flashcardsIndex={session.flashcardsIndex}
-                flashcardsQueue={session.flashcardsQueue}
-                flashcardsDirection={session.flashcardsDirection}
-                handleFlashcardProgress={session.handleFlashcardProgress}
-                handleFlashcardsResult={session.handleFlashcardsResult}
-                handleFlashcardsComplete={session.handleFlashcardsComplete}
-                handleGameResult={session.handleGameResult}
-                handleGameComplete={session.handleGameComplete}
-                setMode={session.setMode}
             />
         );
     }
