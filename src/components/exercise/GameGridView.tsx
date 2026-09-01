@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Layers, Grid, MessageSquare, PenTool, Shuffle } from 'lucide-react';
+import { Layers, Grid, MessageSquare, PenTool, Shuffle, BookOpen } from 'lucide-react';
 import { ExerciseHeader } from './ExerciseHeader';
 import { XP_PER_ACTIVITY } from '../../utils/scoreCalculator';
 import type { LocalLesson, ContainerMode } from '../../types';
+import { WordListModal } from './WordListModal';
 
 interface GameGridViewProps {
     lesson: LocalLesson;
@@ -18,11 +20,25 @@ export function GameGridView({
     lesson, canDoQuiz, setMode, setSessionXP, clearFlashcardPersistence
 }: GameGridViewProps) {
     const { t } = useTranslation();
+    const [showWordList, setShowWordList] = useState(false);
 
     return (
         <div className="flex flex-col gap-5 px-4 py-4 w-full max-w-4xl mx-auto">
             <ExerciseHeader lesson={lesson} subtitle={t('exercise.postLesson.playGames')} onBack={() => setMode('post-lesson')} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                {/* View word list */}
+                <button
+                    className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
+                    style={{ borderColor: 'color-mix(in srgb, var(--accent-color) 30%, transparent)' }}
+                    onClick={() => setShowWordList(true)}
+                >
+                    <BookOpen size={32} color="var(--accent-color)" />
+                    <h3 className="m-0">{t('exercise.wordList.title')}</h3>
+                    <span className="text-sm font-normal text-center" style={{ color: 'var(--text-secondary)' }}>
+                        {t('exercise.wordList.count', { count: lesson.words.length })}
+                    </span>
+                </button>
+
                 <button
                     className={`${glass} flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] p-8`}
                     onClick={() => { 
@@ -87,6 +103,12 @@ export function GameGridView({
                     </button>
                 )}
             </div>
+
+            <WordListModal
+                words={lesson.words}
+                isOpen={showWordList}
+                onClose={() => setShowWordList(false)}
+            />
         </div>
     );
 }

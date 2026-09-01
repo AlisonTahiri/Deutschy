@@ -256,6 +256,14 @@
       "text": "Këtu mund të mësosh fjalët e reja. Këshillë: Për të shënuar një fjalë si 'Të mësuar' plotësisht dhe për ta shtuar te progresi yt, duhet ta gjesh saktë nga Shqipja në Gjermanisht. Ndrysho gjuhën kur të jesh gati!",
       "gotIt": "E kuptova, vazhdojmë!"
     },
+    "wordList": {
+      "title": "Lista e Fjalëve",
+      "buttonLabel": "Fjalët",
+      "count": "{{count}} fjalë në total",
+      "searchPlaceholder": "Kërko fjalë...",
+      "noResults": "Asnjë fjalë nuk u gjet.",
+      "viewBeforeStart": "Shiko fjalët para se të fillosh"
+    },
     "postLesson": {
       "greatJob": "Punë e shkëlqyer! 🎉",
       "partComplete": "Ke kaluar të gjitha kartat e kësaj pjese!",

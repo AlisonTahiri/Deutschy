@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, CheckCircle2, ChevronRight, Trophy, Gamepad2 } from 'lucide-react';
+import { RefreshCw, CheckCircle2, ChevronRight, Trophy, Gamepad2, BookOpen } from 'lucide-react';
 import { ExerciseHeader } from './ExerciseHeader';
 import type { LocalLesson, ContainerMode } from '../../types';
+import { WordListModal } from './WordListModal';
 
 interface PostLessonViewProps {
     lesson: LocalLesson;
@@ -25,6 +27,7 @@ export function PostLessonView({
 }: PostLessonViewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [showWordList, setShowWordList] = useState(false);
 
     return (
         <div className="flex flex-col px-4 py-4 w-full max-w-xl mx-auto gap-5">
@@ -50,6 +53,24 @@ export function PostLessonView({
             </AnimatePresence>
 
             <div className="flex flex-col gap-3 w-full mt-1">
+                {/* View word list */}
+                <motion.button
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
+                    className={`${glass} flex flex-row items-center gap-4 cursor-pointer hover:scale-[1.01] text-left`}
+                    style={{ padding: '1.25rem 1.5rem' }}
+                    onClick={() => setShowWordList(true)}
+                >
+                    <div className="rounded-xl p-3 shrink-0" style={{ background: 'var(--bg-accent-subtle)' }}>
+                        <BookOpen size={22} color="var(--accent-color)" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-base">{t('exercise.wordList.title')}</span>
+                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                            {t('exercise.wordList.count', { count: lesson.words.length })}
+                        </span>
+                    </div>
+                </motion.button>
+
                 {/* Review again → restart from pass1 */}
                 <motion.button
                     initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
@@ -140,6 +161,12 @@ export function PostLessonView({
                     </div>
                 </motion.button>
             </div>
+
+            <WordListModal
+                words={lesson.words}
+                isOpen={showWordList}
+                onClose={() => setShowWordList(false)}
+            />
         </div>
     );
 }

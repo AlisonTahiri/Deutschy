@@ -255,6 +255,14 @@
       "text": "Here you can learn new words. Tip: To mark a word as 'Learned' and add it to your progress, you must answer it correctly from Albanian to German. Switch the language when you're ready!",
       "gotIt": "Got it, let's go!"
     },
+    "wordList": {
+      "title": "Word List",
+      "buttonLabel": "Words",
+      "count": "{{count}} words total",
+      "searchPlaceholder": "Search words...",
+      "noResults": "No words found.",
+      "viewBeforeStart": "View words before starting"
+    },
     "postLesson": {
       "greatJob": "Great job! 🎉",
       "partComplete": "You've gone through all cards in this part!",

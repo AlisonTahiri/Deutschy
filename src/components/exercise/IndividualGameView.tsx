@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { Flashcards } from '../Flashcards';
@@ -5,6 +6,7 @@ import { MultipleChoice } from '../MultipleChoice';
 import { Writing } from '../Writing';
 import { Mixed } from '../Mixed';
 import { MatchingGame } from '../MatchingGame';
+import { WordListModal, WordListButton } from './WordListModal';
 import { XP_PER_ACTIVITY } from '../../utils/scoreCalculator';
 import type { LocalLesson, ContainerMode, ExerciseType, ActiveWordPair } from '../../types';
 
@@ -32,6 +34,7 @@ export function IndividualGameView({
     handleGameResult, handleGameComplete, setMode
 }: IndividualGameViewProps) {
     const { t } = useTranslation();
+    const [showWordList, setShowWordList] = useState(false);
 
 
     return (
@@ -47,6 +50,7 @@ export function IndividualGameView({
                     {mode === 'mixed' && t('exercise.modes.mixedPractice')}
                     {mode === 'matching-game' && t('exercise.modes.matchingGame')}
                 </h3>
+                <WordListButton onClick={() => setShowWordList(true)} />
                 <span className="text-xs px-2 py-1 rounded-full font-semibold"
                     style={{ background: 'var(--bg-accent-subtle)', color: 'var(--accent-color)' }}>
                     +{XP_PER_ACTIVITY[mode as ExerciseType] ?? 2} XP/{t('home.words')}
@@ -91,6 +95,13 @@ export function IndividualGameView({
                     />
                 )}
             </div>
+
+            <WordListModal
+                words={lesson.words}
+                isOpen={showWordList}
+                onClose={() => setShowWordList(false)}
+            />
         </div>
     );
 }
+

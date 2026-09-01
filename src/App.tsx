@@ -11,6 +11,7 @@ import { useAuth } from "./hooks/useAuth";
 import { Auth } from "./components/Auth";
 import { SocialLoginService } from "./services/auth/SocialLoginService";
 import { Games } from "./components/Games";
+import { VocabularyProvider } from "./context/VocabularyContext";
 
 const Admin = lazy(() =>
   import("./components/Admin").then((m) => ({ default: m.Admin }))
@@ -87,24 +88,26 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Layout>
-        <BackgroundMCQGenerator />
-        <ErrorBoundary>
-          <Routes>
-            <Route
-              path="/"
-              element={<Home />}
-            />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
-            <Route path="/games" element={<Games />} />
-            <Route path="/conversations" element={<Suspense fallback={null}><ConversationsList /></Suspense>} />
-            <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
-            {/* Fallback to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ErrorBoundary>
-      </Layout>
+      <VocabularyProvider>
+        <Layout>
+          <BackgroundMCQGenerator />
+          <ErrorBoundary>
+            <Routes>
+              <Route
+                path="/"
+                element={<Home />}
+              />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
+              <Route path="/games" element={<Games />} />
+              <Route path="/conversations" element={<Suspense fallback={null}><ConversationsList /></Suspense>} />
+              <Route path="/exercise/:lessonId" element={<ExerciseContainer />} />
+              {/* Fallback to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </Layout>
+      </VocabularyProvider>
     </BrowserRouter>
   );
 }
