@@ -5,7 +5,7 @@ import { Layout } from "./components/Layout";
 import { Home } from "./components/Home";
 import { Settings } from "./components/Settings";
 import { ExerciseContainer } from "./components/ExerciseContainer";
-import { dbService } from "./services/db/provider";
+
 import { dbV2 } from "./services/db/DexieServiceV2";
 import { useAuth } from "./hooks/useAuth";
 import { Auth } from "./components/Auth";
@@ -46,7 +46,7 @@ function App() {
     const initApp = async () => {
       try {
         await SocialLoginService.initialize();
-        await dbService.init();
+
         await dbV2.init(); // Initialize new V2 DB
         setIsDbReady(true);
       } catch (err) {

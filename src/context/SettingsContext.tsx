@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Settings, LearningLevel } from '../types';
-import { dbService } from '../services/db/provider';
+import { dbV2 } from '../services/db/DexieServiceV2';
 import { adjustColor } from '../utils/colors';
 
 
@@ -34,8 +34,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const loadSettings = async () => {
             try {
-                if (!dbService.isInitialized()) await dbService.init();
-                const loaded = await dbService.getSettings();
+                if (!dbV2.isInitialized()) await dbV2.init();
+                const loaded = await dbV2.getSettings();
                 // Merge with defaults to ensure new fields are present
                 setSettings({ ...defaultSettings, ...loaded });
             } catch (err) {
@@ -50,7 +50,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (isLoading) return;
 
-        dbService.saveSettings(settings).catch(e => console.error("Failed to save settings", e));
+        dbV2.saveSettings(settings).catch(e => console.error("Failed to save settings", e));
 
         const isLight = settings.theme === 'light';
 

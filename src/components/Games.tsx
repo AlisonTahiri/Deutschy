@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVocabularyV2 } from '../context/VocabularyContextV2';
 import { ArrowLeft, BrainCircuit, Type, FileQuestion, Zap, Flame, BarChart2 } from 'lucide-react';
-import { getStreak, getTodayXP } from '../hooks/useProgressManager';
+import { getStreak, getTodayXP } from '../services/xpService';
 import type { ActiveWordPair, ExerciseType } from '../types';
 import { Block, Preloader } from 'konsta/react';
 import { MetricCard } from './MetricCard';

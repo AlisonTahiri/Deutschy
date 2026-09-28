@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Block, Progressbar, Button } from 'konsta/react';
 import { TrendingUp, Award, BookOpen, Zap, Flame, Play, BarChart2 } from 'lucide-react';
 import { MetricCard } from '../MetricCard';
-import { getStreak, getTodayXP } from '../../hooks/useProgressManager';
+import { getStreak, getTodayXP } from '../../services/xpService';
 
 interface DashboardMetrics {
     know: number;

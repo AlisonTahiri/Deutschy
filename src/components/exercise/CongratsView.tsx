@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { RotateCcw, Home, ChevronRight } from 'lucide-react';
-import { getTotalXP } from '../../hooks/useProgressManager';
+import { getTotalXP } from '../../services/xpService';
 import { ExerciseHeader } from './ExerciseHeader';
 import type { LocalLesson, ContainerMode } from '../../types';
 

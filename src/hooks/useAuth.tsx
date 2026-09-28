@@ -1,8 +1,8 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { dbService } from '../services/db/provider';
-import { syncService } from '../services/syncService';
+import { dbV2 } from '../services/db/DexieServiceV2';
+import { progressService } from '../services/progressService';
 
 interface AuthContextType {
     session: Session | null;
@@ -192,20 +192,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signOut = async () => {
         // Ruaj referencat para se të pastrojmë state-in
         const currentUserId = user?.id;
-        const currentAccessToken = session?.access_token;
 
-        // 1. Sinkronizo të dhënat — provo supabase-js client fillimisht
+        // 1. Sinkronizo të dhënat
         if (currentUserId) {
             try {
-                await syncService.pushPendingProgress(currentUserId);
+                await progressService.pushPending(currentUserId);
             } catch (err) {
-                console.warn("pushPendingProgress dështoi, provo flushBeforeUnload:", err);
-                // Fallback: keepalive fetch — funksionon edhe kur projekti kishte pause
-                if (currentAccessToken) {
-                    try {
-                        await syncService.flushBeforeUnload(currentUserId, currentAccessToken);
-                    } catch { /* best-effort */ }
-                }
+                console.warn("pushPending failed on signOut:", err);
             }
         }
 
@@ -217,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (currentUserId) {
             try {
-                await dbService.clearUserProgress(currentUserId);
+                await dbV2.clearUserProgress(currentUserId);
             } catch (err) {
                 console.warn("Could not clear local progress:", err);
             }
