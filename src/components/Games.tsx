@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVocabulary } from '../hooks/useVocabulary';
+import { useVocabularyV2 } from '../context/VocabularyContextV2';
 import { ArrowLeft, BrainCircuit, Type, FileQuestion, Zap, Flame, BarChart2 } from 'lucide-react';
 import { getStreak, getTodayXP } from '../hooks/useProgressManager';
 import type { ActiveWordPair, ExerciseType } from '../types';
@@ -35,7 +35,9 @@ const clearPersistedState = (game: string, lessonId: string | null) => {
 
 export function Games() {
     const { t } = useTranslation();
-    const { lessons, isLoading } = useVocabulary();
+    const { parts, isLoading } = useVocabularyV2();
+    // Keep 'lessons' as alias for minimal diff in useMemo below
+    const lessons = parts;
 
     // Read what the active level and lesson is from Home dashboard persistence
     const PERSISTENCE_KEY = 'deutschy_home_view_state';
@@ -141,9 +143,8 @@ export function Games() {
         if (allActiveWords.length === 0) return 0;
         let score = 0;
         allActiveWords.forEach(w => {
-            let s = w.confidenceScore || 0;
-            if (w.status === 'learned') s = 1.0;
-            score += Math.min(1.0, s);
+            // New system: learned=1.0, remembered=0.5, neither=0
+            score += w.learned ? 1.0 : (w.remembered ? 0.5 : 0);
         });
         return score / allActiveWords.length;
     }, [allActiveWords]);

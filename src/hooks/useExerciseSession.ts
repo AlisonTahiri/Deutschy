@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useProgressManager } from './useProgressManager';
-import { syncService } from '../services/syncService';
+import { progressService } from '../services/progressService';
 import { XP_PER_ACTIVITY } from '../utils/scoreCalculator';
 import type { ContainerMode, ExerciseType } from '../types';
 
@@ -42,7 +41,6 @@ function parseSavedFlashcards(lessonId: string) {
 }
 
 export function useExerciseSession(lessonId: string | undefined, user: any) {
-    const { updateWordScore } = useProgressManager();
 
     // ── Session State ───────────────────────────────────────────────────
     const [mode, setMode] = useState<ContainerMode>(() => parseSavedSession(lessonId ?? '')?.mode ?? 'flashcards');
@@ -105,27 +103,37 @@ export function useExerciseSession(lessonId: string | undefined, user: any) {
     };
 
     const handleFlashcardsResult = async (wordId: string, learned: boolean, languageMode: 'german' | 'albanian') => {
-        await updateWordScore(wordId, learned, 'flashcards', false, languageMode);
+        if (!user?.id) return;
+        if (languageMode === 'german') {
+            // Pass 1 DE→AL: shëno si "remembered" (e ka parë)
+            await progressService.markRemembered(user.id, wordId, learned);
+        } else {
+            // Pass 2 AL→DE: shëno si "learned" (e di plotësisht)
+            if (learned) await progressService.markLearned(user.id, wordId, true);
+        }
         if (learned) {
             setSessionXP(prev => prev + XP_PER_ACTIVITY['flashcards']);
         }
     };
 
     const handleGameResult = async (wordId: string, learned: boolean) => {
+        if (!user?.id) return;
         const type = mode as Exclude<ContainerMode, 'flashcards' | 'post-lesson' | 'congrats' | 'game-grid'>;
-        await updateWordScore(wordId, learned, type as ExerciseType);
-        if (learned) setSessionXP(prev => prev + (XP_PER_ACTIVITY[type as ExerciseType] ?? 2));
+        if (learned) {
+            await progressService.markLearned(user.id, wordId, true);
+            setSessionXP(prev => prev + (XP_PER_ACTIVITY[type as ExerciseType] ?? 2));
+        }
     };
 
     const handleFlashcardsComplete = (completedLanguageMode: 'german' | 'albanian') => {
-        if (user?.id) syncService.pushPendingProgress(user.id).catch(console.error);
+        if (user?.id) progressService.pushPending(user.id).catch(console.error);
         setCompletedDirection(completedLanguageMode);
         setMode('post-lesson');
         clearFlashcardPersistence();
     };
 
     const handleGameComplete = () => {
-        if (user?.id) syncService.pushPendingProgress(user.id).catch(console.error);
+        if (user?.id) progressService.pushPending(user.id).catch(console.error);
         setMode('game-grid');
     };
 

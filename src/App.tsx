@@ -5,13 +5,13 @@ import { Layout } from "./components/Layout";
 import { Home } from "./components/Home";
 import { Settings } from "./components/Settings";
 import { ExerciseContainer } from "./components/ExerciseContainer";
-import { BackgroundMCQGenerator } from "./components/BackgroundMCQGenerator";
 import { dbService } from "./services/db/provider";
+import { dbV2 } from "./services/db/DexieServiceV2";
 import { useAuth } from "./hooks/useAuth";
 import { Auth } from "./components/Auth";
 import { SocialLoginService } from "./services/auth/SocialLoginService";
 import { Games } from "./components/Games";
-import { VocabularyProvider } from "./context/VocabularyContext";
+import { VocabularyProviderV2 } from "./context/VocabularyContextV2";
 
 const Admin = lazy(() =>
   import("./components/Admin").then((m) => ({ default: m.Admin }))
@@ -22,7 +22,7 @@ const ConversationsList = lazy(() =>
 );
 
 import { Onboarding } from "./components/Onboarding";
-import { useSyncManager } from "./hooks/useSyncManager";
+import { useSyncManagerV2 } from "./hooks/useSyncManagerV2";
 import { StorageKeys } from "./utils/storage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -34,8 +34,11 @@ function App() {
   );
   const { session, isLoading: authLoading } = useAuth();
 
-  // Initialize offline sync manager
-  useSyncManager();
+  // Initialize V2 sync manager (version check + progress sync only)
+  useSyncManagerV2(() => {
+    // Fired when levels change — notify VocabularyContextV2 to refresh
+    window.dispatchEvent(new CustomEvent('local-db-updated'));
+  });
 
 
 
@@ -44,6 +47,7 @@ function App() {
       try {
         await SocialLoginService.initialize();
         await dbService.init();
+        await dbV2.init(); // Initialize new V2 DB
         setIsDbReady(true);
       } catch (err) {
         console.error("Critical: Failed to initialize app", err);
@@ -88,9 +92,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <VocabularyProvider>
+      <VocabularyProviderV2>
         <Layout>
-          <BackgroundMCQGenerator />
           <ErrorBoundary>
             <Routes>
               <Route
@@ -107,7 +110,7 @@ function App() {
             </Routes>
           </ErrorBoundary>
         </Layout>
-      </VocabularyProvider>
+      </VocabularyProviderV2>
     </BrowserRouter>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVocabulary } from '../hooks/useVocabulary';
+import { useVocabularyV2 } from '../context/VocabularyContextV2';
 import { useAuth } from '../hooks/useAuth';
 import { useLastActivity } from '../hooks/useLastActivity';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ interface ViewState {
 
 export function Home() {
     const { t } = useTranslation();
-    const { lessons, isLoading } = useVocabulary();
+    const { parts, isLoading } = useVocabularyV2();
     const { session } = useAuth();
     const navigate = useNavigate();
     const { getLastActivity } = useLastActivity();
@@ -77,7 +77,7 @@ export function Home() {
     const activeLevelId = viewState.levelId;
     const activeLessonId = viewState.lessonId;
 
-    const { levels, methodsMap, lessonsMap, allParts } = useLessonHierarchy(lessons);
+    const { levels, methodsMap, lessonsMap, allParts } = useLessonHierarchy(parts);
     const dashboardMetrics = useDashboardMetrics(allParts, lastActivityPath, lessonsMap);
 
     const lessonsForLevel = activeLevelId

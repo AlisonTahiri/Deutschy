@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
-import { Loader2, Flag } from 'lucide-react';
+import { Loader2, Flag, BookOpen, Users } from 'lucide-react';
 
 // Hooks
 import { useAdminState } from '../hooks/useAdminState';
@@ -15,11 +15,13 @@ import { ScanningView } from './admin/ScanningView';
 import { VocabularyView } from './admin/VocabularyView';
 import { SearchResultsView } from './admin/SearchResultsView';
 import { IssuesView } from './admin/IssuesView';
+import { AdminUsers } from './admin/AdminUsers';
 
 export function Admin() {
     const { role } = useAuth();
     const { settings, updateLevel } = useSettings();
     const [showIssues, setShowIssues] = useState(false);
+    const [activeTab, setActiveTab] = useState<'content' | 'users'>('content');
 
     const state = useAdminState(role);
     
@@ -48,8 +50,8 @@ export function Admin() {
         <div className="animate-[fadeIn_0.4s_ease-out] flex flex-col gap-8 pb-8">
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h1 className="m-0 text-3xl font-bold">Content Administration</h1>
-                    <p className="text-(--text-secondary)">Manage course structure and learning materials synchronized via Supabase.</p>
+                    <h1 className="m-0 text-3xl font-bold">Admin Panel</h1>
+                    <p className="text-(--text-secondary)">Menaxhimi i kurseve dhe përdoruesve.</p>
                 </div>
                 <button
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border font-semibold text-sm cursor-pointer transition-all"
@@ -77,6 +79,37 @@ export function Admin() {
                 </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex gap-1 p-1 bg-(--bg-color-secondary) rounded-xl w-fit">
+                <button
+                    onClick={() => setActiveTab('content')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                        activeTab === 'content'
+                            ? 'bg-(--bg-color) text-(--text-primary) shadow-sm'
+                            : 'text-(--text-secondary) hover:text-(--text-primary)'
+                    }`}
+                >
+                    <BookOpen size={15} />
+                    Contenuti
+                </button>
+                <button
+                    onClick={() => setActiveTab('users')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                        activeTab === 'users'
+                            ? 'bg-(--bg-color) text-(--text-primary) shadow-sm'
+                            : 'text-(--text-secondary) hover:text-(--text-primary)'
+                    }`}
+                >
+                    <Users size={15} />
+                    Përdoruesit
+                </button>
+            </div>
+
+            {/* Tab: Përdoruesit */}
+            {activeTab === 'users' && <AdminUsers />}
+
+            {/* Tab: Contenuti */}
+            {activeTab === 'content' && <>
             {state.error && <div className="text-(--danger-color) p-3 bg-(--danger-color)/10 border border-(--danger-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{state.error}</div>}
             {state.success && <div className="text-(--success-color) p-3 bg-(--success-color)/10 border border-(--success-color)/20 rounded-xl text-sm animate-[fadeIn_0.3s_ease-out]">{state.success}</div>}
 
@@ -238,6 +271,7 @@ export function Admin() {
                     handleSaveWord={state.handleSaveWord}
                 />
             )}
+            </>}
         </div>
     );
 }

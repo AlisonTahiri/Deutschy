@@ -102,6 +102,9 @@ export interface ActiveWordPair extends WordPair {
   failCount: number;
   confidenceScore: number;
   attemptsCount: number;
+  // V2 progress fields (boolean system)
+  remembered?: boolean;
+  learned?: boolean;
 }
 
 export interface UserWordProgress {

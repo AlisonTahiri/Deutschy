@@ -2,10 +2,10 @@ import { useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLastActivity } from '../hooks/useLastActivity';
-import { useVocabulary } from '../hooks/useVocabulary';
+import { useVocabularyV2 } from '../context/VocabularyContextV2';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
-import type { ContainerMode } from '../types';
+import type { ContainerMode, ActiveWordPair } from '../types';
 
 // Hooks
 import { useExerciseSession } from '../hooks/useExerciseSession';
@@ -16,8 +16,6 @@ const CongratsView = lazy(() => import('./exercise/CongratsView').then(m => ({ d
 const GameGridView = lazy(() => import('./exercise/GameGridView').then(m => ({ default: m.GameGridView })));
 const IndividualGameView = lazy(() => import('./exercise/IndividualGameView').then(m => ({ default: m.IndividualGameView })));
 
-import type { ActiveWordPair } from '../types';
-
 const btnSec = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border border-(--border-card) cursor-pointer transition-all duration-200 bg-(--bg-card) text-(--text-primary) hover:border-(--accent-color)/50';
 const btnPri = 'inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm cursor-pointer transition-all duration-200 text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]';
 
@@ -25,11 +23,34 @@ export function ExerciseContainer() {
     const { t } = useTranslation();
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
-    const { lessons, isLoading } = useVocabulary();
+    const { parts, isLoading } = useVocabularyV2();
     const { role, user } = useAuth();
     useLastActivity();
 
     const session = useExerciseSession(lessonId, user);
+
+    // Find the part (lesson_parts row) by its ID
+    const activePart = parts.find(p => p.id === lessonId);
+
+    // Map ActivePart → shape expected by child components (ActiveLesson-compatible)
+    const lesson = activePart ? {
+        ...activePart,
+        isSupabaseSynced: true,
+        createdAt: Date.now(),
+        words: activePart.words.map(w => ({
+            ...w,
+            status: w.learned ? 'learned' as const : 'learning' as const,
+            failCount: 0,
+            confidenceScore: w.learned ? 1 : (w.remembered ? 0.5 : 0),
+            attemptsCount: 0,
+            mcq: w.mcq_sentence ? {
+                sentence: w.mcq_sentence,
+                sentenceTranslation: w.mcq_sentence_translation || '',
+                options: w.mcq_options || [],
+                correctAnswer: w.mcq_correct_answer || '',
+            } : undefined,
+        })) as ActiveWordPair[],
+    } : undefined;
 
     // ── Back-button support via history entries ─────────────────────────
     const prevModeRef = useRef<ContainerMode>(session.mode);
@@ -56,8 +77,7 @@ export function ExerciseContainer() {
     }, [session.setMode]);
     // ────────────────────────────────────────────────────────────────────
 
-    const lesson = lessons.find(l => l.id === lessonId);
-    const wordsToPractice: ActiveWordPair[] = lesson ? (lesson.words as ActiveWordPair[]) : [];
+    const wordsToPractice: ActiveWordPair[] = lesson ? lesson.words : [];
 
     if (isLoading) {
         return (
@@ -76,19 +96,27 @@ export function ExerciseContainer() {
         );
     }
 
-    const hasMCQs = lesson.words.some(w => !!w.mcq);
-    const canDoQuiz = role === 'admin' || (!!lesson.isSupabaseSynced && hasMCQs);
+    const hasMCQs = lesson?.words.some(w => !!w.mcq) ?? false;
+    const canDoQuiz = role === 'admin' || (hasMCQs);
 
     // ── Find next part in same lesson ───────────────────────────────────
-    const siblings = lesson?.lesson_id
-        ? lessons
-            .filter(l => l.lesson_id === lesson.lesson_id)
+    const siblings = activePart?.lesson_id
+        ? parts
+            .filter(p => p.lesson_id === activePart.lesson_id)
             .sort((a, b) =>
-                (a.part_name || '').localeCompare(b.part_name || '', undefined, { numeric: true, sensitivity: 'base' })
+                (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
             )
         : [];
     const currentIdx = siblings.findIndex(p => p.id === lessonId);
     const nextPart = currentIdx >= 0 && currentIdx < siblings.length - 1 ? siblings[currentIdx + 1] : null;
+
+    // Map nextPart to the shape PostLessonView expects
+    const nextPartMapped = nextPart ? {
+        ...nextPart,
+        isSupabaseSynced: true,
+        createdAt: Date.now(),
+        words: [],
+    } : null;
 
     const onExit = () => navigate('/');
 
@@ -104,10 +132,10 @@ export function ExerciseContainer() {
     if (session.mode === 'post-lesson') {
         ContentView = (
             <PostLessonView 
-                lesson={lesson}
+                lesson={lesson!}
                 sessionXP={session.sessionXP}
                 completedDirection={session.completedDirection}
-                nextPart={nextPart}
+                nextPart={nextPartMapped}
                 setMode={session.setMode}
                 setSessionXP={session.setSessionXP}
                 clearFlashcardPersistence={session.clearFlashcardPersistence}
