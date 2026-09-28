@@ -181,7 +181,7 @@ export class DexieServiceV2 {
     }
 
     async getWordProgress(userId: string, wordId: string): Promise<UserWordProgress | undefined> {
-        return this.db.user_progress.get([userId, wordId]);
+        return this.db.user_progress.where('[user_id+word_id]').equals([userId, wordId]).first();
     }
 
     async saveProgress(progress: UserWordProgress): Promise<void> {

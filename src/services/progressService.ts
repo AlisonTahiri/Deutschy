@@ -82,7 +82,7 @@ export const progressService = {
         const pending = await dbV2.getPendingProgress(userId);
         if (pending.length === 0) return;
 
-        const toUpsert = pending.map(({ is_synced, ...rest }) => rest);
+        const toUpsert = pending.map(({ is_synced, id, ...rest }) => rest);
 
         const { error } = await supabase
             .from('user_progress_v2')
@@ -112,9 +112,21 @@ export const progressService = {
         const localPending = await dbV2.getPendingProgress(userId);
         const pendingWordIds = new Set(localPending.map(p => p.word_id));
 
-        const toSave: UserWordProgress[] = data
-            .filter(r => !pendingWordIds.has(r.word_id)) // mos mbishkruaj pending
-            .map(r => ({
+        const allLocal = await dbV2.getProgress(userId);
+        const localByWordId = new Map(allLocal.map(p => [p.word_id, p]));
+
+        const toDeleteIds: string[] = [];
+        const toSave: UserWordProgress[] = [];
+
+        for (const r of data) {
+            if (pendingWordIds.has(r.word_id)) continue;
+
+            const existing = localByWordId.get(r.word_id);
+            if (existing && existing.id !== r.id) {
+                toDeleteIds.push(existing.id);
+            }
+
+            toSave.push({
                 id: r.id,
                 user_id: r.user_id,
                 word_id: r.word_id,
@@ -122,7 +134,12 @@ export const progressService = {
                 learned: r.learned,
                 updated_at: r.updated_at,
                 is_synced: true,
-            }));
+            });
+        }
+
+        if (toDeleteIds.length > 0) {
+            await dbV2.db.user_progress.bulkDelete(toDeleteIds);
+        }
 
         if (toSave.length > 0) {
             await dbV2.bulkSaveProgress(toSave);
