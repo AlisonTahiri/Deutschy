@@ -62,7 +62,11 @@ export function AdminUsers() {
         });
     };
 
-    const saveAccess = async () => {
+    const saveAccess = async (e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (!selectedUser) return;
         setIsSaving(true);
         setError(null);
@@ -243,7 +247,7 @@ export function AdminUsers() {
                                     <div className="text-xs text-(--text-secondary)">{selectedUser.email}</div>
                                 </div>
                             </div>
-                            <button onClick={closeModal} className="p-2 rounded-xl hover:bg-(--bg-color-secondary) transition-colors cursor-pointer">
+                            <button type="button" onClick={closeModal} className="p-2 rounded-xl hover:bg-(--bg-color-secondary) transition-colors cursor-pointer">
                                 <X size={18} className="text-(--text-secondary)" />
                             </button>
                         </div>
@@ -291,12 +295,14 @@ export function AdminUsers() {
                         {/* Modal Footer */}
                         <div className="flex gap-2 p-5 pt-0">
                             <button
+                                type="button"
                                 onClick={closeModal}
                                 className="flex-1 py-2.5 rounded-xl border border-(--border-color) text-sm font-medium text-(--text-secondary) hover:text-(--text-primary) transition-all cursor-pointer"
                             >
                                 Anulo
                             </button>
                             <button
+                                type="button"
                                 onClick={saveAccess}
                                 disabled={isSaving || !hasChanges}
                                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"

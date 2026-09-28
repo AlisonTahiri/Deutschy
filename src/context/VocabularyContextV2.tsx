@@ -52,6 +52,10 @@ export function VocabularyProviderV2({ children }: { children: ReactNode }) {
     const loadTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
     const loadAll = useCallback(async (background = false) => {
+        if (loadTimerRef.current) {
+            clearTimeout(loadTimerRef.current);
+        }
+
         if (!background && !_hasLoaded) {
             loadTimerRef.current = setTimeout(() => setIsLoading(true), 150);
         }
@@ -146,7 +150,10 @@ export function VocabularyProviderV2({ children }: { children: ReactNode }) {
         // Rifresko kur sync-u ka shkarkuar të dhëna të reja
         const handleUpdate = () => loadAll(true);
         window.addEventListener('local-db-updated', handleUpdate);
-        return () => window.removeEventListener('local-db-updated', handleUpdate);
+        return () => {
+            window.removeEventListener('local-db-updated', handleUpdate);
+            if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
+        };
     }, [loadAll]);
 
     /**
