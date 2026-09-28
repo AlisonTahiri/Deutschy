@@ -49,7 +49,7 @@ export function VocabularyProviderV2({ children }: { children: ReactNode }) {
     const { user } = useAuth();
     const [parts, setParts] = useState<ActivePart[]>(_cachedParts ?? []);
     const [isLoading, setIsLoading] = useState(!_hasLoaded);
-    const loadTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const loadTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const loadAll = useCallback(async (background = false) => {
         if (loadTimerRef.current) {

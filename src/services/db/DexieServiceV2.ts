@@ -108,8 +108,8 @@ export class DexieServiceV2 {
 
         // Fshi në transaksion
         await this.db.transaction('rw',
-            this.db.words, this.db.parts, this.db.lesson_records,
-            this.db.methods, this.db.downloaded_levels,
+            [this.db.words, this.db.parts, this.db.lesson_records,
+            this.db.methods, this.db.downloaded_levels],
             async () => {
                 if (partIds.length) await this.db.words.where('part_id').anyOf(partIds).delete();
                 if (lessonIds.length) await this.db.parts.where('lesson_id').anyOf(lessonIds).delete();
@@ -163,8 +163,8 @@ export class DexieServiceV2 {
         words: LocalWord[];
     }): Promise<void> {
         await this.db.transaction('rw',
-            this.db.downloaded_levels, this.db.methods,
-            this.db.lesson_records, this.db.parts, this.db.words,
+            [this.db.downloaded_levels, this.db.methods,
+            this.db.lesson_records, this.db.parts, this.db.words],
             async () => {
                 await this.db.downloaded_levels.put(data.level);
                 if (data.methods.length) await this.db.methods.bulkPut(data.methods);

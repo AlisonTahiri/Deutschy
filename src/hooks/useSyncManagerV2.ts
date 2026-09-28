@@ -7,7 +7,6 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { levelPackService } from '../services/levelPackService';
 import { progressService } from '../services/progressService';
-import { dbV2 } from '../services/db/DexieServiceV2';
 
 type SyncStatus = 'idle' | 'syncing' | 'error';
 
